@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 import pydicom
 import xlsxwriter
 from pydicom.multival import MultiValue
@@ -22,7 +23,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         self.dicom_struct.PatientBirthDate = '20000101'
         self.dicom_struct.OperatorsName = 'OperatorName'
         self.dicom_struct.InstanceCreationDate = '20000101'
-        return self.dicom_struct
+    #return self.dicom_struct
 
     def dicom2excel(self, name_file):
         """
@@ -78,6 +79,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with rotated structure.
         """
+        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
         if abs(angle) < 360 and isinstance(angle, float):
             angle = np.radians(angle)
         else:
@@ -136,10 +138,10 @@ class Dicominfo(pydicom.dataset.Dataset):
                     contour_rotated.append(rotation[0])
                     contour_rotated.append(rotation[1])
                     contour_rotated.append(rotation[2])
-                sequence[num].ContourData = MultiValue(float, contour_rotated)
+                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_rotated)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+        #return dicom_struct
 
     def translate(self, name_struct, delta, key, *args):
         """
@@ -157,6 +159,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with translated structure.
         """
+        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
         if abs(delta) < 1000 and isinstance(delta, float):
             pass
         else:
@@ -215,10 +218,10 @@ class Dicominfo(pydicom.dataset.Dataset):
                     contour_translat.append(translation[0])
                     contour_translat.append(translation[1])
                     contour_translat.append(translation[2])
-                sequence[num].ContourData = MultiValue(float, contour_translat)
+                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_translat)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+        return dicom_struct1
 
     def add_margin(self, name_struct, margin):
         """
@@ -237,6 +240,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with expanded/substracted structure.
         """
+        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
         name_id = {}
         if isinstance(margin, float):
             pass
@@ -306,7 +310,7 @@ class Dicominfo(pydicom.dataset.Dataset):
                 else:
                     raise ValueError("Contour needs at least 1 point")
                 sequence = dicom_contour.ContourSequence[num]
-                sequence.ContourData = MultiValue(float, contour_margin)
+                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_margin)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+#return dicom_struct1

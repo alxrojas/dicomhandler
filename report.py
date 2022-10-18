@@ -19,20 +19,20 @@ def report(dicom1, dicom2, name_struct):
     dataframe with statistics.
     """
     name_id1, name_id2 = {}, {}
-    longitude1 = len(dicom1.StructureSetROISequence)
-    longitude2 = len(dicom2.StructureSetROISequence)
+    longitude1 = len(dicom1.dicom_struct.StructureSetROISequence)
+    longitude2 = len(dicom2.dicom_struct.StructureSetROISequence)
     for item in range(longitude1):
-        name_id1[dicom1.StructureSetROISequence[item].ROIName] = item
+        name_id1[dicom1.dicom_struct.StructureSetROISequence[item].ROIName] = item
     for item2 in range(longitude2):
-        name_id2[dicom2.StructureSetROISequence[item2].ROIName] = item2
+        name_id2[dicom2.dicom_struct.StructureSetROISequence[item2].ROIName] = item2
     if (name_struct in name_id1) and (name_struct in name_id2):
-        dicom_contour1 = dicom1.ROIContourSequence[name_id1[name_struct]]
-        dicom_contour2 = dicom2.ROIContourSequence[name_id2[name_struct]]
+        #dicom_contour1 = dicom1.dicom_struct.ROIContourSequence[name_id1[name_struct]]
+        #dicom_contour2 = dicom2.dicom_struct.ROIContourSequence[name_id2[name_struct]]
         distances_contour, radius_contour = [], []
         mean_values1, mean_values2 = [], []
-        for num in range(len(dicom_contour1.ContourSequence)):
-            vector1 = dicom_contour1.ContourSequence[num].ContourData
-            vector2 = dicom_contour2.ContourSequence[num].ContourData
+        for num in range(len(dicom2.dicom_struct.ROIContourSequence[name_id2[name_struct]].ContourSequence)):
+            vector1 = dicom1.dicom_struct.ROIContourSequence[name_id1[name_struct]].ContourSequence[num].ContourData
+            vector2 = dicom2.dicom_struct.ROIContourSequence[name_id2[name_struct]].ContourSequence[num].ContourData
             length1 = int(len(vector1)/3)
             length2 = int(len(vector2)/3)
             xmean1 = np.mean([vector1[3*i] for i in range(length1)])
@@ -45,9 +45,9 @@ def report(dicom1, dicom2, name_struct):
             mean_values2.append([xmean2, ymean2, zmean2])
         centermass1 = np.mean(mean_values1, axis=0)
         centermass2 = np.mean(mean_values2, axis=0)
-        for num in range(len(dicom_contour1.ContourSequence)):
-            vector1 = dicom_contour1.ContourSequence[num].ContourData
-            vector2 = dicom_contour2.ContourSequence[num].ContourData
+        for num in range(len(dicom1.dicom_struct.ROIContourSequence[name_id2[name_struct]].ContourSequence)):
+            vector1 = dicom1.dicom_struct.ROIContourSequence[name_id1[name_struct]].ContourSequence[num].ContourData
+            vector2 = dicom2.dicom_struct.ROIContourSequence[name_id2[name_struct]].ContourSequence[num].ContourData
             length1 = int(len(vector1)/3)
             length2 = int(len(vector2)/3)
             if length1 == length2:
