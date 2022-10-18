@@ -78,20 +78,21 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with rotated structure.
         """
+        dicom_struct1 = copy.deepcopy(self.dicom_struct)
         if abs(angle) < 360 and isinstance(angle, float):
             angle = np.radians(angle)
         else:
             raise ValueError("Type is not float and angle is > 360º")
         name_id = {}
-        length = len(self.dicom_struct.StructureSetROISequence)
+        length = len(dicom_struct1.StructureSetROISequence)
         if key in ['roll', 'pitch', 'yaw']:
             pass
         else:
             raise ValueError("Choose a correct key: roll, pitch, yaw")
         for i in range(length):
-            name_id[self.dicom_struct.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_struct1.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
-            dicom_contour = self.dicom_struct.ROIContourSequence
+            dicom_contour = dicom_struct1.ROIContourSequence
             if not args:
                 origin = dicom_contour[length-1].ContourSequence[0].ContourData
             elif (len(args[0]) == 3 and
@@ -139,7 +140,7 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence[num].ContourData = MultiValue(float, contour_rotated)
         else:
             raise ValueError("Type a correct name")
-        # return self.dicom_struct
+        return dicom_struct1
 
     def translate(self, name_struct, delta, key, *args):
         """
@@ -157,20 +158,21 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with translated structure.
         """
+        dicom_struct1 = copy.deepcopy(self.dicom_struct)
         if abs(delta) < 1000 and isinstance(delta, float):
             pass
         else:
             raise ValueError("Type is not float and delta is > 1000 mm")
         name_id = {}
-        length = len(self.dicom_struct.StructureSetROISequence)
+        length = len(dicom_struct1.StructureSetROISequence)
         if key in ['x', 'y', 'z']:
             pass
         else:
             raise ValueError("Choose a correct key: x, y, z")
         for i in range(length):
-            name_id[self.dicom_struct.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_struct1.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
-            dicom_contour = self.dicom_struct.ROIContourSequence
+            dicom_contour = dicom_struct1.ROIContourSequence
             if not args:
                 origin = dicom_contour[length-1].ContourSequence[0].ContourData
             elif (len(args[0]) == 3 and
@@ -218,7 +220,7 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence[num].ContourData = MultiValue(float, contour_translat)
         else:
             raise ValueError("Type a correct name")
-        # return self.dicom_struct
+        return dicom_struct1
 
     def add_margin(self, name_struct, margin):
         """
@@ -237,17 +239,18 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with expanded/substracted structure.
         """
+        dicom_struct1 = copy.deepcopy(self.dicom_struct)
         name_id = {}
         if isinstance(margin, float):
             pass
         else:
             raise TypeError(f"{margin} must be float")
-        sequence = self.dicom_struct.StructureSetROISequence
+        sequence = dicom_struct1.StructureSetROISequence
         longitude = len(sequence)
         for item in range(longitude):
             name_id[sequence[item].ROIName] = item
         if name_struct in name_id:
-            dicom_base = self.dicom_struct
+            dicom_base = dicom_struct1
             dicom_contour = dicom_base.ROIContourSequence[name_id[name_struct]]
             for num in range(len(dicom_contour.ContourSequence)):
                 contour_margin = []
@@ -309,4 +312,4 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence.ContourData = MultiValue(float, contour_margin)
         else:
             raise ValueError("Type a correct name")
-        # return self.dicom_struct
+        return dicom_struct1
