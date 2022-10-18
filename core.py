@@ -241,7 +241,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         if isinstance(margin, float):
             pass
         else:
-            raise ValueError(f"{margin} must be float")
+            raise TypeError(f"{margin} must be float")
         sequence = self.dicom_struct.StructureSetROISequence
         longitude = len(sequence)
         for item in range(longitude):
