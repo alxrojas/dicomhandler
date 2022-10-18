@@ -22,7 +22,7 @@ class Dicominfo(pydicom.dataset.Dataset):
         self.dicom_struct.PatientBirthDate = '20000101'
         self.dicom_struct.OperatorsName = 'OperatorName'
         self.dicom_struct.InstanceCreationDate = '20000101'
-        return self.dicom_struct
+        # return self.dicom_struct
 
     def dicom2excel(self, name_file):
         """
@@ -139,7 +139,7 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence[num].ContourData = MultiValue(float, contour_rotated)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+        # return self.dicom_struct
 
     def translate(self, name_struct, delta, key, *args):
         """
@@ -218,7 +218,7 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence[num].ContourData = MultiValue(float, contour_translat)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+        # return self.dicom_struct
 
     def add_margin(self, name_struct, margin):
         """
@@ -309,4 +309,4 @@ class Dicominfo(pydicom.dataset.Dataset):
                 sequence.ContourData = MultiValue(float, contour_margin)
         else:
             raise ValueError("Type a correct name")
-        return self.dicom_struct
+        # return self.dicom_struct
