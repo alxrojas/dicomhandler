@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 import pydicom
 import xlsxwriter
 from pydicom.multival import MultiValue
