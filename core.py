@@ -2,6 +2,8 @@ import copy
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
+
 import xlsxwriter
 from pydicom.multival import MultiValue
 
@@ -18,19 +20,19 @@ class Dicominfo:
         Operators Name 'OperatorName',
         Instance Creation Date '20000101'
         """
+        dicom_copy = copy.deepcopy(self)
         if name:
-            self.dicom_struct.PatientName = 'PatientName'
+            dicom_copy.dicom_struct.PatientName = 'PatientName'
         if birth:
-            (self.dicom_struct
+            (dicom_copy.dicom_struct
              .PatientBirthDate) = (datetime.today()
                                    .strftime("%Y%m%d"))
         if operator:
-            self.dicom_struct.OperatorsName = 'OperatorName'
+            dicom_copy.dicom_struct.OperatorsName = 'OperatorName'
         if creation:
-            (self.dicom_struct
+            (dicom_copy.dicom_struct
              .InstanceCreationDate) = (datetime.today()
                                        .strftime("%Y%m%d"))
-        dicom_copy = copy.deepcopy(self.dicom_struct)
         return dicom_copy
 
     def to_excel(self, name_file):
@@ -97,22 +99,22 @@ class Dicominfo:
         OUTPUT:
         DICOM file with rotated structure.
         """
-        dicom_copy = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self)
         if abs(angle) < 360 and isinstance(angle, float):
             angle = np.radians(angle)
         else:
             raise TypeError("Type is not float and angle is > 360º")
         name_id = {}
-        length = len(dicom_copy.StructureSetROISequence)
+        length = len(dicom_copy.dicom_struct.StructureSetROISequence)
         if key in ['roll', 'pitch', 'yaw']:
             pass
         else:
             raise ValueError("Choose a correct key: roll, pitch, yaw")
         for i in range(length):
-            name_id[dicom_copy.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
             if not args:
-                origin = (dicom_copy
+                origin = (dicom_copy.dicom_struct
                           .ROIContourSequence[length-1]
                           .ContourSequence[0]
                           .ContourData)
@@ -146,23 +148,23 @@ class Dicominfo:
                                     [0, 0, 0, 1]
                                     ])
                  }
-            for num in range(len(dicom_copy
+            for num in range(len(dicom_copy.dicom_struct
                                  .ROIContourSequence[name_id[name_struct]]
                                  .ContourSequence)):
                 contour_rotated = []
-                for counter in range(int(len(dicom_copy
+                for counter in range(int(len(dicom_copy.dicom_struct
                                              .ROIContourSequence[name_id[name_struct]]
                                              .ContourSequence[num]
                                              .ContourData)/3)):
-                    vector = [float(dicom_copy
+                    vector = [float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter]),
-                              float(dicom_copy
+                              float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter+1]),
-                              float(dicom_copy
+                              float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter+2]), 1.0]
@@ -170,7 +172,7 @@ class Dicominfo:
                     contour_rotated.append(rotation[0])
                     contour_rotated.append(rotation[1])
                     contour_rotated.append(rotation[2])
-                (dicom_copy
+                (dicom_copy.dicom_struct
                  .ROIContourSequence[name_id[name_struct]]
                  .ContourSequence[num]
                  .ContourData) = MultiValue(float, contour_rotated)
@@ -194,22 +196,22 @@ class Dicominfo:
         OUTPUT:
         DICOM file with translated structure.
         """
-        dicom_copy = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self)
         if abs(delta) < 1000 and isinstance(delta, float):
             pass
         else:
             raise ValueError("Type is not float and delta is > 1000 mm")
         name_id = {}
-        length = len(dicom_copy.StructureSetROISequence)
+        length = len(dicom_copy.dicom_struct.StructureSetROISequence)
         if key in ['x', 'y', 'z']:
             pass
         else:
             raise ValueError("Choose a correct key: x, y, z")
         for i in range(length):
-            name_id[dicom_copy.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
             if not args:
-                origin = (dicom_copy
+                origin = (dicom_copy.dicom_struct
                           .ROIContourSequence[length-1]
                           .ContourSequence[0]
                           .ContourData)
@@ -243,23 +245,23 @@ class Dicominfo:
                                     [0, 0, 1, origin[2]],
                                     [0, 0, 0, 1]
                                     ])}
-            for num in range(len(dicom_copy
+            for num in range(len(dicom_copy.dicom_struct
                                  .ROIContourSequence[name_id[name_struct]]
                                  .ContourSequence)):
                 contour_translat = []
-                for counter in range(int(len(dicom_copy
+                for counter in range(int(len(dicom_copy.dicom_struct
                                              .ROIContourSequence[name_id[name_struct]]
                                              .ContourSequence[num]
                                              .ContourData)/3)):
-                    vector = [float(dicom_copy
+                    vector = [float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter]),
-                              float(dicom_copy
+                              float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter+1]),
-                              float(dicom_copy
+                              float(dicom_copy.dicom_struct
                                     .ROIContourSequence[name_id[name_struct]]
                                     .ContourSequence[num]
                                     .ContourData[3*counter+2]), 1.0]
@@ -267,7 +269,7 @@ class Dicominfo:
                     contour_translat.append(translation[0])
                     contour_translat.append(translation[1])
                     contour_translat.append(translation[2])
-                (dicom_copy
+                (dicom_copy.dicom_struct
                  .ROIContourSequence[name_id[name_struct]]
                  .ContourSequence[num]
                  .ContourData) = MultiValue(float, contour_translat)
@@ -292,42 +294,42 @@ class Dicominfo:
         OUTPUT:
         DICOM file with expanded/substracted structure.
         """
-        dicom_copy = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self)
         name_id = {}
         if isinstance(margin, float):
             pass
         else:
             raise ValueError(f"{margin} must be float")
-        longitude = len(dicom_copy
+        longitude = len(dicom_copy.dicom_struct
                         .StructureSetROISequence)
         for item in range(longitude):
-            name_id[dicom_copy
+            name_id[dicom_copy.dicom_struct
                     .StructureSetROISequence[item]
                     .ROIName] = item
         if name_struct in name_id:
-            for num in range(len((dicom_copy
+            for num in range(len((dicom_copy.dicom_struct
                                   .ROIContourSequence[name_id[name_struct]])
                                   .ContourSequence)):
                 contour_margin = []
-                length = int(len(dicom_copy
+                length = int(len(dicom_copy.dicom_struct
                                  .ROIContourSequence[name_id[name_struct]]
                                  .ContourSequence[num]
                                  .ContourData)/3)
                 if length > 1:
-                    xmean = np.mean([(dicom_copy
+                    xmean = np.mean([(dicom_copy.dicom_struct
                                      .ROIContourSequence[name_id[name_struct]]
                                      .ContourSequence[num]
                                      .ContourData[3*i]) for i in range(length)])
-                    ymean = np.mean([(dicom_copy
+                    ymean = np.mean([(dicom_copy.dicom_struct
                                      .ROIContourSequence[name_id[name_struct]]
                                      .ContourSequence[num]
                                      .ContourData[3*i+1]) for i in range(length)])
                     for cont in range(length):
-                        x0 = (dicom_copy
+                        x0 = (dicom_copy.dicom_struct
                               .ROIContourSequence[name_id[name_struct]]
                               .ContourSequence[num]
                               .ContourData[3*cont])
-                        y0 = (dicom_copy
+                        y0 = (dicom_copy.dicom_struct
                               .ROIContourSequence[name_id[name_struct]]
                               .ContourSequence[num]
                               .ContourData[3*cont + 1])
@@ -367,70 +369,201 @@ class Dicominfo:
                             else:
                                 y1 = y0 - margin
                                 contour_margin.append(y1)
-                        contour_margin.append((dicom_copy
+                        contour_margin.append((dicom_copy.dicom_struct
                                                .ROIContourSequence[name_id[name_struct]]
                                                .ContourSequence[num]
                                                .ContourData[3*cont + 2]))
                 elif length == 1 and margin > 0:
-                    contour_margin = [(dicom_copy
+                    contour_margin = [(dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[0]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[1]) + margin,
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[2]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[0]) + margin,
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[1]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[2]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[0]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[1]) - margin,
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[2]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[0]) - margin,
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[1]),
-                                      (dicom_copy
+                                      (dicom_copy.dicom_struct
                                        .ROIContourSequence[name_id[name_struct]]
                                        .ContourSequence[num]
                                        .ContourData[2])]
                 elif length == 1 and margin <= 0:
-                    contour_margin = (dicom_copy
+                    contour_margin = (dicom_copy.dicom_struct
                                       .ROIContourSequence[name_id[name_struct]]
                                       .ContourSequence[num]
                                       .ContourData)
                 else:
                     raise ValueError("Contour needs at least 1 point")
-                (dicom_copy
+                (dicom_copy.dicom_struct
                  .ROIContourSequence[name_id[name_struct]]
                  .ContourSequence[num]
                  .ContourData) = MultiValue(float, contour_margin)
         else:
             raise ValueError("Type a correct name")
         return dicom_copy
+
+
+
+
+
+def report(dicom1, dicom2, name_struct):
+    """
+    Function that report the maximum, minimum, mean, standard deviation
+    and variance of: radius between each point of a structure and its centre
+    of mass and the distances between two structures (the same name) in
+    different positions. It is reported the distance between the centres of
+    mass of the two structures.
+    The report is in a dataframe.
+    INPUT:
+    dicom1 -> First DICOM file with structures.
+    dicom1 -> Second DICOM file with structures.
+    name_struct -> The name of the structure.
+    OUTPUT:
+    dataframe with statistics.
+    """
+    name_id1, name_id2 = {}, {}
+    longitude1 = len(dicom1.StructureSetROISequence)
+    longitude2 = len(dicom2.StructureSetROISequence)
+    for item in range(longitude1):
+        name_id1[dicom1.StructureSetROISequence[item].ROIName] = item
+    for item2 in range(longitude2):
+        name_id2[dicom2.StructureSetROISequence[item2].ROIName] = item2
+    if (name_struct in name_id1) and (name_struct in name_id2):
+        #dicom_contour1 = dicom1.dicom_struct.ROIContourSequence[name_id1[name_struct]]
+        #dicom_contour2 = dicom2.dicom_struct.ROIContourSequence[name_id2[name_struct]]
+        distances_contour, radius_contour = [], []
+        mean_values1, mean_values2 = [], []
+        for num in range(len(dicom2
+                             .ROIContourSequence[name_id2[name_struct]]
+                             .ContourSequence)):
+            vector2 = (dicom2
+                       .ROIContourSequence[name_id2[name_struct]]
+                       .ContourSequence[num]
+                       .ContourData)
+            length1 = int(len(dicom1
+                              .ROIContourSequence[name_id1[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData)/3)
+            length2 = int(len(vector2)/3)
+            xmean1 = np.mean([(dicom1
+                              .ROIContourSequence[name_id1[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData[3*i]) for i in range(length1)])
+            ymean1 = np.mean([(dicom1
+                              .ROIContourSequence[name_id1[name_struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i+1]) for i in range(length1)])
+            zmean1 = np.mean([(dicom1
+                               .ROIContourSequence[name_id1[name_struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i+2]) for i in range(length1)])
+            mean_values1.append([xmean1, ymean1, zmean1])
+            xmean2 = np.mean([(dicom2
+                               .ROIContourSequence[name_id1[name_struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i]) for i in range(length2)])
+            ymean2 = np.mean([(dicom2
+                               .ROIContourSequence[name_id1[name_struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i+1]) for i in range(length2)])
+            zmean2 = np.mean([(dicom2
+                               .ROIContourSequence[name_id1[name_struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i+2]) for i in range(length2)])
+            mean_values2.append([xmean2, ymean2, zmean2])
+        centermass1 = np.mean(mean_values1, axis=0)
+        centermass2 = np.mean(mean_values2, axis=0)
+        for num in range(len(dicom1
+                             .ROIContourSequence[name_id2[name_struct]]
+                             .ContourSequence)):
+            length1 = int(len(dicom1
+                              .ROIContourSequence[name_id1[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData)/3)
+            length2 = int(len(dicom2
+                              .ROIContourSequence[name_id1[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData)/3)
+            if length1 == length2:
+                for count in range(length1):
+                    basepoint = np.array([(dicom1
+                                           .ROIContourSequence[name_id1[name_struct]]
+                                           .ContourSequence[num]
+                                           .ContourData[3*count]),
+                                          (dicom1
+                                           .ROIContourSequence[name_id1[name_struct]]
+                                           .ContourSequence[num]
+                                           .ContourData[3*count+1]),
+                                          (dicom1
+                                           .ROIContourSequence[name_id1[name_struct]]
+                                           .ContourSequence[num]
+                                           .ContourData[3*count+2])])
+                    movedpoint = np.array([(dicom2
+                                            .ROIContourSequence[name_id1[name_struct]]
+                                            .ContourSequence[num]
+                                            .ContourData[3*count]),
+                                           (dicom2
+                                            .ROIContourSequence[name_id1[name_struct]]
+                                            .ContourSequence[num]
+                                            .ContourData[3*count+1]),
+                                           (dicom2
+                                            .ROIContourSequence[name_id1[name_struct]]
+                                            .ContourSequence[num]
+                                            .ContourData[3*count+2])])
+                    distance = np.sqrt(sum(np.square(basepoint-movedpoint)))
+                    radius = np.sqrt(sum(np.square(basepoint-centermass1)))
+                    distances_contour.append(distance)
+                    radius_contour.append(radius)
+            else:
+                raise ValueError("Contours' length differs")
+    else:
+        raise ValueError("Wrong name or name must match between two DICOM")
+    distance_centermass = np.sqrt(sum(np.square(centermass1-centermass2)))
+    data = {'Parameter': ['Max radius', 'Min radius', 'Mean radius',
+                          'STD radius', 'Variance radius', 'Max distance',
+                          'Min distance', 'Mean distance', 'STD distance',
+                          'Variance distance', 'Distance between center mass'],
+            'Value [mm]': [np.max(radius_contour), np.min(radius_contour),
+                           np.mean(radius_contour), np.std(radius_contour),
+                           np.var(radius_contour), np.max(distances_contour),
+                           np.min(distances_contour),
+                           np.mean(distances_contour),
+                           np.std(distances_contour),
+                           np.var(distances_contour),
+                           distance_centermass]}
+    return pd.DataFrame(data)
