@@ -1,31 +1,39 @@
+import copy
+from datetime import datetime
 
 import numpy as np
-import copy
-import pydicom
 import xlsxwriter
 from pydicom.multival import MultiValue
 
 
-class Dicominfo(pydicom.dataset.Dataset):
+class Dicominfo:
     def __init__(self, dicom_struct):
-        pydicom.dataset.Dataset.__init__(self, dicom_struct)
         self.dicom_struct = dicom_struct
 
-    def anonymize(self):
+    def anonymize(self, name=True, birth=True, operator=True, creation=True):
         """
-        Returns a dicom object with
+        It alters a dicom object with
         Patient Name 'PatientName',
         Patient Birth Date '20000101',
         Operators Name 'OperatorName',
         Instance Creation Date '20000101'
         """
-        self.dicom_struct.PatientName = 'PatientName'
-        self.dicom_struct.PatientBirthDate = '20000101'
-        self.dicom_struct.OperatorsName = 'OperatorName'
-        self.dicom_struct.InstanceCreationDate = '20000101'
-    #return self.dicom_struct
+        if name:
+            self.dicom_struct.PatientName = 'PatientName'
+        if birth:
+            (self.dicom_struct
+             .PatientBirthDate) = (datetime.today()
+                                   .strftime("%Y%m%d"))
+        if operator:
+            self.dicom_struct.OperatorsName = 'OperatorName'
+        if creation:
+            (self.dicom_struct
+             .InstanceCreationDate) = (datetime.today()
+                                       .strftime("%Y%m%d"))
+        dicom_copy = copy.deepcopy(self.dicom_struct)
+        return dicom_copy
 
-    def dicom2excel(self, name_file):
+    def to_excel(self, name_file):
         """
         It creates DICOM contour in excelable form.
         The Contour Data for each organ is set on different sheets.
@@ -42,24 +50,34 @@ class Dicominfo(pydicom.dataset.Dataset):
             name_file = ''.join([name_file, extension])
         names = []
         workbook = xlsxwriter.Workbook(name_file)
-        merge_format = workbook.add_format({'align': 'center'})
-        dicom_contour = self.dicom_struct.ROIContourSequence
-        for item in range(len(self.dicom_struct.StructureSetROISequence)):
+        for item in range(len(self.dicom_struct
+                              .StructureSetROISequence)):
             name = self.dicom_struct.StructureSetROISequence[item].ROIName
             if name in names:
                 pass
             else:
                 names.append(name)
                 worksheet = workbook.add_worksheet(name)
-            for num in range(len(dicom_contour[item].ContourSequence)):
-                contour = dicom_contour[item].ContourSequence[num].ContourData
-                worksheet.merge_range(0, 3*num, 0, 3*num + 2,
-                                      f'Contour {num + 1}', merge_format)
+            for num in range(len(self.dicom_struct
+                                 .ROIContourSequence[item]
+                                 .ContourSequence)):
                 worksheet.write_row(1, 3*num, ['x [mm]', 'y [mm]', 'z [mm]'])
-                for count in range(int(len(contour)/3)):
-                    x = float(contour[3*count])
-                    y = float(contour[3*count+1])
-                    z = float(contour[3*count+2])
+                for count in range(int(len(self.dicom_struct
+                                           .ROIContourSequence[item]
+                                           .ContourSequence[num]
+                                           .ContourData)/3)):
+                    x = float(self.dicom_struct
+                              .ROIContourSequence[item]
+                              .ContourSequence[num]
+                              .ContourData[3*count])
+                    y = float(self.dicom_struct
+                              .ROIContourSequence[item]
+                              .ContourSequence[num]
+                              .ContourData[3*count+1])
+                    z = float(self.dicom_struct
+                              .ROIContourSequence[item]
+                              .ContourSequence[num]
+                              .ContourData[3*count+2])
                     worksheet.write_row(2+count, 3*num, [x, y, z])
         workbook.close()
 
@@ -79,23 +97,25 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with rotated structure.
         """
-        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self.dicom_struct)
         if abs(angle) < 360 and isinstance(angle, float):
             angle = np.radians(angle)
         else:
-            raise ValueError("Type is not float and angle is > 360º")
+            raise TypeError("Type is not float and angle is > 360º")
         name_id = {}
-        length = len(self.dicom_struct.StructureSetROISequence)
+        length = len(dicom_copy.StructureSetROISequence)
         if key in ['roll', 'pitch', 'yaw']:
             pass
         else:
             raise ValueError("Choose a correct key: roll, pitch, yaw")
         for i in range(length):
-            name_id[self.dicom_struct.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_copy.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
-            dicom_contour = self.dicom_struct.ROIContourSequence
             if not args:
-                origin = dicom_contour[length-1].ContourSequence[0].ContourData
+                origin = (dicom_copy
+                          .ROIContourSequence[length-1]
+                          .ContourSequence[0]
+                          .ContourData)
             elif (len(args[0]) == 3 and
                   all(isinstance(x, float) for x in args[0])):
                 origin = args[0]
@@ -126,22 +146,37 @@ class Dicominfo(pydicom.dataset.Dataset):
                                     [0, 0, 0, 1]
                                     ])
                  }
-            sequence = dicom_contour[name_id[name_struct]].ContourSequence
-            for num in range(len(sequence)):
-                contour = sequence[num].ContourData
+            for num in range(len(dicom_copy
+                                 .ROIContourSequence[name_id[name_struct]]
+                                 .ContourSequence)):
                 contour_rotated = []
-                for counter in range(int(len(contour)/3)):
-                    vector = [float(contour[3*counter]),
-                              float(contour[3*counter+1]),
-                              float(contour[3*counter+2]), 1.0]
+                for counter in range(int(len(dicom_copy
+                                             .ROIContourSequence[name_id[name_struct]]
+                                             .ContourSequence[num]
+                                             .ContourData)/3)):
+                    vector = [float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter]),
+                              float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter+1]),
+                              float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter+2]), 1.0]
                     rotation = m['iso2p']@m[key]@m['p2iso']@vector
                     contour_rotated.append(rotation[0])
                     contour_rotated.append(rotation[1])
                     contour_rotated.append(rotation[2])
-                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_rotated)
+                (dicom_copy
+                 .ROIContourSequence[name_id[name_struct]]
+                 .ContourSequence[num]
+                 .ContourData) = MultiValue(float, contour_rotated)
         else:
             raise ValueError("Type a correct name")
-        #return dicom_struct
+        return dicom_copy
 
     def translate(self, name_struct, delta, key, *args):
         """
@@ -159,23 +194,25 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with translated structure.
         """
-        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self.dicom_struct)
         if abs(delta) < 1000 and isinstance(delta, float):
             pass
         else:
             raise ValueError("Type is not float and delta is > 1000 mm")
         name_id = {}
-        length = len(self.dicom_struct.StructureSetROISequence)
+        length = len(dicom_copy.StructureSetROISequence)
         if key in ['x', 'y', 'z']:
             pass
         else:
             raise ValueError("Choose a correct key: x, y, z")
         for i in range(length):
-            name_id[self.dicom_struct.StructureSetROISequence[i].ROIName] = i
+            name_id[dicom_copy.StructureSetROISequence[i].ROIName] = i
         if name_struct in name_id:
-            dicom_contour = self.dicom_struct.ROIContourSequence
             if not args:
-                origin = dicom_contour[length-1].ContourSequence[0].ContourData
+                origin = (dicom_copy
+                          .ROIContourSequence[length-1]
+                          .ContourSequence[0]
+                          .ContourData)
             elif (len(args[0]) == 3 and
                   all(isinstance(x, float) for x in args[0])):
                 origin = args[0]
@@ -206,22 +243,37 @@ class Dicominfo(pydicom.dataset.Dataset):
                                     [0, 0, 1, origin[2]],
                                     [0, 0, 0, 1]
                                     ])}
-            sequence = dicom_contour[name_id[name_struct]].ContourSequence
-            for num in range(len(sequence)):
-                contour = sequence[num].ContourData
+            for num in range(len(dicom_copy
+                                 .ROIContourSequence[name_id[name_struct]]
+                                 .ContourSequence)):
                 contour_translat = []
-                for counter in range(int(len(contour)/3)):
-                    vector = [float(contour[3*counter]),
-                              float(contour[3*counter+1]),
-                              float(contour[3*counter+2]), 1.0]
+                for counter in range(int(len(dicom_copy
+                                             .ROIContourSequence[name_id[name_struct]]
+                                             .ContourSequence[num]
+                                             .ContourData)/3)):
+                    vector = [float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter]),
+                              float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter+1]),
+                              float(dicom_copy
+                                    .ROIContourSequence[name_id[name_struct]]
+                                    .ContourSequence[num]
+                                    .ContourData[3*counter+2]), 1.0]
                     translation = m['iso2p']@m[key]@m['p2iso']@vector
                     contour_translat.append(translation[0])
                     contour_translat.append(translation[1])
                     contour_translat.append(translation[2])
-                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_translat)
+                (dicom_copy
+                 .ROIContourSequence[name_id[name_struct]]
+                 .ContourSequence[num]
+                 .ContourData) = MultiValue(float, contour_translat)
         else:
             raise ValueError("Type a correct name")
-        return dicom_struct1
+        return dicom_copy
 
     def add_margin(self, name_struct, margin):
         """
@@ -240,29 +292,45 @@ class Dicominfo(pydicom.dataset.Dataset):
         OUTPUT:
         DICOM file with expanded/substracted structure.
         """
-        #dicom_struct1 = copy.deepcopy(self.dicom_struct)
+        dicom_copy = copy.deepcopy(self.dicom_struct)
         name_id = {}
         if isinstance(margin, float):
             pass
         else:
             raise ValueError(f"{margin} must be float")
-        sequence = self.dicom_struct.StructureSetROISequence
-        longitude = len(sequence)
+        longitude = len(dicom_copy
+                        .StructureSetROISequence)
         for item in range(longitude):
-            name_id[sequence[item].ROIName] = item
+            name_id[dicom_copy
+                    .StructureSetROISequence[item]
+                    .ROIName] = item
         if name_struct in name_id:
-            dicom_base = self.dicom_struct
-            dicom_contour = dicom_base.ROIContourSequence[name_id[name_struct]]
-            for num in range(len(dicom_contour.ContourSequence)):
+            for num in range(len((dicom_copy
+                                  .ROIContourSequence[name_id[name_struct]])
+                                  .ContourSequence)):
                 contour_margin = []
-                vector = dicom_contour.ContourSequence[num].ContourData
-                length = int(len(vector)/3)
+                length = int(len(dicom_copy
+                                 .ROIContourSequence[name_id[name_struct]]
+                                 .ContourSequence[num]
+                                 .ContourData)/3)
                 if length > 1:
-                    xmean = np.mean([vector[3*i] for i in range(length)])
-                    ymean = np.mean([vector[3*i+1] for i in range(length)])
+                    xmean = np.mean([(dicom_copy
+                                     .ROIContourSequence[name_id[name_struct]]
+                                     .ContourSequence[num]
+                                     .ContourData[3*i]) for i in range(length)])
+                    ymean = np.mean([(dicom_copy
+                                     .ROIContourSequence[name_id[name_struct]]
+                                     .ContourSequence[num]
+                                     .ContourData[3*i+1]) for i in range(length)])
                     for cont in range(length):
-                        x0 = vector[3*cont]
-                        y0 = vector[3*cont + 1]
+                        x0 = (dicom_copy
+                              .ROIContourSequence[name_id[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData[3*cont])
+                        y0 = (dicom_copy
+                              .ROIContourSequence[name_id[name_struct]]
+                              .ContourSequence[num]
+                              .ContourData[3*cont + 1])
                         if x0 != xmean:
                             m = (ymean - y0) / (xmean - x0)
                             sol_x1 = x0 + np.sqrt(margin**2 / (1 + m**2))
@@ -299,18 +367,70 @@ class Dicominfo(pydicom.dataset.Dataset):
                             else:
                                 y1 = y0 - margin
                                 contour_margin.append(y1)
-                        contour_margin.append(vector[3*cont + 2])
+                        contour_margin.append((dicom_copy
+                                               .ROIContourSequence[name_id[name_struct]]
+                                               .ContourSequence[num]
+                                               .ContourData[3*cont + 2]))
                 elif length == 1 and margin > 0:
-                    contour_margin = [vector[0], vector[1] + margin, vector[2],
-                                      vector[0] + margin, vector[1], vector[2],
-                                      vector[0], vector[1] - margin, vector[2],
-                                      vector[0] - margin, vector[1], vector[2]]
+                    contour_margin = [(dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[0]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[1]) + margin,
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[2]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[0]) + margin,
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[1]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[2]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[0]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[1]) - margin,
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[2]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[0]) - margin,
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[1]),
+                                      (dicom_copy
+                                       .ROIContourSequence[name_id[name_struct]]
+                                       .ContourSequence[num]
+                                       .ContourData[2])]
                 elif length == 1 and margin <= 0:
-                    contour_margin = vector
+                    contour_margin = (dicom_copy
+                                      .ROIContourSequence[name_id[name_struct]]
+                                      .ContourSequence[num]
+                                      .ContourData)
                 else:
                     raise ValueError("Contour needs at least 1 point")
-                sequence = dicom_contour.ContourSequence[num]
-                self.dicom_struct.ROIContourSequence[name_id[name_struct]].ContourSequence[num].ContourData = MultiValue(float, contour_margin)
+                (dicom_copy
+                 .ROIContourSequence[name_id[name_struct]]
+                 .ContourSequence[num]
+                 .ContourData) = MultiValue(float, contour_margin)
         else:
             raise ValueError("Type a correct name")
-#return dicom_struct1
+        return dicom_copy
