@@ -1,3 +1,13 @@
+def get_names(self):
+        names = []
+        for item in range(len(self.dicom_struct.StructureSetROISequence)):
+            name = self.dicom_struct.StructureSetROISequence[item].ROIName
+            if name in names:
+                pass
+            else:
+                names.append(name)
+        return names
+
 def dicom2excel(self, name_file, name_struct):
         """
         It creates DICOM contour in excelable form.
