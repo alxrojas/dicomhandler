@@ -1,137 +1,170 @@
 
 import copy
-import xlsxwriter
 
 import numpy as np
 import pandas as pd
-
-from datetime import datetime
+import xlsxwriter
 from pydicom.multival import MultiValue
 
 
 class Dicominfo:
     def __init__(self, *args):
-        temp = ''
-        for arg in args:
-            if temp == '':
-                temp = arg.PatientID
-            else:
-                if temp == arg.PatientID:
+        self.dicom_struct = None
+        self.dicom_dose = None
+        self.dicom_plan = None
+        self.PatientName = None
+        self.PatientBirthDate = None
+        self.PatientID = None
+        if len(args) != 0:
+            temp = ''
+            for arg in args:
+                if temp == '':
                     temp = arg.PatientID
+                elif temp == arg.PatientID:
+                    pass
                 else:
                     raise ValueError("Patient ID's do not match")
-        for arg in args:
-            if arg.Modality == 'RTSTRUCT':
-                self.dicom_struct = arg
-            elif arg.Modality == 'RTDOSE':
-                self.dicom_dose = arg
-            elif arg.Modality == 'RTPLAN':
-                self.dicom_PLAN = arg
-            else:
-                raise ValueError("Modality not supported")
+            for arg in args:
+                if arg.Modality == 'RTSTRUCT':
+                    self.dicom_struct = arg
+                elif arg.Modality == 'RTDOSE':
+                    self.dicom_dose = arg
+                elif arg.Modality == 'RTPLAN':
+                    self.dicom_plan = arg
+                else:
+                    raise ValueError("Modality not supported")
+            self.PatientName = args[0].PatientName
+            self.PatientBirthDate = args[0].PatientBirthDate
+            self.PatientID = args[0].PatientID
+        else:
+            pass
 
     def anonymize(self, name=True, birth=True, operator=True, creation=True):
         """
         It modifies a dicom object with
         Patient Name 'PatientName',
-        Patient Birth Date 'xxxxxxxx',
+        Patient Birth Date '19720101',
         Operators Name 'OperatorName',
-        Instance Creation Date 'xxxxxxxx'
+        Instance Creation Date '19720101'
         """
         dicom_copy = copy.deepcopy(self)
         if name:
+            dicom_copy.PatientName = 'PatientName'
             if hasattr(dicom_copy, 'dicom_struct'):
                 dicom_copy.dicom_struct.PatientName = 'PatientName'
             elif hasattr(dicom_copy, 'dicom_plan'):
                 dicom_copy.dicom_plan.PatientName = 'PatientName'
-            else:
+            elif hasattr(dicom_copy, 'dicom_dose'):
                 dicom_copy.dicom_dose.PatientName = 'PatientName'
+            else:
+                pass
         else:
             pass
         if birth:
+            dicom_copy.PatientBirthDate = '19720101'
             if hasattr(dicom_copy, 'dicom_struct'):
                 (dicom_copy.dicom_struct
-                 .PatientBirthDate) = (datetime.today()
-                                       .strftime("%Y%m%d"))
+                 .PatientBirthDate) = '19720101'
             elif hasattr(dicom_copy, 'dicom_plan'):
                 (dicom_copy.dicom_plan
-                 .PatientBirthDate) = (datetime.today()
-                                       .strftime("%Y%m%d"))
-            else:
+                 .PatientBirthDate) = '19720101'
+            elif hasattr(dicom_copy, 'dicom_dose'):
                 (dicom_copy.dicom_dose
-                 .PatientBirthDate) = (datetime.today()
-                                       .strftime("%Y%m%d"))
+                 .PatientBirthDate) = '19720101'
+            else:
+                pass
         else:
             pass
         if operator:
+            dicom_copy.OperatorsName = 'OperatorName'
             if hasattr(dicom_copy, 'dicom_struct'):
                 dicom_copy.dicom_struct.OperatorsName = 'OperatorName'
             elif hasattr(dicom_copy, 'dicom_plan'):
                 dicom_copy.dicom_plan.OperatorsName = 'OperatorName'
-            else:
+            elif hasattr(dicom_copy, 'dicom_dose'):
                 dicom_copy.dicom_dose.OperatorsName = 'OperatorName'
+            else:
+                pass
         else:
             pass
         if creation:
+            dicom_copy.InstanceCreationDate = '19720101'
             if hasattr(dicom_copy, 'dicom_struct'):
                 (dicom_copy.dicom_struct
-                 .InstanceCreationDate) = (datetime.today()
-                                           .strftime("%Y%m%d"))
+                 .InstanceCreationDate) = '19720101'
             elif hasattr(dicom_copy, 'dicom_plan'):
                 (dicom_copy.dicom_plan
-                 .InstanceCreationDate) = (datetime.today()
-                                           .strftime("%Y%m%d"))
-            else:
+                 .InstanceCreationDate) = '19720101'
+            elif hasattr(dicom_copy, 'dicom_dose'):
                 (dicom_copy.dicom_dose
-                 .InstanceCreationDate) = (datetime.today()
-                                           .strftime("%Y%m%d"))
+                 .InstanceCreationDate) = '19720101'
+            else:
+                pass
         else:
             pass
         return dicom_copy
 
-    def to_excel(self, name_file):
+    def to_excel(self, name_file, names=[]):
         """
         It creates DICOM contour in excelable form.
         The Contour Data for each organ is set on different sheets.
         The file is created in the same directory with the name name.xlsx
         INPUT:
         name_file -> str, with the name of the file.
+        names -> list of str, with the name of the structures to create in
+        excel file. By default, [] which corresponds to all structures.
+        Warning: for all structures, the (slow) process takes couple of minutes
         OUTPUT:
         Excel file.
         """
+        dicom_copy = copy.deepcopy(self)
         extension = '.xlsx'
         if name_file.endswith(extension):
             pass
         else:
             name_file = ''.join([name_file, extension])
-        names = []
-        workbook = xlsxwriter.Workbook(name_file)
-        for item in range(len(self.dicom_struct
+        names_aux, n_all = {}, {}
+        for item in range(len(dicom_copy
+                              .dicom_struct
                               .StructureSetROISequence)):
-            name = self.dicom_struct.StructureSetROISequence[item].ROIName
-            if name in names:
-                pass
-            else:
-                names.append(name)
-                worksheet = workbook.add_worksheet(name)
-            for num in range(len(self.dicom_struct
-                                 .ROIContourSequence[item]
+            names_aux[(dicom_copy
+                       .dicom_struct
+                       .StructureSetROISequence[item]
+                       .ROIName)] = item
+        if len(names) == 0:
+            n_all = names_aux
+        else:
+            for name in names:
+                if name in names_aux.keys():
+                    n_all[name] = names_aux[name]
+                else:
+                    raise ValueError(f"{name} not founded.")
+        workbook = xlsxwriter.Workbook(name_file)
+        for name in n_all:
+            worksheet = workbook.add_worksheet(name)
+            for num in range(len(dicom_copy
+                                 .dicom_struct
+                                 .ROIContourSequence[n_all[name]]
                                  .ContourSequence)):
                 worksheet.write_row(1, 3*num, ['x [mm]', 'y [mm]', 'z [mm]'])
-                for count in range(int(len(self.dicom_struct
-                                           .ROIContourSequence[item]
+                for count in range(int(len(dicom_copy
+                                           .dicom_struct
+                                           .ROIContourSequence[n_all[name]]
                                            .ContourSequence[num]
                                            .ContourData)/3)):
-                    x = float(self.dicom_struct
-                              .ROIContourSequence[item]
+                    x = float(dicom_copy
+                              .dicom_struct
+                              .ROIContourSequence[n_all[name]]
                               .ContourSequence[num]
                               .ContourData[3*count])
-                    y = float(self.dicom_struct
-                              .ROIContourSequence[item]
+                    y = float(dicom_copy
+                              .dicom_struct
+                              .ROIContourSequence[n_all[name]]
                               .ContourSequence[num]
                               .ContourData[3*count+1])
-                    z = float(self.dicom_struct
-                              .ROIContourSequence[item]
+                    z = float(dicom_copy
+                              .dicom_struct
+                              .ROIContourSequence[n_all[name]]
                               .ContourSequence[num]
                               .ContourData[3*count+2])
                     worksheet.write_row(2+count, 3*num, [x, y, z])
@@ -486,51 +519,64 @@ def report(dicom1, dicom2, struct):
     dataframe with statistics.
     """
     n_id1, n_id2 = {}, {}
-    longitude1 = len(dicom1.StructureSetROISequence)
-    longitude2 = len(dicom2.StructureSetROISequence)
+    longitude1 = len(dicom1.dicom_struct.StructureSetROISequence)
+    longitude2 = len(dicom2.dicom_struct.StructureSetROISequence)
     for item in range(longitude1):
-        n_id1[dicom1.StructureSetROISequence[item].ROIName] = item
+        n_id1[(dicom1
+               .dicom_struct
+               .StructureSetROISequence[item]
+               .ROIName)] = item
     for item2 in range(longitude2):
-        n_id2[dicom2.StructureSetROISequence[item2].ROIName] = item2
+        n_id2[(dicom2
+               .dicom_struct
+               .StructureSetROISequence[item2]
+               .ROIName)] = item2
     if (struct in n_id1) and (struct in n_id2):
-        # dicom_contour1 = dicom1.dicom_struct.ROIContourSequence[n_id1[struct]]
-        # dicom_contour2 = dicom2.dicom_struct.ROIContourSequence[n_id2[struct]]
         distances_contour, radius_contour = [], []
         mean_values1, mean_values2 = [], []
         for num in range(len(dicom2
+                             .dicom_struct
                              .ROIContourSequence[n_id2[struct]]
                              .ContourSequence)):
             vector2 = (dicom2
+                       .dicom_struct
                        .ROIContourSequence[n_id2[struct]]
                        .ContourSequence[num]
                        .ContourData)
             length1 = int(len(dicom1
+                              .dicom_struct
                               .ROIContourSequence[n_id1[struct]]
                               .ContourSequence[num]
                               .ContourData)/3)
             length2 = int(len(vector2)/3)
             xmean1 = np.mean([(dicom1
-                              .ROIContourSequence[n_id1[struct]]
-                              .ContourSequence[num]
-                              .ContourData[3*i]) for i in range(length1)])
+                               .dicom_struct
+                               .ROIContourSequence[n_id1[struct]]
+                               .ContourSequence[num]
+                               .ContourData[3*i]) for i in range(length1)])
             ymean1 = np.mean([(dicom1
-                              .ROIContourSequence[n_id1[struct]]
+                               .dicom_struct
+                               .ROIContourSequence[n_id1[struct]]
                                .ContourSequence[num]
                                .ContourData[3*i+1]) for i in range(length1)])
             zmean1 = np.mean([(dicom1
+                               .dicom_struct
                                .ROIContourSequence[n_id1[struct]]
                                .ContourSequence[num]
                                .ContourData[3*i+2]) for i in range(length1)])
             mean_values1.append([xmean1, ymean1, zmean1])
             xmean2 = np.mean([(dicom2
+                               .dicom_struct
                                .ROIContourSequence[n_id1[struct]]
                                .ContourSequence[num]
                                .ContourData[3*i]) for i in range(length2)])
             ymean2 = np.mean([(dicom2
+                               .dicom_struct
                                .ROIContourSequence[n_id1[struct]]
                                .ContourSequence[num]
                                .ContourData[3*i+1]) for i in range(length2)])
             zmean2 = np.mean([(dicom2
+                               .dicom_struct
                                .ROIContourSequence[n_id1[struct]]
                                .ContourSequence[num]
                                .ContourData[3*i+2]) for i in range(length2)])
@@ -538,39 +584,48 @@ def report(dicom1, dicom2, struct):
         centermass1 = np.mean(mean_values1, axis=0)
         centermass2 = np.mean(mean_values2, axis=0)
         for num in range(len(dicom1
+                             .dicom_struct
                              .ROIContourSequence[n_id2[struct]]
                              .ContourSequence)):
             length1 = int(len(dicom1
+                              .dicom_struct
                               .ROIContourSequence[n_id1[struct]]
                               .ContourSequence[num]
                               .ContourData)/3)
             length2 = int(len(dicom2
+                              .dicom_struct
                               .ROIContourSequence[n_id1[struct]]
                               .ContourSequence[num]
                               .ContourData)/3)
             if length1 == length2:
                 for count in range(length1):
                     basepoint = np.array([(dicom1
+                                           .dicom_struct
                                            .ROIContourSequence[n_id1[struct]]
                                            .ContourSequence[num]
                                            .ContourData[3*count]),
                                           (dicom1
+                                           .dicom_struct
                                            .ROIContourSequence[n_id1[struct]]
                                            .ContourSequence[num]
                                            .ContourData[3*count+1]),
                                           (dicom1
+                                           .dicom_struct
                                            .ROIContourSequence[n_id1[struct]]
                                            .ContourSequence[num]
                                            .ContourData[3*count+2])])
                     movedpoint = np.array([(dicom2
+                                            .dicom_struct
                                             .ROIContourSequence[n_id1[struct]]
                                             .ContourSequence[num]
                                             .ContourData[3*count]),
                                            (dicom2
+                                            .dicom_struct
                                             .ROIContourSequence[n_id1[struct]]
                                             .ContourSequence[num]
                                             .ContourData[3*count+1]),
                                            (dicom2
+                                            .dicom_struct
                                             .ROIContourSequence[n_id1[struct]]
                                             .ContourSequence[num]
                                             .ContourData[3*count+2])])
