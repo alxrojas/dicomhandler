@@ -48,60 +48,57 @@ class Dicominfo:
         Instance Creation Date '19720101'
         """
         dicom_copy = copy.deepcopy(self)
+        
         if name:
             dicom_copy.PatientName = 'PatientName'
-            if hasattr(dicom_copy, 'dicom_struct'):
+            if dicom_copy.dicom_struct is not None:
                 dicom_copy.dicom_struct.PatientName = 'PatientName'
-            elif hasattr(dicom_copy, 'dicom_plan'):
+            
+            if dicom_copy.dicom_plan is not None:
                 dicom_copy.dicom_plan.PatientName = 'PatientName'
-            elif hasattr(dicom_copy, 'dicom_dose'):
+            
+            if dicom_copy.dicom_dose is not None:
                 dicom_copy.dicom_dose.PatientName = 'PatientName'
-            else:
-                pass
-        else:
-            pass
+        
         if birth:
             dicom_copy.PatientBirthDate = '19720101'
-            if hasattr(dicom_copy, 'dicom_struct'):
+            if dicom_copy.dicom_struct is not None:
                 (dicom_copy.dicom_struct
                  .PatientBirthDate) = '19720101'
-            elif hasattr(dicom_copy, 'dicom_plan'):
+            
+            if dicom_copy.dicom_plan is not None:
                 (dicom_copy.dicom_plan
                  .PatientBirthDate) = '19720101'
-            elif hasattr(dicom_copy, 'dicom_dose'):
+            
+            if dicom_copy.dicom_dose is not None:
                 (dicom_copy.dicom_dose
                  .PatientBirthDate) = '19720101'
-            else:
-                pass
-        else:
-            pass
+            
         if operator:
             dicom_copy.OperatorsName = 'OperatorName'
-            if hasattr(dicom_copy, 'dicom_struct'):
+            if dicom_copy.dicom_struct is not None:
                 dicom_copy.dicom_struct.OperatorsName = 'OperatorName'
-            elif hasattr(dicom_copy, 'dicom_plan'):
+            
+            if dicom_copy.dicom_plan is not None:
                 dicom_copy.dicom_plan.OperatorsName = 'OperatorName'
-            elif hasattr(dicom_copy, 'dicom_dose'):
+            
+            if dicom_copy.dicom_dose is not None:
                 dicom_copy.dicom_dose.OperatorsName = 'OperatorName'
-            else:
-                pass
-        else:
-            pass
+            
         if creation:
             dicom_copy.InstanceCreationDate = '19720101'
-            if hasattr(dicom_copy, 'dicom_struct'):
+            if dicom_copy.dicom_struct is not None:
                 (dicom_copy.dicom_struct
                  .InstanceCreationDate) = '19720101'
-            elif hasattr(dicom_copy, 'dicom_plan'):
+            
+            if dicom_copy.dicom_plan is not None:
                 (dicom_copy.dicom_plan
                  .InstanceCreationDate) = '19720101'
-            elif hasattr(dicom_copy, 'dicom_dose'):
+            
+            if dicom_copy.dicom_dose is not None:
                 (dicom_copy.dicom_dose
                  .InstanceCreationDate) = '19720101'
-            else:
-                pass
-        else:
-            pass
+            
         return dicom_copy
 
     def to_excel(self, name_file, names=[]):
