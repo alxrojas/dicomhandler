@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from core import Dicominfo
+from dicomhandler.dicom_info import Dicominfo
 
 # pydicom mocks
 

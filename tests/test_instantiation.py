@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-import core
+from dicomhandler.dicom_info import Dicominfo
 
 m1 = Mock()
 m1.PatientName = "Mike Wazowski"
@@ -57,7 +57,7 @@ m5.Modality = "RTDOSE"
 )
 def test_dicominfo_modality_supported(dicom, expected):
     with expected:
-        assert core.Dicominfo(dicom) is not None
+        assert Dicominfo(dicom) is not None
 
 
 @pytest.mark.parametrize(
@@ -71,4 +71,4 @@ def test_dicominfo_modality_supported(dicom, expected):
 )
 def test_dicominfo_id_match(dicom, expected):
     with expected:
-        assert core.Dicominfo(m4, dicom)
+        assert Dicominfo(m4, dicom)
