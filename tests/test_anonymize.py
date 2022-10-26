@@ -1,4 +1,5 @@
 import copy
+import warnings
 from unittest.mock import Mock
 
 import pytest
@@ -44,6 +45,7 @@ d7 = Dicominfo(m4, m2)
 d8 = Dicominfo(m2, m3, m4)
 
 
+@pytest.mark.filterwarnings("ignore:anonymize")
 @pytest.mark.parametrize("PatientName", [True, False])
 @pytest.mark.parametrize("PatientBirthDate", [True, False])
 @pytest.mark.parametrize("OperatorsName", [True, False])
@@ -157,3 +159,11 @@ def test_anonymize(
                 di.dicom_plan.InstanceCreationDate
                 == di_original.dicom_plan.InstanceCreationDate
             )
+
+
+@pytest.mark.filterwarnings("ignore:anonymize")
+def test_anonymize_warning():
+    with pytest.warns(UserWarning):
+        warnings.warn(
+            "anonymize should be run after adding data to the object", UserWarning
+        )

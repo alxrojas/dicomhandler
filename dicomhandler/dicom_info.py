@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -47,6 +48,21 @@ class Dicominfo:
         Instance Creation Date '19720101'
         """
         dicom_copy = copy.deepcopy(self)
+
+        empty_di = all(
+            [
+                self.dicom_struct is None,
+                self.dicom_dose is None,
+                self.dicom_plan is None,
+                self.PatientName is None,
+                self.PatientBirthDate is None,
+                self.PatientID is None,
+            ]
+        )
+
+        if empty_di:
+            warnings.warn("anonymize should be run after adding data to the object")
+            return dicom_copy
 
         if name:
             dicom_copy.PatientName = "PatientName"
