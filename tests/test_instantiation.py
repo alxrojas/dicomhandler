@@ -1,4 +1,3 @@
-import warnings
 from contextlib import nullcontext as does_not_raise
 from unittest.mock import Mock
 
@@ -81,7 +80,7 @@ m8.Modality = "RTDOSE"
 )
 def test_repeated_modality(dicom, m6, expected):
     with expected:
-        di = Dicominfo(dicom, m6)
+        Dicominfo(dicom, m6)
 
 
 @pytest.mark.parametrize(
@@ -108,7 +107,7 @@ def test_dicominfo_id_match(m4, dicom, expected):
 )
 def test_dicominfo_name_match_2in(dicom_sur_nam, dicom_name_sur):
     with pytest.warns(UserWarning):
-        di = Dicominfo(dicom_sur_nam, dicom_name_sur)
+        Dicominfo(dicom_sur_nam, dicom_name_sur)
 
 
 @pytest.mark.parametrize(
@@ -121,7 +120,7 @@ def test_dicominfo_name_match_2in(dicom_sur_nam, dicom_name_sur):
 )
 def test_dicominfo_name_match_3in(d1, d2, d3):
     with pytest.warns(UserWarning):
-        di = Dicominfo(d1, d2, d3)
+        Dicominfo(d1, d2, d3)
 
 
 @pytest.mark.parametrize(
@@ -135,7 +134,7 @@ def test_dicominfo_name_match_3in(d1, d2, d3):
 )
 def test_di_birth_match_2in(bd1, bd2):
     with pytest.warns(UserWarning):
-        di = Dicominfo(bd1, bd2)
+        Dicominfo(bd1, bd2)
 
 
 @pytest.mark.parametrize(
@@ -148,7 +147,7 @@ def test_di_birth_match_2in(bd1, bd2):
 )
 def test_di_birth_match_3in(d1, d2, d3):
     with pytest.warns(UserWarning):
-        di = Dicominfo(d1, d2, d3)
+        Dicominfo(d1, d2, d3)
 
 
 @pytest.mark.parametrize(
@@ -182,7 +181,7 @@ def test_dicominfo_modality_supported_1in(dicom, expected):
 )
 def test_dicominfo_modality_supported_2in(d1, d2):
     with pytest.raises(ValueError):
-        di = Dicominfo(d1, d2)
+        Dicominfo(d1, d2)
 
 
 @pytest.mark.parametrize(
@@ -210,4 +209,4 @@ def test_dicominfo_modality_supported_2in(d1, d2):
 )
 def test_dicominfo_modality_supported_3in(d1, d2, d3):
     with pytest.raises(ValueError):
-        di = Dicominfo(d1, d2, d3)
+        Dicominfo(d1, d2, d3)

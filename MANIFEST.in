@@ -7,6 +7,8 @@ recursive-include Examples *
 
 exclude requirements_dev.txt
 exclude Prueba.ipynb
+exclude tox.ini
+exclude pruebita.py
 
 recursive-exclude tests *
 recursive-exclude dicomhandler.egg-info *

@@ -1,5 +1,4 @@
 import copy
-import warnings
 from unittest.mock import Mock
 
 import pytest
