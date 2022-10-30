@@ -46,42 +46,49 @@ d8 = Dicominfo(m2, m3, m4)
 
 
 @pytest.mark.filterwarnings("ignore:anonymize")
-@pytest.mark.parametrize("PatientName", [True, False])
-@pytest.mark.parametrize("PatientBirthDate", [True, False])
-@pytest.mark.parametrize("OperatorsName", [True, False])
-@pytest.mark.parametrize("InstanceCreationDate", [True, False])
+@pytest.mark.parametrize("patient_name", [True, False])
+@pytest.mark.parametrize("patient_birth_date", [True, False])
+@pytest.mark.parametrize("operators_name", [True, False])
+@pytest.mark.parametrize("instance_creation_date", [True, False])
 @pytest.mark.parametrize("di", [d1, d2, d3, d4, d5, d6, d7, d8])
 def test_anonymize(
-    di, PatientName, PatientBirthDate, OperatorsName, InstanceCreationDate
+    di,
+    patient_name,
+    patient_birth_date,
+    operators_name,
+    instance_creation_date,
 ):
 
     di_original = copy.deepcopy(di)
 
     di = di.anonymize(
-        name=PatientName,
-        birth=PatientBirthDate,
-        operator=OperatorsName,
-        creation=InstanceCreationDate,
+        name=patient_name,
+        birth=patient_birth_date,
+        operator=operators_name,
+        creation=instance_creation_date,
     )
 
-    if di.PatientName is not None and PatientName is True:
+    if di.PatientName is not None and patient_name is True:
         assert di.PatientName == "PatientName"
     else:
         assert di.PatientName == di_original.PatientName
 
-    if di.PatientBirthDate is not None and PatientBirthDate is True:
+    if di.PatientBirthDate is not None and patient_birth_date is True:
         assert di.PatientBirthDate == "19720101"
     else:
         assert di.PatientBirthDate == di_original.PatientBirthDate
 
     if di.dicom_struct is not None:
 
-        if PatientName is True:
+        if patient_name is True:
             assert di.dicom_struct.PatientName == "PatientName"
         else:
-            assert di.dicom_struct.PatientName == di_original.dicom_struct.PatientName
+            assert (
+                di.dicom_struct.PatientName
+                == di_original.dicom_struct.PatientName
+            )
 
-        if PatientBirthDate is True:
+        if patient_birth_date is True:
             assert di.dicom_struct.PatientBirthDate == "19720101"
         else:
             assert (
@@ -89,14 +96,15 @@ def test_anonymize(
                 == di_original.dicom_struct.PatientBirthDate
             )
 
-        if OperatorsName is True:
+        if operators_name is True:
             assert di.dicom_struct.OperatorsName == "OperatorName"
         else:
             assert (
-                di.dicom_struct.OperatorsName == di_original.dicom_struct.OperatorsName
+                di.dicom_struct.OperatorsName
+                == di_original.dicom_struct.OperatorsName
             )
 
-        if InstanceCreationDate is True:
+        if instance_creation_date is True:
             assert di.dicom_struct.InstanceCreationDate == "19720101"
         else:
             assert (
@@ -106,12 +114,14 @@ def test_anonymize(
 
     if di.dicom_dose is not None:
 
-        if PatientName is True:
+        if patient_name is True:
             assert di.dicom_dose.PatientName == "PatientName"
         else:
-            assert di.dicom_dose.PatientName == di_original.dicom_dose.PatientName
+            assert (
+                di.dicom_dose.PatientName == di_original.dicom_dose.PatientName
+            )
 
-        if PatientBirthDate is True:
+        if patient_birth_date is True:
             assert di.dicom_dose.PatientBirthDate == "19720101"
         else:
             assert (
@@ -119,12 +129,15 @@ def test_anonymize(
                 == di_original.dicom_dose.PatientBirthDate
             )
 
-        if OperatorsName is True:
+        if operators_name is True:
             assert di.dicom_dose.OperatorsName == "OperatorName"
         else:
-            assert di.dicom_dose.OperatorsName == di_original.dicom_dose.OperatorsName
+            assert (
+                di.dicom_dose.OperatorsName
+                == di_original.dicom_dose.OperatorsName
+            )
 
-        if InstanceCreationDate is True:
+        if instance_creation_date is True:
             assert di.dicom_dose.InstanceCreationDate == "19720101"
         else:
             assert (
@@ -134,12 +147,14 @@ def test_anonymize(
 
     if di.dicom_plan is not None:
 
-        if PatientName is True:
+        if patient_name is True:
             assert di.dicom_plan.PatientName == "PatientName"
         else:
-            assert di.dicom_plan.PatientName == di_original.dicom_plan.PatientName
+            assert (
+                di.dicom_plan.PatientName == di_original.dicom_plan.PatientName
+            )
 
-        if PatientBirthDate is True:
+        if patient_birth_date is True:
             assert di.dicom_plan.PatientBirthDate == "19720101"
         else:
             assert (
@@ -147,12 +162,15 @@ def test_anonymize(
                 == di_original.dicom_plan.PatientBirthDate
             )
 
-        if OperatorsName is True:
+        if operators_name is True:
             assert di.dicom_plan.OperatorsName == "OperatorName"
         else:
-            assert di.dicom_plan.OperatorsName == di_original.dicom_plan.OperatorsName
+            assert (
+                di.dicom_plan.OperatorsName
+                == di_original.dicom_plan.OperatorsName
+            )
 
-        if InstanceCreationDate is True:
+        if instance_creation_date is True:
             assert di.dicom_plan.InstanceCreationDate == "19720101"
         else:
             assert (
@@ -161,9 +179,7 @@ def test_anonymize(
             )
 
 
-@pytest.mark.filterwarnings("ignore:anonymize")
 def test_anonymize_warning():
     with pytest.warns(UserWarning):
-        warnings.warn(
-            "anonymize should be run after adding data to the object", UserWarning
-        )
+        di = Dicominfo()
+        di.anonymize()

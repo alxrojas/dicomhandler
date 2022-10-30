@@ -1,0 +1,64 @@
+[tool.black]
+line-length = 79
+target-version = ['py39', 'py310']
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
+# =============================================================================
+# PACKAGING
+# =============================================================================
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dicomhandler"
+version = "0.0.1a1"
+dependencies = [
+    "numpy",
+    "pandas",
+    "xlsxwriter",
+    "pydicom",
+]
+# copy y warnings están built-in aparentemente (i.e. no hay que importarlas)
+
+requires-python = ">=3.9"
+
+authors = [{name = "Jerónimo Fotinós", email = "jerofoti@gmail.com"}, {name = "Alejandro Rojas", email = "alexrojas@ciencias.unam.mx"}, {name = "Nicola Maddalozzo", email = "nicolamaddalozzo95@gmail.com"}, {name="Martín Rodríguez Núñez", email="martinrnu@gmail.com"}]
+
+readme = "README.md"
+
+license = {file = "LICENSE"}
+
+description = "dicomhandler is a package for wrapping many pydicom objects of the same patient, performing transformations in structures and comparing them with the originals."
+
+keywords = [
+    "dicomhandler",
+    "dicom",
+    "dcm",
+    "cancer",
+    "radiotherapy",
+]
+
+classifiers = [
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering",
+]
+
+urls = { Homepage = "https://github.com/alxrojas/dicom2handle", Repository = "https://github.com/alxrojas/dicom2handle" }
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["dicomhandler", "dicomhandler.*"]
+namespaces = false
