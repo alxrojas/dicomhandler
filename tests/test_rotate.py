@@ -11,22 +11,81 @@ patient.OperatorsName = "guido rossi"
 patient.InstanceCreationDate = "20200101"
 patient.Modality = "RTSTRUCT"
 
-ds1 = pydicom.dataset.Dataset()
-ds2 = pydicom.dataset.Dataset()
-ds1.ROIName = "cuadrado"
-ds2.ROIName = "sfera"
-patient.StructureSetROISequence = [ds1]
-ds33 = pydicom.dataset.Dataset()
-ds00 = pydicom.dataset.Dataset()
-ds333 = pydicom.dataset.Dataset()
-ds000 = pydicom.dataset.Dataset()
-a = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]
-b = [0.0, 0.0, 0.0]
-ds000.ContourData = MultiValue(float, b)
-ds333.ContourData = MultiValue(float, a)
-ds33.ContourSequence = [ds333]
-ds00.ContourSequence = [ds000]
-patient.ROIContourSequence = [ds33, ds00]
+
+# pydicom.StructureROISequence[0].ROIName
+ds_seq_struct_1 = pydicom.dataset.Dataset()
+ds_seq_struct_2 = pydicom.dataset.Dataset()
+ds_seq_struct_3 = pydicom.dataset.Dataset()
+ds_seq_struct_4 = pydicom.dataset.Dataset()
+ds_seq_struct_1.ROIName = "cubo"
+ds_seq_struct_2.ROIName = "space"
+ds_seq_struct_3.ROIName = "punto"
+ds_seq_struct_4.ROIName = "error"
+patient.StructureSetROISequence = [
+    ds_seq_struct_1,
+    ds_seq_struct_2,
+    ds_seq_struct_3,
+    ds_seq_struct_4,
+]
+
+
+# patient.ROIContourSequence[0].ContourSequence[0].ContourData
+ds_seq_cont_1 = pydicom.dataset.Dataset()
+
+origin = pydicom.dataset.Dataset()
+pyd_corte_1_cubo = pydicom.dataset.Dataset()
+pyd_corte_2_cubo = pydicom.dataset.Dataset()
+pyd_corte_3_cubo = pydicom.dataset.Dataset()
+pyd_corte_4_cubo = pydicom.dataset.Dataset()
+pyd_corte_1_space = pydicom.dataset.Dataset()
+pyd_corte_2_space = pydicom.dataset.Dataset()
+pyd_corte_3_space = pydicom.dataset.Dataset()
+pyd_corte_1_punto = pydicom.dataset.Dataset()
+pyd_corte_1_error = pydicom.dataset.Dataset()
+ds_vect_iso = pydicom.dataset.Dataset()
+
+corte_1_cubo = [0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 2.0, 0.0]
+corte_2_cubo = [0.0, 0.0, 0.3, 2.0, 0.0, 0.3, 2.0, 2.0, 0.3, 0.0, 2.0, 0.3]
+corte_3_cubo = [0.0, 0.0, 0.6, 2.0, 0.0, 0.6, 2.0, 2.0, 0.6, 0.0, 2.0, 0.6]
+corte_4_cubo = [0.0, 0.0, 1.2, 2.0, 0.0, 1.2, 2.0, 2.0, 1.2, 0.0, 2.0, 1.2]
+corte_1_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
+corte_2_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
+corte_3_space = [1.2, 2.0, 3, 1.2, 3.0, 3, 1.2, 4.5, 3]
+corte_1_punto = [1.0, 1.0, 1.0]
+pyd_corte_1_error = [1, 1, 1, 2, 2, 3, 4.0]
+iso = [0.0, 0.0, 0.0]
+pyd_corte_1_cubo.ContourData = MultiValue(float, corte_1_cubo)
+pyd_corte_2_cubo.ContourData = MultiValue(float, corte_2_cubo)
+pyd_corte_3_cubo.ContourData = MultiValue(float, corte_3_cubo)
+pyd_corte_4_cubo.ContourData = MultiValue(float, corte_4_cubo)
+pyd_corte_1_space.ContourData = MultiValue(float, corte_1_space)
+pyd_corte_2_space.ContourData = MultiValue(float, corte_2_space)
+pyd_corte_3_space.ContourData = MultiValue(float, corte_3_space)
+pyd_corte_1_punto.ContourData = MultiValue(float, corte_1_punto)
+ds_vect_iso.ContourData = MultiValue(float, iso)
+
+origin.ContourSequence = [ds_vect_iso]
+ds_cont_struct_1 = pydicom.dataset.Dataset()
+ds_cont_struct_2 = pydicom.dataset.Dataset()
+ds_cont_struct_3 = pydicom.dataset.Dataset()
+ds_cont_struct_1.ContourSequence = [
+    pyd_corte_1_cubo,
+    pyd_corte_2_cubo,
+    pyd_corte_3_cubo,
+    pyd_corte_4_cubo,
+]
+ds_cont_struct_2.ContourSequence = [
+    pyd_corte_1_space,
+    pyd_corte_2_space,
+    pyd_corte_3_space,
+]
+ds_cont_struct_3.ContourSequence = [pyd_corte_1_punto]
+patient.ROIContourSequence = [
+    ds_cont_struct_1,
+    ds_cont_struct_2,
+    ds_cont_struct_3,
+    origin,
+]
 
 
 @pytest.mark.parametrize(
@@ -34,16 +93,19 @@ patient.ROIContourSequence = [ds33, ds00]
     [
         ("cuadrad", 359.999, "yaw", ValueError),
         (2, 200.0, "yaw", ValueError),
-        ("cuadrado", 200.0, "yaw", True),
-        ("cuadrado", 361.1, "yaw", ValueError),
-        ("cuadrado", "1", "yaw", TypeError),
-        ("cuadrado", 200.1, "yy", ValueError),
+        ("punto", 200.0, "yaw", True),
+        ("punto", 361.1, "yaw", ValueError),
+        ("cubo", "1", "yaw", TypeError),
+        ("cubo", 200.1, "yy", ValueError),
+        ("error", 200, "yaw", ValueError),
+        ("cubo", 200.1, "yaw", False),
     ],
 )
 def test_rotate_input_struct(struct, angle, key, expected):
     try:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.rotate(struct, angle, key)
+        expected = True
     except ValueError:
         assert ValueError == expected
     except TypeError:
@@ -53,18 +115,80 @@ def test_rotate_input_struct(struct, angle, key, expected):
 @pytest.mark.parametrize(
     "struct, angle, key, patient",
     [
-        ("cuadrado", 300.0, "yaw", patient),
-        ("cuadrado", 344.0, "yaw", patient),
+        ("punto", 359.999, "yaw", patient),
+        ("punto", 359.999, "pitch", patient),
+        ("punto", 359.999, "roll", patient),
+        ("punto", 0.0, "yaw", patient),
+        ("punto", 0.0, "pitch", patient),
+        ("punto", 0.0, "roll", patient),
     ],
 )
-def test_rotate(struct, angle, key, patient, *args):
+def test_rotate_punto_0_360(struct, angle, key, patient, *args):
     dicom_info1 = Dicominfo(patient)
     x = (
         dicom_info1.rotate(struct, angle, key)
-        .dicom_struct.ROIContourSequence[0]
+        .dicom_struct.ROIContourSequence[1]
         .ContourSequence[0]
         .ContourData
     )
-    y = patient.ROIContourSequence[0].ContourSequence[0].ContourData
+    y = patient.ROIContourSequence[1].ContourSequence[0].ContourData
+    print(x)
+    print(y)
     assert len(x) == len(y)
-    assert all([abs(xi - yi) <= 1.5 for xi, yi in zip(x, y)])
+    assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
+
+
+@pytest.mark.parametrize(
+    "struct, angle, key, patient",
+    [
+        ("cubo", 359.999, "yaw", patient),
+        ("cubo", 359.999, "pitch", patient),
+        ("cubo", 359.999, "roll", patient),
+        ("cubo", 0.0, "yaw", patient),
+        ("cubo", 0.0, "pitch", patient),
+        ("cubo", 0.0, "roll", patient),
+    ],
+)
+def test_rotate_cubo_0_360(struct, angle, key, patient, *args):
+    dicom_info = Dicominfo(patient)
+    for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
+        x = (
+            dicom_info.rotate(struct, angle, key)
+            .dicom_struct.ROIContourSequence[0]
+            .ContourSequence[i]
+            .ContourData
+        )
+        y = patient.ROIContourSequence[0].ContourSequence[i].ContourData
+        print(x)
+        print(y)
+        assert len(x) == len(y)
+        assert all([abs(xi - yi) <= 0.0001 for xi, yi in zip(x, y)])
+
+
+@pytest.mark.parametrize(
+    "struct, angle1, angle2, angle3, key, patient",
+    [
+        ("space", 100, 20, -120, "yaw", patient),
+        ("space", 1, 5, -6, "pitch", patient),
+        ("space", 19, 21, -40, "roll", patient),
+        ("space", 100, -50, -50, "yaw", patient),
+        ("space", 300, -200, -100, "pitch", patient),
+        ("space", 200, 0, -200, "roll", patient),
+    ],
+)
+def test_rotate_space(struct, angle1, angle2, angle3, key, patient, *args):
+    dicom_info = Dicominfo(patient)
+    for i in range(len(dicom_info.dicom_struct.ROIContourSequence[1])):
+        x = (
+            dicom_info.rotate(struct, angle1, key)
+            .rotate(struct, angle2, key)
+            .rotate(struct, angle3, key)
+            .dicom_struct.ROIContourSequence[1]
+            .ContourSequence[i]
+            .ContourData
+        )
+        y = patient.ROIContourSequence[1].ContourSequence[i].ContourData
+        print(x)
+        print(y)
+        assert len(x) == len(y)
+        assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
