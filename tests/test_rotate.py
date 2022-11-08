@@ -265,19 +265,31 @@ def test_rotate_punto(struct, angle, key, patient, expected):
 
 @pytest.mark.parametrize(
     "struct, angle, key, origin, expected",
-    [   
+    [
         ("cubo", 200.0, "yaw", MultiValue(float, [0.0, 0.0, 0.0]), True),
-        ("cubo", 200.0, "yaw", MultiValue(float, [0.0, 0.0, 0.0, 1]), ValueError),
-        ("cubo", 200.0, "yaw", MultiValue(float, [0.0, 1.0, 0.0, 2]), ValueError),
-    ],  
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            MultiValue(float, [0.0, 0.0, 0.0, 1]),
+            ValueError,
+        ),
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            MultiValue(float, [0.0, 1.0, 0.0, 2]),
+            ValueError,
+        ),
+    ],
 )
 def test_rotate_input_origin(struct, angle, key, origin, expected):
     try:
         dicom_info2 = Dicominfo(patient)
         n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
-        dicom_info2.dicom_struct.ROIContourSequence[n_struct - 1].ContourSequence[
-            0
-        ].ContourData = origin
+        dicom_info2.dicom_struct.ROIContourSequence[
+            n_struct - 1
+        ].ContourSequence[0].ContourData = origin
         dicom_info2.rotate(struct, angle, key)
         assert expected
     except ValueError:

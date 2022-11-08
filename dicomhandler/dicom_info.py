@@ -4,7 +4,9 @@ import warnings
 import numpy as np
 import xlsxwriter
 from pydicom.multival import MultiValue
-import pdb; 		# MODIFICA NICOLA DA ELIMINARE
+
+# MODIFICA NICOLA DA ELIMINARE
+
 
 class Dicominfo:
     def __init__(self, *args):
@@ -241,12 +243,15 @@ class Dicominfo:
         DICOM file with rotated structure.
         """
         dicom_copy = copy.deepcopy(self)
-        
-        if isinstance(angle, float)==False and isinstance(angle, int)==False :
-            raise TypeError("Angle is a float o int!")    
-        elif abs(angle)>360:
+
+        if (
+            isinstance(angle, float) is False
+            and isinstance(angle, int) is False
+        ):
+            raise TypeError("Angle is a float o int!")
+        elif abs(angle) > 360:
             raise ValueError("angle is > 360º")
-        else :
+        else:
             angle = np.radians(angle)
         n_id = {}
         length = len(dicom_copy.dicom_struct.StructureSetROISequence)
@@ -271,8 +276,8 @@ class Dicominfo:
                 origin = args[0]
             else:
                 raise ValueError("Type an origin [x,y,z] with float elements")
-            
-            if(len(origin)!=3):
+
+            if len(origin) != 3:
                 raise ValueError("Type an origin [x,y,z] with float elements")
             m = {
                 "roll": np.array(
@@ -323,9 +328,20 @@ class Dicominfo:
                     ].ContourSequence
                 )
             ):
-                if (len(dicom_copy.dicom_struct.ROIContourSequence[n_id[struct]]
-                            .ContourSequence[num].ContourData)%3 != 0):
-                    raise ValueError("One court did not have all points of 3 elements")   
+                if (
+                    len(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num]
+                        .ContourData
+                    )
+                    % 3
+                    != 0
+                ):
+                    raise ValueError(
+                        "One court did not have all points of 3 elements"
+                    )
                 contour_rotated = []
                 for counter in range(
                     int(
@@ -397,9 +413,12 @@ class Dicominfo:
         DICOM file with translated structure.
         """
         dicom_copy = copy.deepcopy(self)
-        if isinstance(delta, float)==False and isinstance(delta, int)==False : 
+        if (
+            isinstance(delta, float) is False
+            and isinstance(delta, int) is False
+        ):
             raise TypeError("delta is a float o int!")
-        elif abs(delta)>1000:
+        elif abs(delta) > 1000:
             raise ValueError("delta is > 1000")
         n_id = {}
         length = len(dicom_copy.dicom_struct.StructureSetROISequence)
@@ -424,8 +443,8 @@ class Dicominfo:
                 origin = args[0]
             else:
                 raise ValueError("Type an origin [x,y,z] with float elements")
-            
-            if(len(origin)!=3):
+
+            if len(origin) != 3:
                 raise ValueError("Type an origin [x,y,z] with float elements")
             m = {
                 "x": np.array(
@@ -476,9 +495,20 @@ class Dicominfo:
                     ].ContourSequence
                 )
             ):
-                if (len(dicom_copy.dicom_struct.ROIContourSequence[n_id[struct]]
-                            .ContourSequence[num].ContourData)%3 != 0):
-                    raise ValueError("One court did not have all points of 3 elements")              
+                if (
+                    len(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num]
+                        .ContourData
+                    )
+                    % 3
+                    != 0
+                ):
+                    raise ValueError(
+                        "One court did not have all points of 3 elements"
+                    )
                 contour_translat = []
                 for counter in range(
                     int(

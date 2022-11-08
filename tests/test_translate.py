@@ -1,7 +1,8 @@
 import pydicom
 import pytest
-from dicomhandler.dicom_info import Dicominfo
 from pydicom.multival import MultiValue
+
+from dicomhandler.dicom_info import Dicominfo
 
 patient = pydicom.dataset.Dataset()
 patient.PatientName = "mario rossi"
@@ -28,7 +29,7 @@ patient.StructureSetROISequence = [
     ds_seq_struct_2,
     ds_seq_struct_3,
     ds_seq_struct_4,
-    ds_seq_struct_5
+    ds_seq_struct_5,
 ]
 
 
@@ -92,7 +93,7 @@ patient.ROIContourSequence = [
     ds_cont_struct_2,
     ds_cont_struct_3,
     ds_cont_struct_4,
-    ds_cont_struct_orig
+    ds_cont_struct_orig,
 ]
 
 
@@ -119,21 +120,23 @@ def test_translate_input_struct(struct, delta, key, expected):
     except TypeError:
         assert TypeError == expected
 
+
 @pytest.mark.parametrize(
     "struct, delta, key, args, expected",
     [
-        ("cubo", 200.0, "x",[0., 0.], ValueError),
-        ("cubo", 200.0, "x",[1, 1, 1], ValueError),
-        ("cubo", 200.0, "x", [0.,1.,0.], True)
+        ("cubo", 200.0, "x", [0.0, 0.0], ValueError),
+        ("cubo", 200.0, "x", [1, 1, 1], ValueError),
+        ("cubo", 200.0, "x", [0.0, 1.0, 0.0], True),
     ],
 )
 def test_translate_input_par_args(struct, delta, key, args, expected):
     try:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.translate(struct, delta, key, args)
-        assert expected == True
+        assert expected is True
     except ValueError:
         assert expected == ValueError
+
 
 @pytest.mark.parametrize(
     "struct, delta, key, patient",
@@ -210,12 +213,13 @@ def test_translate_space(struct, delta1, delta2, delta3, key, patient, *args):
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
 
+
 @pytest.mark.parametrize(
     "struct, delta, key, patient, expected",
     [
-        ("punto", 1, "x", patient, MultiValue(float, [2., 1., 1.])),
-        ("punto", 1, "y", patient, MultiValue(float, [1., 2., 1.])),
-        ("punto", 1, "z", patient, MultiValue(float, [1., 1., 2.]))
+        ("punto", 1, "x", patient, MultiValue(float, [2.0, 1.0, 1.0])),
+        ("punto", 1, "y", patient, MultiValue(float, [1.0, 2.0, 1.0])),
+        ("punto", 1, "z", patient, MultiValue(float, [1.0, 1.0, 2.0])),
     ],
 )
 def test_rotate_punto(struct, delta, key, patient, expected):
@@ -237,17 +241,31 @@ def test_rotate_punto(struct, delta, key, patient, expected):
 @pytest.mark.parametrize(
     "struct, delta, key, origin, expected",
     [
-        ("cubo", 200.0, "z",MultiValue(float,[0., 0., 0.]), True),
-        ("cubo", 200.0, "z",MultiValue(float,[0., 0., 0.,1]), ValueError),
-        ("cubo", 200.0, "z", MultiValue(float,[0.,1.,0.,2]), ValueError)
+        ("cubo", 200.0, "z", MultiValue(float, [0.0, 0.0, 0.0]), True),
+        (
+            "cubo",
+            200.0,
+            "z",
+            MultiValue(float, [0.0, 0.0, 0.0, 1]),
+            ValueError,
+        ),
+        (
+            "cubo",
+            200.0,
+            "z",
+            MultiValue(float, [0.0, 1.0, 0.0, 2]),
+            ValueError,
+        ),
     ],
 )
 def test_translate_input_origin(struct, delta, key, origin, expected):
     try:
         dicom_info2 = Dicominfo(patient)
         n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
-        dicom_info2.dicom_struct.ROIContourSequence[n_struct-1].ContourSequence[0].ContourData = origin
+        dicom_info2.dicom_struct.ROIContourSequence[
+            n_struct - 1
+        ].ContourSequence[0].ContourData = origin
         dicom_info2.translate(struct, delta, key)
-        assert expected == True
+        assert expected is True
     except ValueError:
         assert expected == ValueError
