@@ -17,15 +17,18 @@ ds_seq_struct_1 = pydicom.dataset.Dataset()
 ds_seq_struct_2 = pydicom.dataset.Dataset()
 ds_seq_struct_3 = pydicom.dataset.Dataset()
 ds_seq_struct_4 = pydicom.dataset.Dataset()
+ds_seq_struct_5 = pydicom.dataset.Dataset()
 ds_seq_struct_1.ROIName = "cubo"
 ds_seq_struct_2.ROIName = "space"
 ds_seq_struct_3.ROIName = "punto"
 ds_seq_struct_4.ROIName = "error"
+ds_seq_struct_5.ROIName = "Coord 1"
 patient.StructureSetROISequence = [
     ds_seq_struct_1,
     ds_seq_struct_2,
     ds_seq_struct_3,
     ds_seq_struct_4,
+    ds_seq_struct_5
 ]
 
 
@@ -52,7 +55,7 @@ corte_1_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
 corte_2_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
 corte_3_space = [1.2, 2.0, 3, 1.2, 3.0, 3, 1.2, 4.5, 3]
 corte_1_punto = [1.0, 1.0, 1.0]
-pyd_corte_1_error = [1, 1, 1, 2, 2, 3, 4.0]
+corte_1_error = [1, 1, 1, 2, 2, 3, 4.0]
 iso = [0.0, 0.0, 0.0]
 pyd_corte_1_cubo.ContourData = MultiValue(float, corte_1_cubo)
 pyd_corte_2_cubo.ContourData = MultiValue(float, corte_2_cubo)
@@ -62,12 +65,14 @@ pyd_corte_1_space.ContourData = MultiValue(float, corte_1_space)
 pyd_corte_2_space.ContourData = MultiValue(float, corte_2_space)
 pyd_corte_3_space.ContourData = MultiValue(float, corte_3_space)
 pyd_corte_1_punto.ContourData = MultiValue(float, corte_1_punto)
+pyd_corte_1_error.ContourData = MultiValue(float, corte_1_error)
 ds_vect_iso.ContourData = MultiValue(float, iso)
 
-origin.ContourSequence = [ds_vect_iso]
 ds_cont_struct_1 = pydicom.dataset.Dataset()
 ds_cont_struct_2 = pydicom.dataset.Dataset()
 ds_cont_struct_3 = pydicom.dataset.Dataset()
+ds_cont_struct_4 = pydicom.dataset.Dataset()
+ds_cont_struct_orig = pydicom.dataset.Dataset()
 ds_cont_struct_1.ContourSequence = [
     pyd_corte_1_cubo,
     pyd_corte_2_cubo,
@@ -80,11 +85,14 @@ ds_cont_struct_2.ContourSequence = [
     pyd_corte_3_space,
 ]
 ds_cont_struct_3.ContourSequence = [pyd_corte_1_punto]
+ds_cont_struct_4.ContourSequence = [pyd_corte_1_error]
+ds_cont_struct_orig.ContourSequence = [ds_vect_iso]
 patient.ROIContourSequence = [
     ds_cont_struct_1,
     ds_cont_struct_2,
     ds_cont_struct_3,
-    origin,
+    ds_cont_struct_4,
+    ds_cont_struct_orig
 ]
 
 
@@ -111,6 +119,21 @@ def test_translate_input_struct(struct, delta, key, expected):
     except TypeError:
         assert TypeError == expected
 
+@pytest.mark.parametrize(
+    "struct, delta, key, args, expected",
+    [
+        ("cubo", 200.0, "x",[0., 0.], ValueError),
+        ("cubo", 200.0, "x",[1, 1, 1], ValueError),
+        ("cubo", 200.0, "x", [0.,1.,0.], True)
+    ],
+)
+def test_translate_input_par_args(struct, delta, key, args, expected):
+    try:
+        dicom_info1 = Dicominfo(patient)
+        dicom_info1.translate(struct, delta, key, args)
+        assert expected == True
+    except ValueError:
+        assert expected == ValueError
 
 @pytest.mark.parametrize(
     "struct, delta, key, patient",
@@ -186,3 +209,45 @@ def test_translate_space(struct, delta1, delta2, delta3, key, patient, *args):
         print(y)
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
+
+@pytest.mark.parametrize(
+    "struct, delta, key, patient, expected",
+    [
+        ("punto", 1, "x", patient, MultiValue(float, [2., 1., 1.])),
+        ("punto", 1, "y", patient, MultiValue(float, [1., 2., 1.])),
+        ("punto", 1, "z", patient, MultiValue(float, [1., 1., 2.]))
+    ],
+)
+def test_rotate_punto(struct, delta, key, patient, expected):
+    dicom_info = Dicominfo(patient)
+    for i in range(len(dicom_info.dicom_struct.ROIContourSequence[2])):
+        x = (
+            dicom_info.translate(struct, delta, key)
+            .dicom_struct.ROIContourSequence[2]
+            .ContourSequence[i]
+            .ContourData
+        )
+        y = expected
+        print(x)
+        print(y)
+        assert len(x) == len(y)
+        assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
+
+
+@pytest.mark.parametrize(
+    "struct, delta, key, origin, expected",
+    [
+        ("cubo", 200.0, "z",MultiValue(float,[0., 0., 0.]), True),
+        ("cubo", 200.0, "z",MultiValue(float,[0., 0., 0.,1]), ValueError),
+        ("cubo", 200.0, "z", MultiValue(float,[0.,1.,0.,2]), ValueError)
+    ],
+)
+def test_translate_input_origin(struct, delta, key, origin, expected):
+    try:
+        dicom_info2 = Dicominfo(patient)
+        n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
+        dicom_info2.dicom_struct.ROIContourSequence[n_struct-1].ContourSequence[0].ContourData = origin
+        dicom_info2.translate(struct, delta, key)
+        assert expected == True
+    except ValueError:
+        assert expected == ValueError
