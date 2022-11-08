@@ -1,3 +1,5 @@
+from contextlib import nullcontext as does_not_raise
+
 import pydicom
 import pytest
 from pydicom.multival import MultiValue
@@ -100,42 +102,34 @@ patient.ROIContourSequence = [
 @pytest.mark.parametrize(
     "struct, delta, key, expected",
     [
-        ("cuadrad", 0, "x", ValueError),
-        (2, 20.0, "x", ValueError),
-        ("punto", 20.0, "x", True),
-        ("punto", 1001, "x", ValueError),
-        ("cubo", "1", "x", TypeError),
-        ("cubo", 200.0, "xx", ValueError),
-        ("error", 200, "x", ValueError),
-        ("cubo", 200.1, "x", False),
+        ("cuadrad", 0, "x", pytest.raises(ValueError)),
+        (2, 20.0, "x", pytest.raises(ValueError)),
+        ("punto", 20.0, "x", does_not_raise()),
+        ("punto", 1001, "x", pytest.raises(ValueError)),
+        ("cubo", "1", "x", pytest.raises(TypeError)),
+        ("cubo", 200.0, "xx", pytest.raises(ValueError)),
+        ("error", 200, "x", pytest.raises(ValueError)),
+        ("cubo", 200.1, "x", does_not_raise()),
     ],
 )
 def test_translate_input_struct(struct, delta, key, expected):
-    try:
+    with expected:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.translate(struct, delta, key)
-        expected = True
-    except ValueError:
-        assert ValueError == expected
-    except TypeError:
-        assert TypeError == expected
 
 
 @pytest.mark.parametrize(
     "struct, delta, key, args, expected",
     [
-        ("cubo", 200.0, "x", [0.0, 0.0], ValueError),
-        ("cubo", 200.0, "x", [1, 1, 1], ValueError),
-        ("cubo", 200.0, "x", [0.0, 1.0, 0.0], True),
+        ("cubo", 200.0, "x", [0.0, 0.0], pytest.raises(ValueError)),
+        ("cubo", 200.0, "x", [1, 1, 1], pytest.raises(ValueError)),
+        ("cubo", 200.0, "x", [0.0, 1.0, 0.0], does_not_raise()),
     ],
 )
 def test_translate_input_par_args(struct, delta, key, args, expected):
-    try:
+    with expected:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.translate(struct, delta, key, args)
-        assert expected is True
-    except ValueError:
-        assert expected == ValueError
 
 
 @pytest.mark.parametrize(
@@ -155,10 +149,8 @@ def test_translate_punto_0_360(struct, delta, key, patient, *args):
         .ContourData
     )
     y = patient.ROIContourSequence[1].ContourSequence[0].ContourData
-    print(x)
-    print(y)
     assert len(x) == len(y)
-    assert all([abs(xi - yi) <= 0.001 for xi, yi in zip(x, y)])
+    assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
 
 
 @pytest.mark.parametrize(
@@ -179,8 +171,6 @@ def test_translate_cubo_0_360(struct, delta, key, patient, *args):
             .ContourData
         )
         y = patient.ROIContourSequence[0].ContourSequence[i].ContourData
-        print(x)
-        print(y)
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
 
@@ -208,8 +198,6 @@ def test_translate_space(struct, delta1, delta2, delta3, key, patient, *args):
             .ContourData
         )
         y = patient.ROIContourSequence[1].ContourSequence[i].ContourData
-        print(x)
-        print(y)
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
 
@@ -232,8 +220,6 @@ def test_rotate_punto(struct, delta, key, patient, expected):
             .ContourData
         )
         y = expected
-        print(x)
-        print(y)
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
 
@@ -241,31 +227,34 @@ def test_rotate_punto(struct, delta, key, patient, expected):
 @pytest.mark.parametrize(
     "struct, delta, key, origin, expected",
     [
-        ("cubo", 200.0, "z", MultiValue(float, [0.0, 0.0, 0.0]), True),
+        (
+            "cubo",
+            200.0,
+            "z",
+            MultiValue(float, [0.0, 0.0, 0.0]),
+            does_not_raise(),
+        ),
         (
             "cubo",
             200.0,
             "z",
             MultiValue(float, [0.0, 0.0, 0.0, 1]),
-            ValueError,
+            pytest.raises(ValueError),
         ),
         (
             "cubo",
             200.0,
             "z",
             MultiValue(float, [0.0, 1.0, 0.0, 2]),
-            ValueError,
+            pytest.raises(ValueError),
         ),
     ],
 )
 def test_translate_input_origin(struct, delta, key, origin, expected):
-    try:
+    with expected:
         dicom_info2 = Dicominfo(patient)
         n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
         dicom_info2.dicom_struct.ROIContourSequence[
             n_struct - 1
         ].ContourSequence[0].ContourData = origin
         dicom_info2.translate(struct, delta, key)
-        assert expected is True
-    except ValueError:
-        assert expected == ValueError

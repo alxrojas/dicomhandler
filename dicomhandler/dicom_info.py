@@ -585,7 +585,7 @@ class Dicominfo:
         if isinstance(margin, float):
             pass
         else:
-            raise ValueError(f"{margin} must be float")
+            raise TypeError(f"{margin} must be float")
         longitude = len(dicom_copy.dicom_struct.StructureSetROISequence)
         for item in range(longitude):
             n_id[
@@ -670,14 +670,13 @@ class Dicominfo:
                             elif margin >= 0 and dist1 < dist2:
                                 contourmargin.append(sol_x2)
                                 contourmargin.append(y2)
-                            elif margin < 0 and dist1 < dist2:
+                            elif margin < 0 and dist1 <= dist2:
                                 contourmargin.append(sol_x1)
                                 contourmargin.append(y1)
-                            elif margin < 0 and dist1 > dist2:
+                            else:
                                 contourmargin.append(sol_x2)
                                 contourmargin.append(y2)
-                            else:
-                                raise ValueError("Invalid margin")
+
                         else:
                             contourmargin.append(x0)
                             if margin >= 0 and y0 >= ymean:

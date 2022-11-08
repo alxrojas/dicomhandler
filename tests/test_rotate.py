@@ -1,3 +1,5 @@
+from contextlib import nullcontext as does_not_raise
+
 import pydicom
 import pytest
 from pydicom.multival import MultiValue
@@ -100,43 +102,35 @@ patient.ROIContourSequence = [
 @pytest.mark.parametrize(
     "struct, angle, key, expected",
     [
-        ("cuadrad", 359.999, "yaw", ValueError),
-        (2, 200.0, "yaw", ValueError),
-        ("punto", 200.0, "yaw", True),
-        ("punto", 361.1, "yaw", ValueError),
-        ("cubo", "1", "yaw", TypeError),
-        ("cubo", 200.1, "yy", ValueError),
-        ("error", 200, "yaw", ValueError),
-        ("cubo", 200.1, "yaw", True),
+        ("cuadrad", 359.999, "yaw", pytest.raises(ValueError)),
+        (2, 200.0, "yaw", pytest.raises(ValueError)),
+        ("punto", 200.0, "yaw", does_not_raise()),
+        ("punto", 361.1, "yaw", pytest.raises(ValueError)),
+        ("cubo", "1", "yaw", pytest.raises(TypeError)),
+        ("cubo", 200.1, "yy", pytest.raises(ValueError)),
+        ("error", 200, "yaw", pytest.raises(ValueError)),
+        ("cubo", 200.1, "yaw", does_not_raise()),
     ],
 )
 def test_rotate_input_struct(struct, angle, key, expected):
-    try:
+    with expected:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.rotate(struct, angle, key)
-        assert expected
-    except ValueError:
-        assert ValueError == expected
-    except TypeError:
-        assert TypeError == expected
 
 
 @pytest.mark.parametrize(
     "struct, angle, key, args, expected",
     [
-        ("cubo", 200.0, "yaw", [0.0, 0.0], ValueError),
-        ("cubo", 200.0, "yaw", [1, 1, 1], ValueError),
-        ("cubo", 200.0, "yaw", [0.0, 1.0, 0.0], True),
-        ("cubo", 200.0, "yaw", [0.0, 1.0, 0.0, 2], ValueError),
+        ("cubo", 200.0, "yaw", [0.0, 0.0], pytest.raises(ValueError)),
+        ("cubo", 200.0, "yaw", [1, 1, 1], pytest.raises(ValueError)),
+        ("cubo", 200.0, "yaw", [0.0, 1.0, 0.0], does_not_raise()),
+        ("cubo", 200.0, "yaw", [0.0, 1.0, 0.0, 2], pytest.raises(ValueError)),
     ],
 )
 def test_rotate_input_par_args(struct, angle, key, args, expected):
-    try:
+    with expected:
         dicom_info1 = Dicominfo(patient)
         dicom_info1.rotate(struct, angle, key, args)
-        assert expected
-    except ValueError:
-        assert expected == ValueError
 
 
 @pytest.mark.parametrize(
@@ -266,31 +260,34 @@ def test_rotate_punto(struct, angle, key, patient, expected):
 @pytest.mark.parametrize(
     "struct, angle, key, origin, expected",
     [
-        ("cubo", 200.0, "yaw", MultiValue(float, [0.0, 0.0, 0.0]), True),
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            MultiValue(float, [0.0, 0.0, 0.0]),
+            does_not_raise(),
+        ),
         (
             "cubo",
             200.0,
             "yaw",
             MultiValue(float, [0.0, 0.0, 0.0, 1]),
-            ValueError,
+            pytest.raises(ValueError),
         ),
         (
             "cubo",
             200.0,
             "yaw",
             MultiValue(float, [0.0, 1.0, 0.0, 2]),
-            ValueError,
+            pytest.raises(ValueError),
         ),
     ],
 )
 def test_rotate_input_origin(struct, angle, key, origin, expected):
-    try:
+    with expected:
         dicom_info2 = Dicominfo(patient)
         n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
         dicom_info2.dicom_struct.ROIContourSequence[
             n_struct - 1
         ].ContourSequence[0].ContourData = origin
         dicom_info2.rotate(struct, angle, key)
-        assert expected
-    except ValueError:
-        assert expected == ValueError
