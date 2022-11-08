@@ -195,7 +195,11 @@ class Dicominfo:
                     ].ContourSequence
                 )
             ):
-                worksheet.write_row(1, 3 * num, ["x [mm]", "y [mm]", "z [mm]"])
+                worksheet.write_row(
+                    0,
+                    3 * num,
+                    [f"x{num} [mm]", f"y{num} [mm]", f"z{num} [mm]"],
+                )
                 for count in range(
                     int(
                         len(
@@ -223,7 +227,7 @@ class Dicominfo:
                         .ContourSequence[num]
                         .ContourData[3 * count + 2]
                     )
-                    worksheet.write_row(2 + count, 3 * num, [x, y, z])
+                    worksheet.write_row(1 + count, 3 * num, [x, y, z])
         workbook.close()
 
     def rotate(self, struct, angle, key, *args):
