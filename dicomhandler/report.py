@@ -18,41 +18,38 @@ def report(dicom1, dicom2, struct):
     dataframe with statistics.
     """
     n_id1, n_id2 = {}, {}
-    longitude1 = len(dicom1
-                     .dicom_struct
-                     .StructureSetROISequence)
-    longitude2 = len(dicom2
-                     .dicom_struct
-                     .StructureSetROISequence)
+    longitude1 = len(dicom1.dicom_struct.StructureSetROISequence)
+    longitude2 = len(dicom2.dicom_struct.StructureSetROISequence)
     for item in range(longitude1):
-        n_id1[(dicom1
-               .dicom_struct
-               .StructureSetROISequence[item]
-               .ROIName)] = item
+        n_id1[
+            (dicom1.dicom_struct.StructureSetROISequence[item].ROIName)
+        ] = item
     for item2 in range(longitude2):
-        n_id2[(dicom2
-               .dicom_struct
-               .StructureSetROISequence[item2]
-               .ROIName)] = item2
+        n_id2[
+            (dicom2.dicom_struct.StructureSetROISequence[item2].ROIName)
+        ] = item2
     if (struct in n_id1) and (struct in n_id2):
         distances_contour, radius_contour = [], []
         mean_values1, mean_values2 = [], []
-        if (len(dicom1
-                .dicom_struct
-                .ROIContourSequence[n_id2[struct]]
-                .ContourSequence) == len(dicom2
-                                         .dicom_struct
-                                         .ROIContourSequence[n_id2[struct]]
-                                         .ContourSequence)):
-            for num in range(len(dicom2
-                                 .dicom_struct
-                                 .ROIContourSequence[n_id2[struct]]
-                                 .ContourSequence)):
+        if len(
+            dicom1.dicom_struct.ROIContourSequence[
+                n_id2[struct]
+            ].ContourSequence
+        ) == len(
+            dicom2.dicom_struct.ROIContourSequence[
+                n_id2[struct]
+            ].ContourSequence
+        ):
+            for num in range(
+                len(
+                    dicom2.dicom_struct.ROIContourSequence[
+                        n_id2[struct]
+                    ].ContourSequence
+                )
+            ):
                 length1 = int(
                     len(
-                        dicom1
-                        .dicom_struct
-                        .ROIContourSequence[n_id1[struct]]
+                        dicom1.dicom_struct.ROIContourSequence[n_id1[struct]]
                         .ContourSequence[num]
                         .ContourData
                     )
@@ -60,9 +57,7 @@ def report(dicom1, dicom2, struct):
                 )
                 length2 = int(
                     len(
-                        dicom2
-                        .dicom_struct
-                        .ROIContourSequence[n_id2[struct]]
+                        dicom2.dicom_struct.ROIContourSequence[n_id2[struct]]
                         .ContourSequence[num]
                         .ContourData
                     )
@@ -71,9 +66,9 @@ def report(dicom1, dicom2, struct):
                 xmean1 = np.mean(
                     [
                         (
-                            dicom1
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom1.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i]
                         )
@@ -83,9 +78,9 @@ def report(dicom1, dicom2, struct):
                 ymean1 = np.mean(
                     [
                         (
-                            dicom1
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom1.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i + 1]
                         )
@@ -95,9 +90,9 @@ def report(dicom1, dicom2, struct):
                 zmean1 = np.mean(
                     [
                         (
-                            dicom1
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom1.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i + 2]
                         )
@@ -108,9 +103,9 @@ def report(dicom1, dicom2, struct):
                 xmean2 = np.mean(
                     [
                         (
-                            dicom2
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom2.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i]
                         )
@@ -120,9 +115,9 @@ def report(dicom1, dicom2, struct):
                 ymean2 = np.mean(
                     [
                         (
-                            dicom2
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom2.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i + 1]
                         )
@@ -132,9 +127,9 @@ def report(dicom1, dicom2, struct):
                 zmean2 = np.mean(
                     [
                         (
-                            dicom2
-                            .dicom_struct
-                            .ROIContourSequence[n_id1[struct]]
+                            dicom2.dicom_struct.ROIContourSequence[
+                                n_id1[struct]
+                            ]
                             .ContourSequence[num]
                             .ContourData[3 * i + 2]
                         )
@@ -146,17 +141,14 @@ def report(dicom1, dicom2, struct):
             centermass2 = np.mean(mean_values2, axis=0)
             for num in range(
                 len(
-                    dicom1
-                    .dicom_struct
-                    .ROIContourSequence[n_id2[struct]]
-                    .ContourSequence
+                    dicom1.dicom_struct.ROIContourSequence[
+                        n_id2[struct]
+                    ].ContourSequence
                 )
             ):
                 length1 = int(
                     len(
-                        dicom1
-                        .dicom_struct
-                        .ROIContourSequence[n_id1[struct]]
+                        dicom1.dicom_struct.ROIContourSequence[n_id1[struct]]
                         .ContourSequence[num]
                         .ContourData
                     )
@@ -164,9 +156,7 @@ def report(dicom1, dicom2, struct):
                 )
                 length2 = int(
                     len(
-                        dicom2
-                        .dicom_struct
-                        .ROIContourSequence[n_id1[struct]]
+                        dicom2.dicom_struct.ROIContourSequence[n_id1[struct]]
                         .ContourSequence[num]
                         .ContourData
                     )
@@ -177,23 +167,23 @@ def report(dicom1, dicom2, struct):
                         basepoint = np.array(
                             [
                                 (
-                                    dicom1
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom1.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count]
                                 ),
                                 (
-                                    dicom1
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom1.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count + 1]
                                 ),
                                 (
-                                    dicom1
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom1.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count + 2]
                                 ),
@@ -202,23 +192,23 @@ def report(dicom1, dicom2, struct):
                         movedpoint = np.array(
                             [
                                 (
-                                    dicom2
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom2.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count]
                                 ),
                                 (
-                                    dicom2
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom2.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count + 1]
                                 ),
                                 (
-                                    dicom2
-                                    .dicom_struct
-                                    .ROIContourSequence[n_id1[struct]]
+                                    dicom2.dicom_struct.ROIContourSequence[
+                                        n_id1[struct]
+                                    ]
                                     .ContourSequence[num]
                                     .ContourData[3 * count + 2]
                                 ),
@@ -238,9 +228,7 @@ def report(dicom1, dicom2, struct):
             raise ValueError("Number of slices do not correspond")
     else:
         raise ValueError("Wrong name or name must match between two DICOM")
-    distance_centermass = np.sqrt(
-        sum(np.square(centermass1 - centermass2))
-    )
+    distance_centermass = np.sqrt(sum(np.square(centermass1 - centermass2)))
     data = {
         "Parameter": [
             "Max radius",
