@@ -114,7 +114,7 @@ data3 = {
 def test_correct_name_structure(dicom1, name, expected):
     with expected:
         di = Dicominfo(dicom1)
-        di.to_excel("out_test", [name])
+        di.structure_to_excel("out_test", [name])
         os.remove("out_test.xlsx")
 
 
@@ -128,7 +128,7 @@ def test_correct_name_structure(dicom1, name, expected):
 def test_filename(dicom1, file, name, expected):
     with expected:
         di = Dicominfo(dicom1)
-        di.to_excel(file, [name])
+        di.structure_to_excel(file, [name])
         os.remove("out_test.xlsx")
 
 
@@ -141,7 +141,7 @@ def test_filename(dicom1, file, name, expected):
 )
 def test_dataframe(dicom1, dataframe, name):
     di = Dicominfo(dicom1)
-    di.to_excel("out_test", [name])
+    di.structure_to_excel("out_test", [name])
     df1 = pd.read_excel("out_test.xlsx", sheet_name=name)
     df2 = pd.DataFrame(dataframe, dtype="int64")
     assert_frame_equal(df1, df2)
@@ -157,7 +157,7 @@ def test_dataframe(dicom1, dataframe, name):
 )
 def test_all_structures(dicom1, dataframe, name):
     di = Dicominfo(dicom1)
-    di.to_excel("out_test")
+    di.structure_to_excel("out_test")
     df1 = pd.read_excel("out_test.xlsx", sheet_name=name)
     df2 = pd.DataFrame(dataframe, dtype="int64")
     assert_frame_equal(df1, df2)
