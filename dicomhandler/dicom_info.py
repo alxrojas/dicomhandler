@@ -280,9 +280,6 @@ class Dicominfo:
                 origin = args[0]
             else:
                 raise ValueError("Type an origin [x,y,z] with float elements")
-
-            if len(origin) != 3:
-                raise ValueError("Type an origin [x,y,z] with float elements")
             m = {
                 "roll": np.array(
                     [
@@ -448,8 +445,6 @@ class Dicominfo:
             else:
                 raise ValueError("Type an origin [x,y,z] with float elements")
 
-            if len(origin) != 3:
-                raise ValueError("Type an origin [x,y,z] with float elements")
             m = {
                 "x": np.array(
                     [
