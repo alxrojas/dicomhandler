@@ -14,8 +14,15 @@ patient.OperatorsName = "guido rossi"
 patient.InstanceCreationDate = "20200101"
 patient.Modality = "RTSTRUCT"
 
+patient_or_err = pydicom.dataset.Dataset()
+patient.PatientName = "mario bianchi"
+patient.PatientID = "3"
+patient.PatientBirthDate = "20000101"
+patient.OperatorsName = "guido bianchi"
+patient.InstanceCreationDate = "20200101"
+patient.Modality = "RTSTRUCT"
 
-# pydicom.StructureROISequence[0].ROIName
+# Structure for patient
 ds_seq_struct_1 = pydicom.dataset.Dataset()
 ds_seq_struct_2 = pydicom.dataset.Dataset()
 ds_seq_struct_3 = pydicom.dataset.Dataset()
@@ -34,8 +41,8 @@ patient.StructureSetROISequence = [
     ds_seq_struct_5,
 ]
 
+# Structure for patient_or_err, in which we modify the isocenter point for test
 
-# patient.ROIContourSequence[0].ContourSequence[0].ContourData
 ds_seq_cont_1 = pydicom.dataset.Dataset()
 
 origin = pydicom.dataset.Dataset()
@@ -176,6 +183,41 @@ def test_translate_cubo_0_360(struct, delta, key, patient, *args):
 
 
 @pytest.mark.parametrize(
+    "struct, delta, key, patient, origin, expected",
+    [
+        (
+            "cubo",
+            200.0,
+            "z",
+            patient,
+            MultiValue(float, [0.0, 0.0, 0.0]),
+            does_not_raise(),
+        ),
+        (
+            "cubo",
+            200.0,
+            "z",
+            patient,
+            MultiValue(float, [0.0, 0.0, 0.0, 1]),
+            pytest.raises(ValueError),
+        ),
+        (
+            "cubo",
+            200.0,
+            "z",
+            patient,
+            MultiValue(float, [0.0, 1.0, 0.0, 2]),
+            pytest.raises(ValueError),
+        ),
+    ],
+)
+def test_translate_input_origin(struct, delta, key, patient, origin, expected):
+    with expected:
+        dicom_info2 = Dicominfo(patient)
+        dicom_info2.translate(struct, delta, key, origin)
+
+
+@pytest.mark.parametrize(
     "struct, delta1, delta2, delta3, key, patient",
     [
         ("space", 100, 20, -120, "x", patient),
@@ -222,39 +264,3 @@ def test_rotate_punto(struct, delta, key, patient, expected):
         y = expected
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
-
-
-@pytest.mark.parametrize(
-    "struct, delta, key, origin, expected",
-    [
-        (
-            "cubo",
-            200.0,
-            "z",
-            MultiValue(float, [0.0, 0.0, 0.0]),
-            does_not_raise(),
-        ),
-        (
-            "cubo",
-            200.0,
-            "z",
-            MultiValue(float, [0.0, 0.0, 0.0, 1]),
-            pytest.raises(ValueError),
-        ),
-        (
-            "cubo",
-            200.0,
-            "z",
-            MultiValue(float, [0.0, 1.0, 0.0, 2]),
-            pytest.raises(ValueError),
-        ),
-    ],
-)
-def test_translate_input_origin(struct, delta, key, origin, expected):
-    with expected:
-        dicom_info2 = Dicominfo(patient)
-        n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
-        dicom_info2.dicom_struct.ROIContourSequence[
-            n_struct - 1
-        ].ContourSequence[0].ContourData = origin
-        dicom_info2.translate(struct, delta, key)

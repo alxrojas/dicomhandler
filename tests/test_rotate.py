@@ -216,6 +216,41 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient, *args):
 
 
 @pytest.mark.parametrize(
+    "struct, angle, key, patient, origin, expected",
+    [
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            patient,
+            MultiValue(float, [0.0, 0.0, 0.0]),
+            does_not_raise(),
+        ),
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            patient,
+            MultiValue(float, [0.0, 0.0, 0.0, 1]),
+            pytest.raises(ValueError),
+        ),
+        (
+            "cubo",
+            200.0,
+            "yaw",
+            patient,
+            MultiValue(float, [0.0, 1.0, 0.0, 2]),
+            pytest.raises(ValueError),
+        ),
+    ],
+)
+def test_rotate_input_origin(struct, angle, key, patient, origin, expected):
+    with expected:
+        dicom_info2 = Dicominfo(patient)
+        dicom_info2.rotate(struct, angle, key, origin)
+
+
+@pytest.mark.parametrize(
     "struct, angle, key, patient, expected",
     [
         (
@@ -229,7 +264,7 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient, *args):
             "punto",
             90,
             "yaw",
-            patient,  # fmt: skip
+            patient,
             MultiValue(float, [-1.00000267, 0.99999533, 1]),
         ),
         (
@@ -251,43 +286,5 @@ def test_rotate_punto(struct, angle, key, patient, expected):
             .ContourData
         )
         y = expected
-        print(x)
-        print(y)
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
-
-
-@pytest.mark.parametrize(
-    "struct, angle, key, origin, expected",
-    [
-        (
-            "cubo",
-            200.0,
-            "yaw",
-            MultiValue(float, [0.0, 0.0, 0.0]),
-            does_not_raise(),
-        ),
-        (
-            "cubo",
-            200.0,
-            "yaw",
-            MultiValue(float, [0.0, 0.0, 0.0, 1]),
-            pytest.raises(ValueError),
-        ),
-        (
-            "cubo",
-            200.0,
-            "yaw",
-            MultiValue(float, [0.0, 1.0, 0.0, 2]),
-            pytest.raises(ValueError),
-        ),
-    ],
-)
-def test_rotate_input_origin(struct, angle, key, origin, expected):
-    with expected:
-        dicom_info2 = Dicominfo(patient)
-        n_struct = len(dicom_info2.dicom_struct.StructureSetROISequence)
-        dicom_info2.dicom_struct.ROIContourSequence[
-            n_struct - 1
-        ].ContourSequence[0].ContourData = origin
-        dicom_info2.rotate(struct, angle, key)
