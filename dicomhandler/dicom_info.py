@@ -151,7 +151,7 @@ class Dicominfo:
 
         return dicom_copy
 
-    def to_excel(self, name_file, names=[]):
+    def structure_to_excel(self, name_file, names=[]):
         """
         It creates DICOM contour in excelable form.
         The Contour Data for each organ is set on different sheets.
@@ -228,6 +228,83 @@ class Dicominfo:
                         .ContourData[3 * count + 2]
                     )
                     worksheet.write_row(1 + count, 3 * num, [x, y, z])
+        workbook.close()
+
+    def mlc_to_excel(self, name_file):
+        """
+        It creates DICOM contour in excelable form.
+        The Contour Data for each organ is set on different sheets.
+        The file is created in the same directory with the name name.xlsx
+        INPUT:
+        name_file -> str, with the name of the file.
+        OUTPUT:
+        Excel file.
+        """
+        dicom_copy = copy.deepcopy(self)
+        extension = ".xlsx"
+        if name_file.endswith(extension):
+            pass
+        else:
+            name_file = "".join([name_file, extension])
+        if dicom_copy.dicom_plan is None:
+            raise ValueError("Plan not loaded")
+        workbook = xlsxwriter.Workbook(name_file)
+        for number in range(len(dicom_copy.dicom_plan.BeamSequence)):
+            worksheet = workbook.add_worksheet(f"Beam {number}")
+            for controlpoint in range(
+                len(
+                    dicom_copy.dicom_plan.BeamSequence[
+                        number
+                    ].ControlPointSequence
+                )
+            ):
+                gantry_angle = (
+                    dicom_copy.dicom_plan.BeamSequence[number]
+                    .ControlPointSequence[controlpoint]
+                    .GantryAngle
+                )
+                gantry_direction = (
+                    dicom_copy.dicom_plan.BeamSequence[number]
+                    .ControlPointSequence[controlpoint]
+                    .GantryRotationDirection
+                )
+                table_direction = (
+                    dicom_copy.dicom_plan.BeamSequence[number]
+                    .ControlPointSequence[0]
+                    .PatientSupportAngle
+                )
+                if controlpoint == 0:
+                    mlc = np.array(
+                        dicom_copy.dicom_plan.BeamSequence[number]
+                        .ControlPointSequence[controlpoint]
+                        .BeamLimitingDevicePositionSequence[2]
+                        .LeafJawPositions
+                    )
+                else:
+                    mlc = list(
+                        np.array(
+                            dicom_copy.dicom_plan.BeamSequence[number]
+                            .ControlPointSequence[controlpoint]
+                            .BeamLimitingDevicePositionSequence[0]
+                            .LeafJawPositions
+                        )
+                    )
+                worksheet.write_row(
+                    controlpoint,
+                    0,
+                    [
+                        f"ControlPoint{controlpoint}",
+                        "GantryAngle",
+                        gantry_angle,
+                        "GantryDirection",
+                        gantry_direction,
+                        "TableDirection",
+                        table_direction,
+                        "MLC",
+                    ],
+                )
+                for leaf in range(len(mlc)):
+                    worksheet.write_row(controlpoint, 8 + leaf, [mlc[leaf]])
         workbook.close()
 
     def rotate(self, struct, angle, key, *args):
