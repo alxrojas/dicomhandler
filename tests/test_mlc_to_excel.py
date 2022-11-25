@@ -198,9 +198,7 @@ def test_dataframe(dicom1, dataframe, index):
     di = Dicominfo(dicom1)
     di.mlc_to_excel("out_test")
     df1 = pd.read_excel("out_test.xlsx", index_col=0, header=None).T
-    print(df1)
     df2 = pd.DataFrame(dataframe, index=index)
-    print(df2)
     assert_frame_equal(df1, df2, check_names=False)
     os.remove("out_test.xlsx")
 
@@ -218,8 +216,6 @@ def test_datasheets(dicom1, dataframe, name, index):
     df1 = pd.read_excel(
         "out_test.xlsx", sheet_name=name, index_col=0, header=None
     ).T
-    print(df1)
     df2 = pd.DataFrame(dataframe, index=index)
-    print(df2)
     assert_frame_equal(df1, df2, check_names=False)
     os.remove("out_test.xlsx")
