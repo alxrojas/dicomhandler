@@ -1,13 +1,15 @@
 import os
 from contextlib import nullcontext as does_not_raise
 
+from dicomhandler.dicom_info import Dicominfo
+
 import pandas as pd
-import pydicom
-import pytest
 from pandas.testing import assert_frame_equal
+
+import pydicom
 from pydicom.multival import MultiValue
 
-from dicomhandler.dicom_info import Dicominfo
+import pytest
 
 patient1 = pydicom.dataset.Dataset()
 patient1.PatientName = "Mike Wazowski"

@@ -1,10 +1,11 @@
 from contextlib import nullcontext as does_not_raise
 
+from dicomhandler.dicom_info import Dicominfo
+
 import pydicom
-import pytest
 from pydicom.multival import MultiValue
 
-from dicomhandler.dicom_info import Dicominfo
+import pytest
 
 patient = pydicom.dataset.Dataset()
 patient.PatientName = "mario rossi"

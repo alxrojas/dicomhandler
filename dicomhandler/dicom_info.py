@@ -2,8 +2,10 @@ import copy
 import warnings
 
 import numpy as np
-import xlsxwriter
+
 from pydicom.multival import MultiValue
+
+import xlsxwriter
 
 # MODIFICA NICOLA DA ELIMINARE
 

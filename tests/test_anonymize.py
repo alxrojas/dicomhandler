@@ -1,9 +1,10 @@
 import copy
 from unittest.mock import Mock
 
+from dicomhandler.dicom_info import Dicominfo
+
 import pytest
 
-from dicomhandler.dicom_info import Dicominfo
 
 # pydicom mocks
 

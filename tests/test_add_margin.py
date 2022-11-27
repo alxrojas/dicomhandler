@@ -1,8 +1,9 @@
+from dicomhandler.dicom_info import Dicominfo
+
 import pydicom
-import pytest
 from pydicom.multival import MultiValue
 
-from dicomhandler.dicom_info import Dicominfo
+import pytest
 
 patient = pydicom.dataset.Dataset()
 patient.PatientName = "mario rossi"
