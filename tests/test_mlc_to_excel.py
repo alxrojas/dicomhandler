@@ -177,20 +177,6 @@ def test_correct_modality(dicom1, expected):
 
 
 @pytest.mark.parametrize(
-    "dicom1, file, expected",
-    [
-        (patient1, "out_test", does_not_raise()),
-        (patient1, "out_test.xlsx", does_not_raise()),
-    ],
-)
-def test_filename(dicom1, file, expected):
-    with expected:
-        di = Dicominfo(dicom1)
-        di.mlc_to_excel(file)
-        os.remove("out_test.xlsx")
-
-
-@pytest.mark.parametrize(
     "dicom1, dataframe, index",
     [
         (patient1, data1, index1),
