@@ -1,13 +1,16 @@
 from contextlib import nullcontext as does_not_raise
 
-import pandas as pd
-import pydicom
-import pytest
-from pandas.testing import assert_frame_equal
-from pydicom.multival import MultiValue
-
 from dicomhandler.dicom_info import Dicominfo
 from dicomhandler.report import report
+
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
+import pydicom
+from pydicom.multival import MultiValue
+
+import pytest
+
 
 ds_origin = pydicom.dataset.Dataset()
 origin = pydicom.dataset.Dataset()

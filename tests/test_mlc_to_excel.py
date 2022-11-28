@@ -1,14 +1,17 @@
 import os
 from contextlib import nullcontext as does_not_raise
 
+from dicomhandler.dicom_info import Dicominfo
+
 import numpy as np
+
 import pandas as pd
-import pydicom
-import pytest
 from pandas.testing import assert_frame_equal
+
+import pydicom
 from pydicom.multival import MultiValue
 
-from dicomhandler.dicom_info import Dicominfo
+import pytest
 
 patient1 = pydicom.dataset.Dataset()
 patient1.PatientName = "Mike Wazowski"
@@ -174,20 +177,6 @@ def test_correct_modality(dicom1, expected):
 
 
 @pytest.mark.parametrize(
-    "dicom1, file, expected",
-    [
-        (patient1, "out_test", does_not_raise()),
-        (patient1, "out_test.xlsx", does_not_raise()),
-    ],
-)
-def test_filename(dicom1, file, expected):
-    with expected:
-        di = Dicominfo(dicom1)
-        di.mlc_to_excel(file)
-        os.remove("out_test.xlsx")
-
-
-@pytest.mark.parametrize(
     "dicom1, dataframe, index",
     [
         (patient1, data1, index1),
@@ -198,9 +187,7 @@ def test_dataframe(dicom1, dataframe, index):
     di = Dicominfo(dicom1)
     di.mlc_to_excel("out_test")
     df1 = pd.read_excel("out_test.xlsx", index_col=0, header=None).T
-    print(df1)
     df2 = pd.DataFrame(dataframe, index=index)
-    print(df2)
     assert_frame_equal(df1, df2, check_names=False)
     os.remove("out_test.xlsx")
 
@@ -218,8 +205,6 @@ def test_datasheets(dicom1, dataframe, name, index):
     df1 = pd.read_excel(
         "out_test.xlsx", sheet_name=name, index_col=0, header=None
     ).T
-    print(df1)
     df2 = pd.DataFrame(dataframe, index=index)
-    print(df2)
     assert_frame_equal(df1, df2, check_names=False)
     os.remove("out_test.xlsx")

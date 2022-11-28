@@ -1,13 +1,15 @@
 import os
 from contextlib import nullcontext as does_not_raise
 
+from dicomhandler.dicom_info import Dicominfo
+
 import pandas as pd
-import pydicom
-import pytest
 from pandas.testing import assert_frame_equal
+
+import pydicom
 from pydicom.multival import MultiValue
 
-from dicomhandler.dicom_info import Dicominfo
+import pytest
 
 patient1 = pydicom.dataset.Dataset()
 patient1.PatientName = "Mike Wazowski"
@@ -115,20 +117,6 @@ def test_correct_name_structure(dicom1, name, expected):
     with expected:
         di = Dicominfo(dicom1)
         di.structure_to_excel("out_test", [name])
-        os.remove("out_test.xlsx")
-
-
-@pytest.mark.parametrize(
-    "dicom1, file, name, expected",
-    [
-        (patient2, "out_test", "point", does_not_raise()),
-        (patient1, "out_test.xlsx", "cube", does_not_raise()),
-    ],
-)
-def test_filename(dicom1, file, name, expected):
-    with expected:
-        di = Dicominfo(dicom1)
-        di.structure_to_excel(file, [name])
         os.remove("out_test.xlsx")
 
 

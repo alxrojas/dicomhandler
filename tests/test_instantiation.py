@@ -1,9 +1,9 @@
 from contextlib import nullcontext as does_not_raise
 from unittest.mock import Mock
 
-import pytest
-
 from dicomhandler.dicom_info import Dicominfo
+
+import pytest
 
 m1 = Mock()
 m1.PatientName = "Mike Wazowski"
