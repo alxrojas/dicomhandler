@@ -11,6 +11,7 @@ exclude tox.ini
 exclude pruebita.py
 
 recursive-exclude tests *
+recursive-exclude docs *
 recursive-exclude dicomhandler.egg-info *
 recursive-exclude .pytest_cache *
 recursive-exclude .ipynb_checkpoints *
