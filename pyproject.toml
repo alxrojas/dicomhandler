@@ -28,7 +28,7 @@ dependencies = [
 
 requires-python = ">=3.7"
 
-authors = [{name = "Jerónimo Fotinós", email = "jerofoti@gmail.com"}, {name = "Alejandro Rojas", email = "alexrojas@ciencias.unam.mx"}, {name = "Nicola Maddalozzo", email = "nicolamaddalozzo95@gmail.com"}, {name="Martín Rodríguez Núñez", email="martinrnu@gmail.com"}]
+authors = [{name = "Jerónimo Fotinós", email = "jerofoti@gmail.com"}, {name = "Alejandro Rojas", email = "alexrojas@ciencias.unam.mx"}, {name = "Nicola Maddalozzo", email = "nicolamaddalozzo95@gmail.com"}]
 
 readme = "README.md"
 
