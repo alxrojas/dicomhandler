@@ -23,6 +23,7 @@ dependencies = [
     "pandas",
     "xlsxwriter",
     "pydicom",
+    "openpyxl",
 ]
 # copy y warnings están built-in aparentemente (i.e. no hay que importarlas)
 
