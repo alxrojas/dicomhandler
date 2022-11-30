@@ -1,11 +1,8 @@
 from dicomhandler.dicom_info import Dicominfo
 
-import pydicom
 from pydicom.multival import MultiValue
 
 import pytest
-
-
 
 
 @pytest.mark.parametrize(

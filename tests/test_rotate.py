@@ -2,12 +2,9 @@ from contextlib import nullcontext as does_not_raise
 
 from dicomhandler.dicom_info import Dicominfo
 
-import pydicom
 from pydicom.multival import MultiValue
 
 import pytest
-
-
 
 
 @pytest.mark.parametrize(
@@ -133,7 +130,6 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
             "cubo",
             200.0,
             "yaw",
-         
             MultiValue(float, [0.0, 0.0, 0.0]),
             does_not_raise(),
         ),
@@ -141,7 +137,6 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
             "cubo",
             200.0,
             "yaw",
-          
             MultiValue(float, [0.0, 0.0, 0.0, 1]),
             pytest.raises(ValueError),
         ),
@@ -149,7 +144,6 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
             "cubo",
             200.0,
             "yaw",
-      
             MultiValue(float, [0.0, 1.0, 0.0, 2]),
             pytest.raises(ValueError),
         ),
@@ -168,21 +162,18 @@ def test_rotate_input_origin(struct, angle, key, patient_1, origin, expected):
             "punto",
             90,
             "roll",
-
             MultiValue(float, [1.0, -1.00000267, 0.99999533]),
         ),
         (
             "punto",
             90,
             "yaw",
-     
             MultiValue(float, [-1.00000267, 0.99999533, 1]),
         ),
         (
             "punto",
             90,
             "pitch",
-   
             MultiValue(float, [0.99999533, 1.0, -1.00000267]),
         ),
     ],

@@ -1,48 +1,6 @@
 import copy
-from unittest.mock import Mock
-
-from dicomhandler.dicom_info import Dicominfo
 
 import pytest
-
-
-# pydicom mocks
-
-m2 = Mock()
-m2.PatientName = "Mike Wazowski"
-m2.PatientID = "00"
-m2.PatientBirthDate = "20000102"
-m2.OperatorsName = "Myself"
-m2.InstanceCreationDate = "20220101"
-m2.Modality = "RTPLAN"
-
-m3 = Mock()
-m3.PatientName = "Mike Wazowski"
-m3.PatientID = "00"
-m3.PatientBirthDate = "20000102"
-m3.OperatorsName = "Myself"
-m3.InstanceCreationDate = "20220101"
-m3.Modality = "RTDOSE"
-
-m4 = Mock()
-m4.PatientName = "Mike Wazowski"
-m4.PatientID = "00"
-m4.PatientBirthDate = "20000102"
-m4.OperatorsName = "Myself"
-m4.InstanceCreationDate = "20220101"
-m4.Modality = "RTSTRUCT"
-
-
-# dicominfo mocks
-
-d1 = Dicominfo()
-d2 = Dicominfo(m2)
-d3 = Dicominfo(m3)
-d4 = Dicominfo(m4)
-d5 = Dicominfo(m2, m3)
-d6 = Dicominfo(m3, m4)
-d7 = Dicominfo(m4, m2)
-d8 = Dicominfo(m2, m3, m4)
 
 
 @pytest.mark.filterwarnings("ignore:anonymize")
@@ -50,18 +8,21 @@ d8 = Dicominfo(m2, m3, m4)
 @pytest.mark.parametrize("patient_birth_date", [True, False])
 @pytest.mark.parametrize("operators_name", [True, False])
 @pytest.mark.parametrize("instance_creation_date", [True, False])
-@pytest.mark.parametrize("di", [d1, d2, d3, d4, d5, d6, d7, d8])
+@pytest.mark.parametrize(
+    "di", ["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"]
+)
 def test_anonymize(
     di,
     patient_name,
     patient_birth_date,
     operators_name,
     instance_creation_date,
+    request,
 ):
 
-    di_original = copy.deepcopy(di)
+    di_original = copy.deepcopy(request.getfixturevalue(di))
 
-    di = di.anonymize(
+    di = request.getfixturevalue(di).anonymize(
         name=patient_name,
         birth=patient_birth_date,
         operator=operators_name,
@@ -179,7 +140,7 @@ def test_anonymize(
             )
 
 
-def test_anonymize_warning():
+def test_anonymize_warning(request):
     with pytest.warns(UserWarning):
-        di = Dicominfo()
+        di = request.getfixturevalue("d1")
         di.anonymize()

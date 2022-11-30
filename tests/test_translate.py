@@ -2,7 +2,6 @@ from contextlib import nullcontext as does_not_raise
 
 from dicomhandler.dicom_info import Dicominfo
 
-import pydicom
 from pydicom.multival import MultiValue
 
 import pytest
@@ -35,7 +34,9 @@ def test_translate_input_struct(struct, delta, key, expected, patient_1):
         ("cubo", 200.0, "x", [0.0, 1.0, 0.0], does_not_raise()),
     ],
 )
-def test_translate_input_par_args(struct, delta, key, args, expected, patient_1):
+def test_translate_input_par_args(
+    struct, delta, key, args, expected, patient_1
+):
     with expected:
         dicom_info1 = Dicominfo(patient_1)
         dicom_info1.translate(struct, delta, key, args)
@@ -91,7 +92,6 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 0.0, 0.0]),
             does_not_raise(),
         ),
@@ -99,7 +99,6 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 0.0, 0.0, 1]),
             pytest.raises(ValueError),
         ),
@@ -107,13 +106,14 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 1.0, 0.0, 2]),
             pytest.raises(ValueError),
         ),
     ],
 )
-def test_translate_input_origin(struct, delta, key, patient_1, origin, expected):
+def test_translate_input_origin(
+    struct, delta, key, patient_1, origin, expected
+):
     with expected:
         dicom_info2 = Dicominfo(patient_1)
         dicom_info2.translate(struct, delta, key, origin)
@@ -130,7 +130,9 @@ def test_translate_input_origin(struct, delta, key, patient_1, origin, expected)
         ("space", 200, 0, -200, "z"),
     ],
 )
-def test_translate_space(struct, delta1, delta2, delta3, key, patient_1, *args):
+def test_translate_space(
+    struct, delta1, delta2, delta3, key, patient_1, *args
+):
     dicom_info = Dicominfo(patient_1)
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
