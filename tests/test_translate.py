@@ -1,8 +1,5 @@
 from contextlib import nullcontext as does_not_raise
 
-from dicomhandler.dicom_info import Dicominfo
-
-import pydicom
 from pydicom.multival import MultiValue
 
 import pytest
@@ -21,9 +18,9 @@ import pytest
         ("cubo", 200.1, "x", does_not_raise()),
     ],
 )
-def test_translate_input_struct(struct, delta, key, expected, patient_1):
+def test_translate_input_struct(dicom_infos, struct, delta, key, expected):
     with expected:
-        dicom_info1 = Dicominfo(patient_1)
+        dicom_info1 = dicom_infos("patient_1.gz")
         dicom_info1.translate(struct, delta, key)
 
 
@@ -35,9 +32,11 @@ def test_translate_input_struct(struct, delta, key, expected, patient_1):
         ("cubo", 200.0, "x", [0.0, 1.0, 0.0], does_not_raise()),
     ],
 )
-def test_translate_input_par_args(struct, delta, key, args, expected, patient_1):
+def test_translate_input_par_args(
+    dicom_infos, struct, delta, key, args, expected
+):
     with expected:
-        dicom_info1 = Dicominfo(patient_1)
+        dicom_info1 = dicom_infos("patient_1.gz")
         dicom_info1.translate(struct, delta, key, args)
 
 
@@ -49,15 +48,22 @@ def test_translate_input_par_args(struct, delta, key, args, expected, patient_1)
         ("punto", 0.0, "z"),
     ],
 )
-def test_translate_punto_0_360(struct, delta, key, patient_1, *args):
-    dicom_info1 = Dicominfo(patient_1)
+def test_translate_punto_0_360(
+    patients, dicom_infos, struct, delta, key, *args
+):
+    dicom_info1 = dicom_infos("patient_1.gz")
     x = (
         dicom_info1.translate(struct, delta, key)
         .dicom_struct.ROIContourSequence[1]
         .ContourSequence[0]
         .ContourData
     )
-    y = patient_1.ROIContourSequence[1].ContourSequence[0].ContourData
+    y = (
+        patients("patient_1.gz")
+        .ROIContourSequence[1]
+        .ContourSequence[0]
+        .ContourData
+    )
     assert len(x) == len(y)
     assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
 
@@ -70,8 +76,10 @@ def test_translate_punto_0_360(struct, delta, key, patient_1, *args):
         ("cubo", 0.0, "z"),
     ],
 )
-def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
-    dicom_info = Dicominfo(patient_1)
+def test_translate_cubo_0_360(
+    dicom_infos, patients, struct, delta, key, *args
+):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
             dicom_info.translate(struct, delta, key)
@@ -79,7 +87,12 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             .ContourSequence[i]
             .ContourData
         )
-        y = patient_1.ROIContourSequence[0].ContourSequence[i].ContourData
+        y = (
+            patients("patient_1.gz")
+            .ROIContourSequence[0]
+            .ContourSequence[i]
+            .ContourData
+        )
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
 
@@ -91,7 +104,6 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 0.0, 0.0]),
             does_not_raise(),
         ),
@@ -99,7 +111,6 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 0.0, 0.0, 1]),
             pytest.raises(ValueError),
         ),
@@ -107,15 +118,16 @@ def test_translate_cubo_0_360(struct, delta, key, patient_1, *args):
             "cubo",
             200.0,
             "z",
-            
             MultiValue(float, [0.0, 1.0, 0.0, 2]),
             pytest.raises(ValueError),
         ),
     ],
 )
-def test_translate_input_origin(struct, delta, key, patient_1, origin, expected):
+def test_translate_input_origin(
+    dicom_infos, struct, delta, key, origin, expected
+):
     with expected:
-        dicom_info2 = Dicominfo(patient_1)
+        dicom_info2 = dicom_infos("patient_1.gz")
         dicom_info2.translate(struct, delta, key, origin)
 
 
@@ -130,8 +142,10 @@ def test_translate_input_origin(struct, delta, key, patient_1, origin, expected)
         ("space", 200, 0, -200, "z"),
     ],
 )
-def test_translate_space(struct, delta1, delta2, delta3, key, patient_1, *args):
-    dicom_info = Dicominfo(patient_1)
+def test_translate_space(
+    dicom_infos, patients, struct, delta1, delta2, delta3, key, *args
+):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
             dicom_info.translate(struct, delta1, key)
@@ -141,7 +155,12 @@ def test_translate_space(struct, delta1, delta2, delta3, key, patient_1, *args):
             .ContourSequence[i]
             .ContourData
         )
-        y = patient_1.ROIContourSequence[1].ContourSequence[i].ContourData
+        y = (
+            patients("patient_1.gz")
+            .ROIContourSequence[1]
+            .ContourSequence[i]
+            .ContourData
+        )
         assert len(x) == len(y)
         assert all([abs(xi - yi) <= 0.00000001 for xi, yi in zip(x, y)])
 
@@ -154,8 +173,8 @@ def test_translate_space(struct, delta1, delta2, delta3, key, patient_1, *args):
         ("punto", 1, "z", MultiValue(float, [1.0, 1.0, 2.0])),
     ],
 )
-def test_rotate_punto(struct, delta, key, patient_1, expected):
-    dicom_info = Dicominfo(patient_1)
+def test_translate_punto(dicom_infos, struct, delta, key, expected):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[2])):
         x = (
             dicom_info.translate(struct, delta, key)

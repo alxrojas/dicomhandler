@@ -1,170 +1,259 @@
-import pydicom
-from pydicom.multival import MultiValue
+import os
+import pathlib
+from unittest.mock import Mock
+
+from dicomhandler.dicom_info import Dicominfo
+
+import joblib
+
 import pytest
 
 
+PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
+DATA_PATH = PATH / "data"
+
+
+@pytest.fixture(scope="session")
+def dicom_infos():
+    def make(name):
+
+        return Dicominfo(joblib.load(DATA_PATH / name))
+
+    return make
+
+
+@pytest.fixture(scope="session")
+def patients():
+    def make(name):
+        return joblib.load(DATA_PATH / name)
+
+    return make
+
+
 @pytest.fixture()
-def patient_1():
-    patient = pydicom.dataset.Dataset()
-    patient.PatientName = "mario rossi"
-    patient.PatientID = "3"
-    patient.PatientBirthDate = "20000101"
-    patient.OperatorsName = "guido rossi"
-    patient.InstanceCreationDate = "20200101"
-    patient.Modality = "RTSTRUCT"
+def dicom_info_empty():
+    d1 = Dicominfo()
+    return d1
 
 
-    # pydicom.StructureROISequence[0].ROIName
-    ds_seq_struct_1 = pydicom.dataset.Dataset()
-    ds_seq_struct_2 = pydicom.dataset.Dataset()
-    ds_seq_struct_3 = pydicom.dataset.Dataset()
-    ds_seq_struct_4 = pydicom.dataset.Dataset()
-    ds_seq_struct_5 = pydicom.dataset.Dataset()
-    ds_seq_struct_1.ROIName = "cubo"
-    ds_seq_struct_2.ROIName = "space"
-    ds_seq_struct_3.ROIName = "punto"
-    ds_seq_struct_4.ROIName = "error"
-    ds_seq_struct_5.ROIName = "Coord 1"
-    patient.StructureSetROISequence = [
-        ds_seq_struct_1,
-        ds_seq_struct_2,
-        ds_seq_struct_3,
-        ds_seq_struct_4,
-        ds_seq_struct_5,
-    ]
-
-
-    # patient.ROIContourSequence[0].ContourSequence[0].ContourData
-    ds_seq_cont_1 = pydicom.dataset.Dataset()
-
-    origin = pydicom.dataset.Dataset()
-    pyd_corte_1_cubo = pydicom.dataset.Dataset()
-    pyd_corte_2_cubo = pydicom.dataset.Dataset()
-    pyd_corte_3_cubo = pydicom.dataset.Dataset()
-    pyd_corte_4_cubo = pydicom.dataset.Dataset()
-    pyd_corte_1_space = pydicom.dataset.Dataset()
-    pyd_corte_2_space = pydicom.dataset.Dataset()
-    pyd_corte_3_space = pydicom.dataset.Dataset()
-    pyd_corte_1_punto = pydicom.dataset.Dataset()
-    pyd_corte_1_error = pydicom.dataset.Dataset()
-    ds_vect_iso = pydicom.dataset.Dataset()
-
-    corte_1_cubo = [0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 2.0, 0.0]
-    corte_2_cubo = [0.0, 0.0, 0.3, 2.0, 0.0, 0.3, 2.0, 2.0, 0.3, 0.0, 2.0, 0.3]
-    corte_3_cubo = [0.0, 0.0, 0.6, 2.0, 0.0, 0.6, 2.0, 2.0, 0.6, 0.0, 2.0, 0.6]
-    corte_4_cubo = [0.0, 0.0, 1.2, 2.0, 0.0, 1.2, 2.0, 2.0, 1.2, 0.0, 2.0, 1.2]
-    corte_1_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
-    corte_2_space = [1.2, 1.3, 1.5, 1.2, 7, 1.5, 1.2, 10, 1.5]
-    corte_3_space = [1.2, 2.0, 3, 1.2, 3.0, 3, 1.2, 4.5, 3]
-    corte_1_punto = [1.0, 1.0, 1.0]
-    corte_1_error = [1, 1, 1, 2, 2, 3, 4.0]
-    iso = [0.0, 0.0, 0.0]
-    pyd_corte_1_cubo.ContourData = MultiValue(float, corte_1_cubo)
-    pyd_corte_2_cubo.ContourData = MultiValue(float, corte_2_cubo)
-    pyd_corte_3_cubo.ContourData = MultiValue(float, corte_3_cubo)
-    pyd_corte_4_cubo.ContourData = MultiValue(float, corte_4_cubo)
-    pyd_corte_1_space.ContourData = MultiValue(float, corte_1_space)
-    pyd_corte_2_space.ContourData = MultiValue(float, corte_2_space)
-    pyd_corte_3_space.ContourData = MultiValue(float, corte_3_space)
-    pyd_corte_1_punto.ContourData = MultiValue(float, corte_1_punto)
-    pyd_corte_1_error.ContourData = MultiValue(float, corte_1_error)
-    ds_vect_iso.ContourData = MultiValue(float, iso)
-
-    ds_cont_struct_1 = pydicom.dataset.Dataset()
-    ds_cont_struct_2 = pydicom.dataset.Dataset()
-    ds_cont_struct_3 = pydicom.dataset.Dataset()
-    ds_cont_struct_4 = pydicom.dataset.Dataset()
-    ds_cont_struct_orig = pydicom.dataset.Dataset()
-    ds_cont_struct_1.ContourSequence = [
-        pyd_corte_1_cubo,
-        pyd_corte_2_cubo,
-        pyd_corte_3_cubo,
-        pyd_corte_4_cubo,
-    ]
-    ds_cont_struct_2.ContourSequence = [
-        pyd_corte_1_space,
-        pyd_corte_2_space,
-        pyd_corte_3_space,
-    ]
-    ds_cont_struct_3.ContourSequence = [pyd_corte_1_punto]
-    ds_cont_struct_4.ContourSequence = [pyd_corte_1_error]
-    ds_cont_struct_orig.ContourSequence = [ds_vect_iso]
-    patient.ROIContourSequence = [
-        ds_cont_struct_1,
-        ds_cont_struct_2,
-        ds_cont_struct_3,
-        ds_cont_struct_4,
-        ds_cont_struct_orig,
-    ]
-    return patient
-    
 @pytest.fixture()
-def patient_2():
-    patient = pydicom.dataset.Dataset()
-    patient.PatientName = "mario rossi"
-    patient.PatientID = "3"
-    patient.PatientBirthDate = "20000101"
-    patient.OperatorsName = "guido rossi"
-    patient.InstanceCreationDate = "20200101"
-    patient.Modality = "RTSTRUCT"
+def dicom_info_2():
+    m2 = Mock()
+    m2.PatientName = "Mike Wazowski"
+    m2.PatientID = "00"
+    m2.PatientBirthDate = "20000102"
+    m2.OperatorsName = "Myself"
+    m2.InstanceCreationDate = "20220101"
+    m2.Modality = "RTPLAN"
+    d2 = Dicominfo(m2)
+    return d2
 
-    ds_seq_struct_1 = pydicom.dataset.Dataset()
-    ds_seq_struct_2 = pydicom.dataset.Dataset()
-    ds_seq_struct_3 = pydicom.dataset.Dataset()
-    ds_seq_struct_4 = pydicom.dataset.Dataset()
-    ds_seq_struct_5 = pydicom.dataset.Dataset()
-    ds_seq_struct_6 = pydicom.dataset.Dataset()
-    ds_seq_struct_1.ROIName = "space1"
-    ds_seq_struct_2.ROIName = "space2"
-    ds_seq_struct_3.ROIName = "space3"
-    ds_seq_struct_4.ROIName = "space4"
-    ds_seq_struct_5.ROIName = "space5"
-    ds_seq_struct_6.ROIName = "space6"
-    patient.StructureSetROISequence = [
-        ds_seq_struct_1,
-        ds_seq_struct_2,
-        ds_seq_struct_3,
-        ds_seq_struct_4,
-        ds_seq_struct_5,
-        ds_seq_struct_6,
-    ]
 
-    pyd_corte_1_space1 = pydicom.dataset.Dataset()
-    pyd_corte_1_space2 = pydicom.dataset.Dataset()
-    pyd_corte_1_space3 = pydicom.dataset.Dataset()
-    pyd_corte_1_space4 = pydicom.dataset.Dataset()
-    pyd_corte_1_space5 = pydicom.dataset.Dataset()
-    pyd_corte_1_space6 = pydicom.dataset.Dataset()
-    corte_1_space1 = [0.0, 1.0, 0.0, 1.0, 0.0, 0.0]
-    corte_1_space2 = [1.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0]
-    corte_1_space3 = [1.0, 1.0, 0.0, 2.0, -1.0, 0.0, 3.0, 0.0, 0.0]
-    corte_1_space4 = [1.0, 0.0, 0.0]
-    corte_1_space5 = []
-    corte_1_space6 = [1.0, 0.0, 0.0, 1.0, 2.0, 0.0]
-    pyd_corte_1_space1.ContourData = MultiValue(float, corte_1_space1)
-    pyd_corte_1_space2.ContourData = MultiValue(float, corte_1_space2)
-    pyd_corte_1_space3.ContourData = MultiValue(float, corte_1_space3)
-    pyd_corte_1_space4.ContourData = MultiValue(float, corte_1_space4)
-    pyd_corte_1_space5.ContourData = MultiValue(float, corte_1_space5)
-    pyd_corte_1_space6.ContourData = MultiValue(float, corte_1_space6)
-    ds_cont_struct_1 = pydicom.dataset.Dataset()
-    ds_cont_struct_2 = pydicom.dataset.Dataset()
-    ds_cont_struct_3 = pydicom.dataset.Dataset()
-    ds_cont_struct_4 = pydicom.dataset.Dataset()
-    ds_cont_struct_5 = pydicom.dataset.Dataset()
-    ds_cont_struct_6 = pydicom.dataset.Dataset()
-    ds_cont_struct_1.ContourSequence = [pyd_corte_1_space1]
-    ds_cont_struct_2.ContourSequence = [pyd_corte_1_space2]
-    ds_cont_struct_3.ContourSequence = [pyd_corte_1_space3]
-    ds_cont_struct_4.ContourSequence = [pyd_corte_1_space4]
-    ds_cont_struct_5.ContourSequence = [pyd_corte_1_space5]
-    ds_cont_struct_6.ContourSequence = [pyd_corte_1_space6]
-    patient.ROIContourSequence = [
-        ds_cont_struct_1,
-        ds_cont_struct_2,
-        ds_cont_struct_3,
-        ds_cont_struct_4,
-        ds_cont_struct_5,
-        ds_cont_struct_6,
-    ]
-    return patient
+@pytest.fixture()
+def dicom_info_3():
+    m3 = Mock()
+    m3.PatientName = "Mike Wazowski"
+    m3.PatientID = "00"
+    m3.PatientBirthDate = "20000102"
+    m3.OperatorsName = "Myself"
+    m3.InstanceCreationDate = "20220101"
+    m3.Modality = "RTDOSE"
+    d3 = Dicominfo(m3)
+    return d3
+
+
+@pytest.fixture()
+def dicom_info_4():
+    m4 = Mock()
+    m4.PatientName = "Mike Wazowski"
+    m4.PatientID = "00"
+    m4.PatientBirthDate = "20000102"
+    m4.OperatorsName = "Myself"
+    m4.InstanceCreationDate = "20220101"
+    m4.Modality = "RTSTRUCT"
+    d4 = Dicominfo(m4)
+    return d4
+
+
+@pytest.fixture()
+def dicom_info_5():
+    m2 = Mock()
+    m2.PatientName = "Mike Wazowski"
+    m2.PatientID = "00"
+    m2.PatientBirthDate = "20000102"
+    m2.OperatorsName = "Myself"
+    m2.InstanceCreationDate = "20220101"
+    m2.Modality = "RTPLAN"
+    m3 = Mock()
+    m3.PatientName = "Mike Wazowski"
+    m3.PatientID = "00"
+    m3.PatientBirthDate = "20000102"
+    m3.OperatorsName = "Myself"
+    m3.InstanceCreationDate = "20220101"
+    m3.Modality = "RTDOSE"
+    d5 = Dicominfo(m2, m3)
+    return d5
+
+
+@pytest.fixture()
+def dicom_info_6():
+    m3 = Mock()
+    m3.PatientName = "Mike Wazowski"
+    m3.PatientID = "00"
+    m3.PatientBirthDate = "20000102"
+    m3.OperatorsName = "Myself"
+    m3.InstanceCreationDate = "20220101"
+    m3.Modality = "RTDOSE"
+    m4 = Mock()
+    m4.PatientName = "Mike Wazowski"
+    m4.PatientID = "00"
+    m4.PatientBirthDate = "20000102"
+    m4.OperatorsName = "Myself"
+    m4.InstanceCreationDate = "20220101"
+    m4.Modality = "RTSTRUCT"
+    d6 = Dicominfo(m3, m4)
+    return d6
+
+
+@pytest.fixture()
+def dicom_info_7():
+    m2 = Mock()
+    m2.PatientName = "Mike Wazowski"
+    m2.PatientID = "00"
+    m2.PatientBirthDate = "20000102"
+    m2.OperatorsName = "Myself"
+    m2.InstanceCreationDate = "20220101"
+    m2.Modality = "RTPLAN"
+    m4 = Mock()
+    m4.PatientName = "Mike Wazowski"
+    m4.PatientID = "00"
+    m4.PatientBirthDate = "20000102"
+    m4.OperatorsName = "Myself"
+    m4.InstanceCreationDate = "20220101"
+    m4.Modality = "RTSTRUCT"
+    d7 = Dicominfo(m4, m2)
+    return d7
+
+
+@pytest.fixture()
+def dicom_info_8():
+    m2 = Mock()
+    m2.PatientName = "Mike Wazowski"
+    m2.PatientID = "00"
+    m2.PatientBirthDate = "20000102"
+    m2.OperatorsName = "Myself"
+    m2.InstanceCreationDate = "20220101"
+    m2.Modality = "RTPLAN"
+
+    m3 = Mock()
+    m3.PatientName = "Mike Wazowski"
+    m3.PatientID = "00"
+    m3.PatientBirthDate = "20000102"
+    m3.OperatorsName = "Myself"
+    m3.InstanceCreationDate = "20220101"
+    m3.Modality = "RTDOSE"
+    m4 = Mock()
+    m4.PatientName = "Mike Wazowski"
+    m4.PatientID = "00"
+    m4.PatientBirthDate = "20000102"
+    m4.OperatorsName = "Myself"
+    m4.InstanceCreationDate = "20220101"
+    m4.Modality = "RTSTRUCT"
+    d8 = Dicominfo(m2, m3, m4)
+    return d8
+
+
+@pytest.fixture()
+def patient_mock_1():
+    m1 = Mock()
+    m1.PatientName = "Mike Wazowski"
+    m1.PatientID = "00"
+    m1.PatientBirthDate = "20000102"
+    m1.OperatorsName = "Myself"
+    m1.InstanceCreationDate = "20220101"
+    m1.Modality = ""
+    return m1
+
+
+@pytest.fixture()
+def patient_mock_2():
+    m2 = Mock()
+    m2.PatientName = "Mike Wazowski"
+    m2.PatientID = "00"
+    m2.PatientBirthDate = "20000102"
+    m2.OperatorsName = "Myself"
+    m2.InstanceCreationDate = "20220101"
+    m2.Modality = "RTPLAN"
+    return m2
+
+
+@pytest.fixture()
+def patient_mock_3():
+    m3 = Mock()
+    m3.PatientName = "Mike Wazowski"
+    m3.PatientID = "00"
+    m3.PatientBirthDate = "20000102"
+    m3.OperatorsName = "Myself"
+    m3.InstanceCreationDate = "20220101"
+    m3.Modality = "RTDOSE"
+    return m3
+
+
+@pytest.fixture()
+def patient_mock_4():
+    m4 = Mock()
+    m4.PatientName = "Mike Wazowski"
+    m4.PatientID = "00"
+    m4.PatientBirthDate = "20000102"
+    m4.OperatorsName = "Myself"
+    m4.InstanceCreationDate = "20220101"
+    m4.Modality = "RTSTRUCT"
+    return m4
+
+
+@pytest.fixture()
+def patient_mock_5():
+    m5 = Mock()
+    m5.PatientName = "Mike Wazowski"
+    m5.PatientID = "02"
+    m5.PatientBirthDate = "20000102"
+    m5.OperatorsName = "Myself"
+    m5.InstanceCreationDate = "20220101"
+    m5.Modality = "RTDOSE"
+    return m5
+
+
+@pytest.fixture()
+def patient_mock_6():
+    m6 = Mock()
+    m6.PatientName = "Mike Wazowski"
+    m6.PatientID = "00"
+    m6.PatientBirthDate = "20000102"
+    m6.OperatorsName = "Myself"
+    m6.InstanceCreationDate = "20220101"
+    m6.Modality = "RTDOSE"
+    return m6
+
+
+@pytest.fixture()
+def patient_mock_7():
+    m7 = Mock()
+    m7.PatientName = "Wazowski, Mike"
+    m7.PatientID = "00"
+    m7.PatientBirthDate = "20000102"
+    m7.OperatorsName = "Myself"
+    m7.InstanceCreationDate = "20220101"
+    m7.Modality = "RTDOSE"
+    return m7
+
+
+@pytest.fixture()
+def patient_mock_8():
+    m8 = Mock()
+    m8.PatientName = "Wazowski, Mike"
+    m8.PatientID = "00"
+    m8.PatientBirthDate = "20000101"
+    m8.OperatorsName = "Myself"
+    m8.InstanceCreationDate = "20220101"
+    m8.Modality = "RTDOSE"
+    return m8

@@ -3,13 +3,13 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# ----- Agrego la ruta para importar el paquete -------------------------------
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../.."))
-
+# ----- Agrego la ruta para importar el paquete -------------------------------
 import dicomhandler
+
+sys.path.insert(0, os.path.abspath("../.."))
 
 
 # -- Project information -----------------------------------------------------
