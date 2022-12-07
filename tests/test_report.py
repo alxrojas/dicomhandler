@@ -1,12 +1,12 @@
 from contextlib import nullcontext as does_not_raise
 
-from dicomhandler.dicom_info import Dicominfo
 from dicomhandler.report import report
 
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
 import pytest
+
 
 data1 = {
     "Parameter": [
@@ -358,83 +358,87 @@ data12 = {
 
 
 @pytest.mark.parametrize(
-    "dicom1, dicom2, name, expected",
+    "patient1, patient2, name, expected",
     [
-        ("patient_8", "patient_9", "point", does_not_raise()),
-        ("patient_8", "patient_9", "cube", does_not_raise()),
-        ("patient_8", "patient_9", "POINT", pytest.raises(ValueError)),
-        ("patient_8", "patient_10", "", pytest.raises(ValueError)),
-        ("patient_8", "patient_9", "", pytest.raises(ValueError)),
-        ("patient_8", "patient_10", "point", pytest.raises(ValueError)),
-        ("patient_8", "patient_10", "cube", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_9.gz", "point", does_not_raise()),
+        ("patient_8.gz", "patient_9.gz", "cube", does_not_raise()),
+        ("patient_8.gz", "patient_9.gz", "POINT", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_10.gz", "", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_9.gz", "", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_10.gz", "point", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_10.gz", "cube", pytest.raises(ValueError)),
     ],
 )
-def test_match_name(dicom1, dicom2, name, expected, request):
+def test_match_name(dicom_infos, patient1, patient2, name, expected, request):
     with expected:
-        original = Dicominfo(request.getfixturevalue(dicom1))
-        rotated = Dicominfo(request.getfixturevalue(dicom2))
+        original = dicom_infos(patient1)
+        rotated = dicom_infos(patient2)
         report(original, rotated, name)
 
 
 @pytest.mark.parametrize(
-    "dicom1,dicom2,name,expected",
+    "patient1,patient2,name,expected",
     [
-        ("patient_8", "patient_9", "point", does_not_raise()),
-        ("patient_8", "patient_9", "cube", does_not_raise()),
-        ("patient_8", "patient_11", "point", pytest.raises(ValueError)),
-        ("patient_8", "patient_12", "cube", pytest.raises(ValueError)),
-        ("patient_8", "patient_13", "cube", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_9.gz", "point", does_not_raise()),
+        ("patient_8.gz", "patient_9.gz", "cube", does_not_raise()),
+        ("patient_8.gz", "patient_11.gz", "point", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_12.gz", "cube", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_13.gz", "cube", pytest.raises(ValueError)),
     ],
 )
-def test_length_contours(dicom1, dicom2, name, expected, request):
+def test_length_contours(
+    dicom_infos, patient1, patient2, name, expected, request
+):
     with expected:
-        original = Dicominfo(request.getfixturevalue(dicom1))
-        rotated = Dicominfo(request.getfixturevalue(dicom2))
+        original = dicom_infos(patient1)
+        rotated = dicom_infos(patient2)
         report(original, rotated, name)
 
 
 @pytest.mark.parametrize(
-    "dicom1,dicom2, dataframe, name",
+    "patient1, patient2, dataframe, name",
     [
-        ("patient_8", "patient_8", data1, "point"),
-        ("patient_8", "patient_9", data1, "point"),
-        ("patient_8", "patient_9", data2, "cube"),
-        ("patient_8", "patient_8", data2, "cube"),
+        ("patient_8.gz", "patient_8.gz", data1, "point"),
+        ("patient_8.gz", "patient_9.gz", data1, "point"),
+        ("patient_8.gz", "patient_9.gz", data2, "cube"),
+        ("patient_8.gz", "patient_8.gz", data2, "cube"),
     ],
 )
-def test_dataframe(dicom1, dicom2, dataframe, name, request):
-    original = Dicominfo(request.getfixturevalue(dicom1))
-    rotated = Dicominfo(request.getfixturevalue(dicom2))
+def test_dataframe(dicom_infos, patient1, patient2, dataframe, name, request):
+    original = dicom_infos(patient1)
+    rotated = dicom_infos(patient2)
     df1 = report(original, rotated, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
 
 
 @pytest.mark.parametrize(
-    "dicom1, dataframe, name, delta, key",
+    "patient1, dataframe, name, delta, key",
     [
-        ("patient_8", data3, "point", 1.0, "x"),
-        ("patient_8", data3, "point", 1.0, "y"),
-        ("patient_8", data3, "point", 1.0, "z"),
-        ("patient_8", data3, "point", -1.0, "x"),
-        ("patient_8", data3, "point", -1.0, "y"),
-        ("patient_8", data3, "point", -1.0, "z"),
-        ("patient_8", data1, "point", 0.0, "x"),
-        ("patient_8", data1, "point", 0.0, "y"),
-        ("patient_8", data1, "point", 0.0, "z"),
-        ("patient_8", data4, "cube", 1.0, "x"),
-        ("patient_8", data4, "cube", 1.0, "y"),
-        ("patient_8", data4, "cube", 1.0, "z"),
-        ("patient_8", data4, "cube", -1.0, "x"),
-        ("patient_8", data4, "cube", -1.0, "y"),
-        ("patient_8", data4, "cube", -1.0, "z"),
-        ("patient_8", data2, "cube", 0.0, "x"),
-        ("patient_8", data2, "cube", 0.0, "y"),
-        ("patient_8", data2, "cube", 0.0, "z"),
+        ("patient_8.gz", data3, "point", 1.0, "x"),
+        ("patient_8.gz", data3, "point", 1.0, "y"),
+        ("patient_8.gz", data3, "point", 1.0, "z"),
+        ("patient_8.gz", data3, "point", -1.0, "x"),
+        ("patient_8.gz", data3, "point", -1.0, "y"),
+        ("patient_8.gz", data3, "point", -1.0, "z"),
+        ("patient_8.gz", data1, "point", 0.0, "x"),
+        ("patient_8.gz", data1, "point", 0.0, "y"),
+        ("patient_8.gz", data1, "point", 0.0, "z"),
+        ("patient_8.gz", data4, "cube", 1.0, "x"),
+        ("patient_8.gz", data4, "cube", 1.0, "y"),
+        ("patient_8.gz", data4, "cube", 1.0, "z"),
+        ("patient_8.gz", data4, "cube", -1.0, "x"),
+        ("patient_8.gz", data4, "cube", -1.0, "y"),
+        ("patient_8.gz", data4, "cube", -1.0, "z"),
+        ("patient_8.gz", data2, "cube", 0.0, "x"),
+        ("patient_8.gz", data2, "cube", 0.0, "y"),
+        ("patient_8.gz", data2, "cube", 0.0, "z"),
     ],
 )
-def test_translations(dicom1, dataframe, name, delta, key, request):
-    original = Dicominfo(request.getfixturevalue(dicom1))
+def test_translations(
+    dicom_infos, patient1, dataframe, name, delta, key, request
+):
+    original = dicom_infos(patient1)
     translated = original.translate(name, delta, key)
     df1 = report(original, translated, name)
     df2 = pd.DataFrame(dataframe)
@@ -442,36 +446,38 @@ def test_translations(dicom1, dataframe, name, delta, key, request):
 
 
 @pytest.mark.parametrize(
-    "dicom1, dataframe, name, angle, key",
+    "patient1, dataframe, name, angle, key",
     [
-        ("patient_8", data1, "point", 0.0, "roll"),
-        ("patient_8", data1, "point", 0.0, "pitch"),
-        ("patient_8", data1, "point", 0.0, "yaw"),
-        ("patient_8", data1, "point", 359.99, "roll"),
-        ("patient_8", data1, "point", 359.99, "pitch"),
-        ("patient_8", data1, "point", 359.99, "yaw"),
-        ("patient_8", data5, "point", 90.0, "roll"),
-        ("patient_8", data5, "point", 90.0, "pitch"),
-        ("patient_8", data5, "point", 90.0, "yaw"),
-        ("patient_8", data5, "point", -90.0, "roll"),
-        ("patient_8", data5, "point", -90.0, "pitch"),
-        ("patient_8", data5, "point", -90.0, "yaw"),
-        ("patient_8", data2, "cube", 0.0, "roll"),
-        ("patient_8", data2, "cube", 0.0, "pitch"),
-        ("patient_8", data2, "cube", 0.0, "yaw"),
-        ("patient_8", data2, "cube", 359.99, "roll"),
-        ("patient_8", data2, "cube", 359.99, "pitch"),
-        ("patient_8", data2, "cube", 359.99, "yaw"),
-        ("patient_8", data6, "cube", 90.0, "roll"),
-        ("patient_8", data6, "cube", 90.0, "pitch"),
-        ("patient_8", data7, "cube", 90.0, "yaw"),
-        ("patient_8", data6, "cube", -90.0, "roll"),
-        ("patient_8", data6, "cube", -90.0, "pitch"),
-        ("patient_8", data7, "cube", -90.0, "yaw"),
+        ("patient_8.gz", data1, "point", 0.0, "roll"),
+        ("patient_8.gz", data1, "point", 0.0, "pitch"),
+        ("patient_8.gz", data1, "point", 0.0, "yaw"),
+        ("patient_8.gz", data1, "point", 359.99, "roll"),
+        ("patient_8.gz", data1, "point", 359.99, "pitch"),
+        ("patient_8.gz", data1, "point", 359.99, "yaw"),
+        ("patient_8.gz", data5, "point", 90.0, "roll"),
+        ("patient_8.gz", data5, "point", 90.0, "pitch"),
+        ("patient_8.gz", data5, "point", 90.0, "yaw"),
+        ("patient_8.gz", data5, "point", -90.0, "roll"),
+        ("patient_8.gz", data5, "point", -90.0, "pitch"),
+        ("patient_8.gz", data5, "point", -90.0, "yaw"),
+        ("patient_8.gz", data2, "cube", 0.0, "roll"),
+        ("patient_8.gz", data2, "cube", 0.0, "pitch"),
+        ("patient_8.gz", data2, "cube", 0.0, "yaw"),
+        ("patient_8.gz", data2, "cube", 359.99, "roll"),
+        ("patient_8.gz", data2, "cube", 359.99, "pitch"),
+        ("patient_8.gz", data2, "cube", 359.99, "yaw"),
+        ("patient_8.gz", data6, "cube", 90.0, "roll"),
+        ("patient_8.gz", data6, "cube", 90.0, "pitch"),
+        ("patient_8.gz", data7, "cube", 90.0, "yaw"),
+        ("patient_8.gz", data6, "cube", -90.0, "roll"),
+        ("patient_8.gz", data6, "cube", -90.0, "pitch"),
+        ("patient_8.gz", data7, "cube", -90.0, "yaw"),
     ],
 )
-def test_rotations(dicom1, dataframe, name, angle, key, request):
-    original = Dicominfo(request.getfixturevalue(dicom1))
+def test_rotations(
+    dicom_infos, patient1, dataframe, name, angle, key, request
+):
+    original = dicom_infos(patient1)
     rotated = original.rotate(name, angle, key)
     df1 = report(original, rotated, name)
     df2 = pd.DataFrame(dataframe)
@@ -479,17 +485,17 @@ def test_rotations(dicom1, dataframe, name, angle, key, request):
 
 
 @pytest.mark.parametrize(
-    "dicom1, dataframe, name, angle, key1, key2",
+    "patient1, dataframe, name, angle, key1, key2",
     [
-        ("patient_8", data8, "point", 90.0, "roll", "pitch"),
-        ("patient_8", data9, "point", 90.0, "roll", "yaw"),
-        ("patient_8", data10, "point", 90.0, "pitch", "yaw"),
+        ("patient_8.gz", data8, "point", 90.0, "roll", "pitch"),
+        ("patient_8.gz", data9, "point", 90.0, "roll", "yaw"),
+        ("patient_8.gz", data10, "point", 90.0, "pitch", "yaw"),
     ],
 )
 def test_cumulated_rotations(
-    dicom1, dataframe, name, angle, key1, key2, request
+    dicom_infos, patient1, dataframe, name, angle, key1, key2, request
 ):
-    original = Dicominfo(request.getfixturevalue(dicom1))
+    original = dicom_infos(patient1)
     rotated = original.rotate(name, angle, key1)
     rotated2 = rotated.rotate(name, angle, key2)
     df1 = report(original, rotated2, name)
@@ -498,17 +504,17 @@ def test_cumulated_rotations(
 
 
 @pytest.mark.parametrize(
-    "dicom1, dataframe, name, delta, key1, key2",
+    "patient1, dataframe, name, delta, key1, key2",
     [
-        ("patient_8", data11, "point", 1.0, "x", "y"),
-        ("patient_8", data11, "point", 1.0, "x", "z"),
-        ("patient_8", data11, "point", 1.0, "z", "y"),
+        ("patient_8.gz", data11, "point", 1.0, "x", "y"),
+        ("patient_8.gz", data11, "point", 1.0, "x", "z"),
+        ("patient_8.gz", data11, "point", 1.0, "z", "y"),
     ],
 )
 def test_cumulated_translations(
-    dicom1, dataframe, name, delta, key1, key2, request
+    dicom_infos, patient1, dataframe, name, delta, key1, key2, request
 ):
-    original = Dicominfo(request.getfixturevalue(dicom1))
+    original = dicom_infos(patient1)
     translated = original.translate(name, delta, key1)
     translated2 = translated.translate(name, delta, key2)
     df1 = report(original, translated2, name)
@@ -517,14 +523,14 @@ def test_cumulated_translations(
 
 
 @pytest.mark.parametrize(
-    "dicom1, dataframe, name, margin",
+    "patient1, dataframe, name, margin",
     [
-        ("patient_8", data12, "cube", 1.0),
-        ("patient_8", data12, "cube", -1.0),
+        ("patient_8.gz", data12, "cube", 1.0),
+        ("patient_8.gz", data12, "cube", -1.0),
     ],
 )
-def test_margins(dicom1, dataframe, name, margin, request):
-    original = Dicominfo(request.getfixturevalue(dicom1))
+def test_margins(dicom_infos, patient1, dataframe, name, margin, request):
+    original = dicom_infos(patient1)
     expanded = original.add_margin(name, margin)
     df1 = report(original, expanded, name)
     df2 = pd.DataFrame(dataframe)

@@ -1,5 +1,3 @@
-from dicomhandler.dicom_info import Dicominfo
-
 from pydicom.multival import MultiValue
 
 import pytest
@@ -14,9 +12,9 @@ import pytest
         ("space1", 1, pytest.raises(TypeError)),
     ],
 )
-def test_add_margin_cont(struct, margin, patient_2, expected):
+def test_add_margin_cont(dicom_infos, struct, margin, expected):
     with expected:
-        dicom_info1 = Dicominfo(patient_2)
+        dicom_info1 = dicom_infos("patient_2.gz")
         dicom_info1.add_margin(struct, margin)
 
 
@@ -90,8 +88,8 @@ def test_add_margin_cont(struct, margin, patient_2, expected):
         ),
     ],
 )
-def test_add_margin(struct, margin, index, expected, patient_2):
-    dicom_info1 = Dicominfo(patient_2)
+def test_add_margin(dicom_infos, struct, margin, index, expected):
+    dicom_info1 = dicom_infos("patient_2.gz")
     x = (
         dicom_info1.add_margin(struct, margin)
         .dicom_struct.ROIContourSequence[index]

@@ -1,7 +1,5 @@
 from contextlib import nullcontext as does_not_raise
 
-from dicomhandler.dicom_info import Dicominfo
-
 from pydicom.multival import MultiValue
 
 import pytest
@@ -20,9 +18,9 @@ import pytest
         ("cubo", 200.1, "yaw", does_not_raise()),
     ],
 )
-def test_rotate_input_struct(struct, angle, key, expected, patient_1):
+def test_rotate_input_struct(dicom_infos, struct, angle, key, expected):
     with expected:
-        dicom_info1 = Dicominfo(patient_1)
+        dicom_info1 = dicom_infos("patient_1.gz")
         dicom_info1.rotate(struct, angle, key)
 
 
@@ -35,9 +33,11 @@ def test_rotate_input_struct(struct, angle, key, expected, patient_1):
         ("cubo", 200.0, "yaw", [0.0, 1.0, 0.0, 2], pytest.raises(ValueError)),
     ],
 )
-def test_rotate_input_par_args(struct, angle, key, args, expected, patient_1):
+def test_rotate_input_par_args(
+    dicom_infos, struct, angle, key, args, expected
+):
     with expected:
-        dicom_info1 = Dicominfo(patient_1)
+        dicom_info1 = dicom_infos("patient_1.gz")
         dicom_info1.rotate(struct, angle, key, args)
 
 
@@ -52,15 +52,20 @@ def test_rotate_input_par_args(struct, angle, key, args, expected, patient_1):
         ("punto", 0.0, "roll"),
     ],
 )
-def test_rotate_punto_0_360(struct, angle, key, patient_1, *args):
-    dicom_info1 = Dicominfo(patient_1)
+def test_rotate_punto_0_360(dicom_infos, patients, struct, angle, key, *args):
+    dicom_info1 = dicom_infos("patient_1.gz")
     x = (
         dicom_info1.rotate(struct, angle, key)
         .dicom_struct.ROIContourSequence[1]
         .ContourSequence[0]
         .ContourData
     )
-    y = patient_1.ROIContourSequence[1].ContourSequence[0].ContourData
+    y = (
+        patients("patient_1.gz")
+        .ROIContourSequence[1]
+        .ContourSequence[0]
+        .ContourData
+    )
     print(x)
     print(y)
     assert len(x) == len(y)
@@ -78,8 +83,8 @@ def test_rotate_punto_0_360(struct, angle, key, patient_1, *args):
         ("cubo", 0.0, "roll"),
     ],
 )
-def test_rotate_cubo_0_360(struct, angle, key, patient_1, *args):
-    dicom_info = Dicominfo(patient_1)
+def test_rotate_cubo_0_360(dicom_infos, patients, struct, angle, key, *args):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
             dicom_info.rotate(struct, angle, key)
@@ -87,7 +92,12 @@ def test_rotate_cubo_0_360(struct, angle, key, patient_1, *args):
             .ContourSequence[i]
             .ContourData
         )
-        y = patient_1.ROIContourSequence[0].ContourSequence[i].ContourData
+        y = (
+            patients("patient_1.gz")
+            .ROIContourSequence[0]
+            .ContourSequence[i]
+            .ContourData
+        )
         print(x)
         print(y)
         assert len(x) == len(y)
@@ -105,8 +115,10 @@ def test_rotate_cubo_0_360(struct, angle, key, patient_1, *args):
         ("space", 200, 0, -200, "roll"),
     ],
 )
-def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
-    dicom_info = Dicominfo(patient_1)
+def test_rotate_space(
+    dicom_infos, patients, struct, angle1, angle2, angle3, key, *args
+):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[1])):
         x = (
             dicom_info.rotate(struct, angle1, key)
@@ -116,7 +128,12 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
             .ContourSequence[i]
             .ContourData
         )
-        y = patient_1.ROIContourSequence[1].ContourSequence[i].ContourData
+        y = (
+            patients("patient_1.gz")
+            .ROIContourSequence[1]
+            .ContourSequence[i]
+            .ContourData
+        )
         print(x)
         print(y)
         assert len(x) == len(y)
@@ -149,9 +166,11 @@ def test_rotate_space(struct, angle1, angle2, angle3, key, patient_1, *args):
         ),
     ],
 )
-def test_rotate_input_origin(struct, angle, key, patient_1, origin, expected):
+def test_rotate_input_origin(
+    dicom_infos, struct, angle, key, origin, expected
+):
     with expected:
-        dicom_info2 = Dicominfo(patient_1)
+        dicom_info2 = dicom_infos("patient_1.gz")
         dicom_info2.rotate(struct, angle, key, origin)
 
 
@@ -178,8 +197,8 @@ def test_rotate_input_origin(struct, angle, key, patient_1, origin, expected):
         ),
     ],
 )
-def test_rotate_punto(struct, angle, key, patient_1, expected):
-    dicom_info = Dicominfo(patient_1)
+def test_rotate_punto(dicom_infos, struct, angle, key, expected):
+    dicom_info = dicom_infos("patient_1.gz")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[2])):
         x = (
             dicom_info.rotate(struct, angle, key)

@@ -23,7 +23,7 @@ dependencies = [
     "pandas",
     "xlsxwriter",
     "pydicom",
-]
+ ]
 # copy y warnings están built-in aparentemente (i.e. no hay que importarlas)
 
 requires-python = ">=3.7"

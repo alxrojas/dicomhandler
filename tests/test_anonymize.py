@@ -9,7 +9,17 @@ import pytest
 @pytest.mark.parametrize("operators_name", [True, False])
 @pytest.mark.parametrize("instance_creation_date", [True, False])
 @pytest.mark.parametrize(
-    "di", ["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"]
+    "di",
+    [
+        "dicom_info_empty",
+        "dicom_info_2",
+        "dicom_info_3",
+        "dicom_info_4",
+        "dicom_info_5",
+        "dicom_info_6",
+        "dicom_info_7",
+        "dicom_info_8",
+    ],
 )
 def test_anonymize(
     di,
@@ -142,5 +152,5 @@ def test_anonymize(
 
 def test_anonymize_warning(request):
     with pytest.warns(UserWarning):
-        di = request.getfixturevalue("d1")
+        di = request.getfixturevalue("dicom_info_empty")
         di.anonymize()
