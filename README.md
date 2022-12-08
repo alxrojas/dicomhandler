@@ -1,12 +1,5 @@
 <h1 align="center"> dicom2handle </h1>
 
-<h4 align="center">
-:construction: Project in development. Men at work :construction:
-</h4>
-
-![Badge Development](https://img.shields.io/badge/STATUS-DEVELOPMENT-green)
-![GitHub Org's stars](https://img.shields.io/github/stars/alxrojas?style=social)
-
 Python tool for integrating [DICOM](https://www.dicomstandard.org/) information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new DICOM files with this information, which are compatible with the commercial systems of treatment planning such as [Eclipse](https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse) and [Brainlab Elements](https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/). It is possible to extract the information from the structures in an easy "excelable" form.
 
 
@@ -16,7 +9,11 @@ Python tool for integrating [DICOM](https://www.dicomstandard.org/) information 
 
 - `anonymize`: In many cases, it is important to anonymize the patient's information for research and statistics. `anonymize` method allows to overwrite the name, birthdate of the patient, the operator's name and the creation of the plan.
 
-- `to_excel`: The information of the cartesian coordinates (relative positions) for all or some structures is extracted in an .xlsx file for posprocessing.
+- `structure_to_excel`: The information of the cartesian coordinates (relative positions) for all or some structures is extracted in an .xlsx file for posprocessing.
+
+- `mlc_to_excel`: The information of MLC positions, checkpoints, gantry angles, gantry direction and table angle for all beams are extracted in an .xlsx file for posprocessing.
+
+- `info_to_dataframe`: The information of plan and structures for targets. The information includes the prescribed dose, the center of mass, the dose received in a reference point, the distance to isocenter, the maximum, minimum and mean radius for each target in a dataframe.
 
 - `rotate`: You can rotate an arbritrary structure (organ at risk, lesion or support structure) in any of the 3 degrees of freedom [(roll, pitch or yaw)](https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll) with the angle (in grades) of your choice. **Additional advantage: You can accumulate rotations and traslations to study any combination.**
 
@@ -98,11 +95,33 @@ An .xlsx file is generated in the current directory with the information on the 
 
 ⚠️ 🐢 For all structures this process takes several minutes (for 40 structures -> 15-20 min) 🐢 ⚠️
 ```python
-di.to_excel('Name of the file', structures = [])
+di.structure_to_excel('Name of the file', structures = [])
 ```
 Or you can select some structures to obtain the excel file:
 ```python
-di.to_excel('Name of the file', structures = ['Structure1', 'Structure2'])
+di.structure_to_excel('Name of the file', structures = ['Structure1', 'Structure2'])
+```
+For the MLC information:
+```python
+di.mlc_to_excel('Name of the file')
+```
+
+### Information in dataframe
+A dataframe is generated with the main information of the plan and structures, relevant for clinical statistics. By defaults, the dataframe is created for all targets' name from the plan file.
+```python
+di.info_to_dataframe()
+```
+If the names from the plan and structures files missmatch, it is possible to add manually the list of the target names as follows:
+```python
+targets = ['1 GTV +2.0 mm','2 GTV +2.0 mm','3 PTV +1.0 mm','4 PTV +1.0 mm','5 PTV +1.0 mm']
+di.info_to_dataframe(targets)
+
+	Target	Prescribed dose [Gy]	Reference point dose [Gy]	Reference coordinates [mm]	Distance to iso [mm]	Structure coordinates [mm]	Max radius [mm]	Min radius [mm]	Mean radius [mm]	Distance to iso (from structure) [mm]
+0	1 GTV +2.0 mm	21.0	25.51	[26.758, -150.305, 23.663]	41.0	[26.704, -149.982, 23.5]	12.17	5.76	8.94	41.0
+1	2 GTV +2.0 mm	21.0	25.78	[-23.007, -145.655, 12.624]	41.3	[-22.738, -145.146, 13.0]	13.07	5.76	9.63	41.5
+2	3 PTV +1.0 mm4	21.0	25.21	[60.6, -180.097, -31.561]	60.3	[60.485, -180.06, -31.5]	13.07	3.59	8.97	60.2
+3	4 PTV +1.0 mm4	21.0	25.34	[-47.799, -202.427, -34.313]	72.2	[-47.819, -202.399, -34.5]	13.07	2.77	8.48	72.2
+4	5 PTV +1.0 mm4	21.0	24.46	[18.532, -132.937, -21.835]	33.4	[18.477, -132.879, -22.0]	13.07	2.77	8.12	33.5
 ```
 
 ## 📁 Access
@@ -123,10 +142,10 @@ Things do you need to install the software:
 
 ## ✒ Authors
 
-| [<sub>Alejandro Rojas</sub>](https://github.com/alxrojas)| [<sub>Jerónimo Fotinós</sub>](https://github.com/JeroFotinos) | [<sub>Nicola Maddalozzo</sub>](https://github.com/nicolaMaddalozzo) |  [<sub>Martín Núñez</sub>](https://github.com/martinnnuez) |
-| :---: | :---: | :---: | :---: |
+| [<sub>Alejandro Rojas</sub>](https://github.com/alxrojas)| [<sub>Jerónimo Fotinós</sub>](https://github.com/JeroFotinos) | [<sub>Nicola Maddalozzo</sub>](https://github.com/nicolaMaddalozzo)
+| :---: | :---: | :---: |
 
-## 📄 Licencia
+## 📄 License
 This project is licensed under (MIT) - Look the file [LICENSE.md](https://github.com/alxrojas/dicom2handle/blob/main/LICENSE) for details.
 
 ## 🤓 More information for potential applications

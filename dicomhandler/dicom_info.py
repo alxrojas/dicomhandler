@@ -22,6 +22,8 @@ import warnings
 
 import numpy as np
 
+import pandas as pd
+
 from pydicom.multival import MultiValue
 
 import xlsxwriter
@@ -435,6 +437,247 @@ class Dicominfo:
         workbook.close()
         file_open.close()
 
+    def info_to_dataframe(self, targets=[]):
+        """Method info to dataframe.
+
+        The information of the prescribed dose, reference points in targets.
+        dose to references points, maximum, minimun and mean radius and.
+        the center of mass and distance to isocenter for each target.
+        are summarized in a dataframe.
+        The information is reported for all targets in the dicom plan.
+        It is necessary to include at least the structure and plan files.
+        Names' targets must match. If not, add manually as the examples.
+        Please verify that names are in concordance from both files.
+
+        Example
+        -------
+        # Obtain dataframe with the names matched.
+        >>> import pydicom
+        >>> import os
+        # import the class from the dicomhandler.
+        >>> import dicomhandler.dicom_info as dh
+        # construct the object.
+        >>> file = os.listdir(os.chdir('./DICOMfiles'))
+        >>> plan = pydicom.dcmread(file[0], force = True)
+        >>> struct = pydicom.dcmread(file[1], force = True)
+        >>> dicom = dh.Dicom_info(struct, plan)
+        # Call method info_to_dataframe
+        >>> dicom.info_to_dataframe()
+
+        # Obtain dataframe with the names missmatched.
+        >>> targets = ['1 GTV +2.0 mm',
+                      '2 GTV +2.0 mm',
+                      '3 PTV +1.0 mm',
+                      '4 PTV +1.0 mm',
+                      '5 PTV +1.0 mm']
+        >>> dicom.info_to_dataframe(targets)
+
+        Parameters
+        ----------
+        targets : list
+            List of names' targets. By default target = [].
+
+        Returns
+        -------
+        Dataframe with information from DICOM files.
+
+        Raises, Warnings
+        ------
+        ValueError
+            Length of target names must be {len(names)}.
+            You must load plan and structure files.
+            Verify the correct names between plan and structures.
+
+        """
+        counter = 0
+        dictionary = {}
+        names, dose, dose_ref, coordinates = [], [], [], []
+        dist2iso, dist2iso_struct, radius_contour, centermass = [], [], [], []
+        radiusmax, radiusmin, radiusmean = [], [], []
+        n_id = {}
+        dicom_copy = copy.deepcopy(self)
+        isocenter_plan = np.array(
+            dicom_copy.dicom_plan.BeamSequence[0]
+            .ControlPointSequence[0]
+            .IsocenterPosition
+        )
+        while counter < len(dicom_copy.dicom_plan.DoseReferenceSequence) / 2:
+            names.append(
+                dicom_copy.dicom_plan.DoseReferenceSequence[
+                    counter * 2
+                ].DoseReferenceDescription
+            )
+            dose.append(
+                round(
+                    dicom_copy.dicom_plan.DoseReferenceSequence[
+                        counter * 2
+                    ].TargetPrescriptionDose,
+                    2,
+                )
+            )
+            dose_ref.append(
+                round(
+                    dicom_copy.dicom_plan.DoseReferenceSequence[
+                        counter * 2 + 1
+                    ].TargetPrescriptionDose,
+                    2,
+                )
+            )
+            coordinates.append(
+                dicom_copy.dicom_plan.DoseReferenceSequence[
+                    counter * 2 + 1
+                ].DoseReferencePointCoordinates
+            )
+            dist2iso.append(
+                round(
+                    np.linalg.norm(
+                        np.array(
+                            dicom_copy.dicom_plan.DoseReferenceSequence[
+                                counter * 2 + 1
+                            ].DoseReferencePointCoordinates
+                            - isocenter_plan
+                        )
+                    ),
+                    1,
+                )
+            )
+            counter = counter + 1
+        for i, _ in enumerate(dicom_copy.dicom_struct.StructureSetROISequence):
+            n_id[
+                (dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
+            ] = i
+        if len(targets) == 0:
+            targets = names
+        elif len(targets) != len(names):
+            raise ValueError(f"Length of target names must be {len(names)}.")
+        if (dicom_copy.dicom_plan is None) or (
+            dicom_copy.dicom_struct is None
+        ):
+            raise ValueError("You must load plan and structure files.")
+        for name in targets:
+            if name in n_id:
+                mean_values1 = []
+                for num, _ in enumerate(
+                    dicom_copy.dicom_struct.ROIContourSequence[
+                        n_id[name]
+                    ].ContourSequence
+                ):
+                    counter1 = 0
+                    xmean1, ymean1, zmean1 = [], [], []
+                    while counter1 < int(
+                        len(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData
+                        )
+                        / 3
+                    ):
+                        xmean1.append(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData[3 * counter1]
+                        )
+                        ymean1.append(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData[3 * counter1 + 1]
+                        )
+                        zmean1.append(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData[3 * counter1 + 2]
+                        )
+                        counter1 = counter1 + 1
+                    xmean1 = np.mean(xmean1)
+                    ymean1 = np.mean(ymean1)
+                    zmean1 = np.mean(zmean1)
+                    mean_values1.append([xmean1, ymean1, zmean1])
+                centermass1 = np.mean(mean_values1, axis=0)
+                for num, _ in enumerate(
+                    dicom_copy.dicom_struct.ROIContourSequence[
+                        n_id[name]
+                    ].ContourSequence
+                ):
+                    counter2 = 0
+                    while counter2 < int(
+                        len(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData
+                        )
+                        / 3
+                    ):
+                        basepoint = np.array(
+                            [
+                                (
+                                    dicom_copy.dicom_struct.ROIContourSequence[
+                                        n_id[name]
+                                    ]
+                                    .ContourSequence[num]
+                                    .ContourData[3 * counter2]
+                                ),
+                                (
+                                    dicom_copy.dicom_struct.ROIContourSequence[
+                                        n_id[name]
+                                    ]
+                                    .ContourSequence[num]
+                                    .ContourData[3 * counter2 + 1]
+                                ),
+                                (
+                                    dicom_copy.dicom_struct.ROIContourSequence[
+                                        n_id[name]
+                                    ]
+                                    .ContourSequence[num]
+                                    .ContourData[3 * counter2 + 2]
+                                ),
+                            ]
+                        )
+                        radius_contour.append(
+                            round(
+                                np.linalg.norm(
+                                    np.array((basepoint - centermass1))
+                                ),
+                                2,
+                            )
+                        )
+                        counter2 = counter2 + 1
+                for value, _ in enumerate(centermass1):
+                    centermass1[value] = round(centermass1[value], 3)
+            else:
+                warnings.warn(
+                    "Verify the correct names between plan and structures."
+                )
+            centermass.append(centermass1)
+            radiusmax.append(round(np.max(radius_contour), 2))
+            radiusmin.append(round(np.min(radius_contour), 2))
+            radiusmean.append(round(np.mean(radius_contour), 2))
+            dist2iso_struct.append(
+                round(
+                    np.linalg.norm(np.array(centermass1 - isocenter_plan)), 1
+                )
+            )
+        dictionary["Target"] = names
+        dictionary["Prescribed dose [Gy]"] = dose
+        dictionary["Reference point dose [Gy]"] = dose_ref
+        dictionary["Reference coordinates [mm]"] = coordinates
+        dictionary["Distance to iso [mm]"] = dist2iso
+        dictionary["Structure coordinates [mm]"] = centermass
+        dictionary["Max radius [mm]"] = radiusmax
+        dictionary["Min radius [mm]"] = radiusmin
+        dictionary["Mean radius [mm]"] = radiusmean
+        dictionary["Distance to iso (from structure) [mm]"] = dist2iso_struct
+        return pd.DataFrame(dictionary)
+
     def rotate(self, struct, angle, key, *args):
         """Method rotate.
 
@@ -765,12 +1008,10 @@ class Dicominfo:
                     ]
                 ),
             }
-            for num in range(
-                len(
-                    dicom_copy.dicom_struct.ROIContourSequence[
-                        n_id[struct]
-                    ].ContourSequence
-                )
+            for num, _ in enumerate(
+                dicom_copy.dicom_struct.ROIContourSequence[
+                    n_id[struct]
+                ].ContourSequence
             ):
                 if (
                     len(
