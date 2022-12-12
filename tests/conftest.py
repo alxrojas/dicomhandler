@@ -23,6 +23,17 @@ def dicom_infos():
 
 
 @pytest.fixture(scope="session")
+def dicom_infos_2():
+    def make(name1, name2):
+
+        return Dicominfo(
+            joblib.load(DATA_PATH / name1), joblib.load(DATA_PATH / name2)
+        )
+
+    return make
+
+
+@pytest.fixture(scope="session")
 def patients():
     def make(name):
         return joblib.load(DATA_PATH / name)
