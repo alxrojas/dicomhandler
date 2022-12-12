@@ -18,8 +18,8 @@ in an easy *excelable* form.
 
 """
 import copy
-from collections import defaultdict
 import warnings
+from collections import defaultdict
 
 import numpy as np
 
@@ -438,75 +438,164 @@ class Dicominfo:
         workbook.close()
         file_open.close()
 
-    def areas_to_df(self):
+    def areas_to_dataframe(self):
+        """Calculates area of gantry.
+
+        The objective of this function is to describe the movements.
+        of the gantry during radiation. The information of every.
+        movement is saved inside the pydicom plan of the patient inside.
+        patient.BeamSequence. At every movement corresponds a beam.
+        The output of this funcion is a pandas dataframe with.
+        6 columns. The code of the beam, the code of the checkpoint,
+        the total area that is under radiation, angle of gantry.
+        gantry direction, table (angle of the table).
+        It is necessary to include at least the plan file.
+        Every beam is made with the same machine for a patient, so.
+        the number of leaves of the machine is the same for every
+        beam.
+
+
+        Example
+        -------
+        # Obtain dataframe
+        >>> import pydicom
+        >>> import os
+        # import the class from the dicomhandler.
+        >>> import dicomhandler.dicom_info as dh
+        # construct the object.
+        >>> file = os.listdir(os.chdir('./DICOM_PLANfile'))
+        >>> plan = pydicom.dcmread(file[0], force = True)
+        >>> dicom = dh.Dicom_info(plan)
+        # Call method areas_to_dataframe
+        >>> dicom.areas_to_dataframe()
+
+
+        Returns
+        -------
+        Dataframe with information from DICOM plan.
+
+        Raises
+        ------
+        ValueError, TypeError
+            Plan not loaded.
+            The number of leaves is different among the beams.
+            gantry_direction must be a string.
+
+        """
         dicom_copy = copy.deepcopy(self)
-  
+
         if dicom_copy.dicom_plan is None:
             raise ValueError("Plan not loaded")
-        n_laminas = len(dicom_copy.dicom_plan.BeamSequence[0] \
-                                                 .BeamLimitingDeviceSequence[2] \
-                                                 .LeafPositionBoundaries) - 1
-                                               
-        for i,_ in enumerate(dicom_copy.dicom_plan.BeamSequence):
-           
-            if (n_laminas != len(dicom_copy.dicom_plan.BeamSequence[i] \
-                                             .BeamLimitingDeviceSequence[2] \
-                                             .LeafPositionBoundaries) - 1):
-                raise ValueError("The number of leaves is different among the beams")
-        
-       
-                                             
-            
-        df_cols = ['beam', 'checkpoint', 'area', 'gantry_angle', 'gantry_direction', 'table']
-        dict_laminas = defaultdict(list) 
-        leaf_pos = dicom_copy.dicom_plan.BeamSequence[0].BeamLimitingDeviceSequence[2].LeafPositionBoundaries
-        
-        for i,j in enumerate(leaf_pos[:len(leaf_pos)-1]):
-            dict_laminas[i+1].append(abs(j - leaf_pos[i+1])) 
+        n_laminas = (
+            len(
+                dicom_copy.dicom_plan.BeamSequence[0]
+                .BeamLimitingDeviceSequence[2]
+                .LeafPositionBoundaries
+            )
+            - 1
+        )
+
+        for i, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
+
+            if (
+                n_laminas
+                != len(
+                    dicom_copy.dicom_plan.BeamSequence[i]
+                    .BeamLimitingDeviceSequence[2]
+                    .LeafPositionBoundaries
+                )
+                - 1
+            ):
+                raise ValueError(
+                    "The number of leaves is different among the beams"
+                )
+
+        df_cols = [
+            "beam",
+            "checkpoint",
+            "area",
+            "gantry_angle",
+            "gantry_direction",
+            "table",
+        ]
+        dict_laminas = defaultdict(list)
+        leaf_pos = (
+            dicom_copy.dicom_plan.BeamSequence[0]
+            .BeamLimitingDeviceSequence[2]
+            .LeafPositionBoundaries
+        )
+
+        for i, j in enumerate(leaf_pos[: len(leaf_pos) - 1]):
+            dict_laminas[i + 1].append(abs(j - leaf_pos[i + 1]))
         rows_df = []
-        for i,_ in enumerate(dicom_copy.dicom_plan.BeamSequence) :
-            table = dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence[0].PatientSupportAngle   
-            if isinstance(table, float) is False:
-                raise TypeError("table angle must be a float")     
-            gantry_direction = dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence[0].GantryRotationDirection
+        for i, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
+            table = (
+                dicom_copy.dicom_plan.BeamSequence[i]
+                .ControlPointSequence[0]
+                .PatientSupportAngle
+            )
+
+            gantry_direction = (
+                dicom_copy.dicom_plan.BeamSequence[i]
+                .ControlPointSequence[0]
+                .GantryRotationDirection
+            )
             if isinstance(gantry_direction, str) is False:
-                raise TypeError("gantry_direction must be a string") 
-            for j, _ in enumerate(dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence) :
-   
-                gantry_angle = dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence[j].GantryAngle
-                if isinstance(gantry_angle, float) is False:
-                    raise TypeError("gantry_angle must be a float")
-                if j == 0 :
-                    mlc_positions = dicom_copy.dicom_plan.BeamSequence[i] \
-                                         .ControlPointSequence[j] \
-                                         .BeamLimitingDevicePositionSequence[2] \
-                                         .LeafJawPositions
-                else :
-                    mlc_positions = dicom_copy.dicom_plan.BeamSequence[i] \
-                                         .ControlPointSequence[j] \
-                                         .BeamLimitingDevicePositionSequence[0] \
-                                         .LeafJawPositions
-        
-                A = np.array(mlc_positions[:len(mlc_positions)//2])
-                B = np.array(mlc_positions[len(mlc_positions)//2:len(mlc_positions)])
-                diff = abs(A-B)
+                raise TypeError("gantry_direction must be a string")
+            for j, _ in enumerate(
+                dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence
+            ):
+
+                gantry_angle = (
+                    dicom_copy.dicom_plan.BeamSequence[i]
+                    .ControlPointSequence[j]
+                    .GantryAngle
+                )
+
+                if j == 0:
+                    mlc_positions = (
+                        dicom_copy.dicom_plan.BeamSequence[i]
+                        .ControlPointSequence[j]
+                        .BeamLimitingDevicePositionSequence[2]
+                        .LeafJawPositions
+                    )
+                else:
+                    mlc_positions = (
+                        dicom_copy.dicom_plan.BeamSequence[i]
+                        .ControlPointSequence[j]
+                        .BeamLimitingDevicePositionSequence[0]
+                        .LeafJawPositions
+                    )
+
+                a = np.array(mlc_positions[: len(mlc_positions) // 2])
+                lim1 = len(mlc_positions) // 2
+                lim2 = len(mlc_positions)
+                b = np.array(mlc_positions[lim1:lim2])
+                diff = abs(a - b)
                 dict_lamina_prov = copy.deepcopy(dict_laminas)
-                for z, elem_diff in enumerate(diff) :
-                    dict_lamina_prov[z+1].append(elem_diff)
-        
+                for z, elem_diff in enumerate(diff):
+                    dict_lamina_prov[z + 1].append(elem_diff)
+
                 area = 0
-       
+
                 for values in dict_lamina_prov.values():
-                    area+=values[0]*values[1]
-                rows_df.append([i+1,j+1,round(area,4),gantry_angle, gantry_direction, table])
+                    area += values[0] * values[1]
+                rows_df.append(
+                    [
+                        i + 1,
+                        j + 1,
+                        round(area, 4),
+                        gantry_angle,
+                        gantry_direction,
+                        table,
+                    ]
+                )
         df = pd.DataFrame(rows_df, columns=df_cols)
         return df
 
-
     def info_to_dataframe(self, targets=[]):
-        
-        """
-        Method info to dataframe.
+        """Method info to dataframe.
+
         The information of the prescribed dose, reference points in targets.
         dose to references points, maximum, minimun and mean radius and.
         the center of mass and distance to isocenter for each target.
@@ -514,9 +603,11 @@ class Dicominfo:
         The information is reported for all targets in the dicom plan.
         It is necessary to include at least the structure and plan files.
         Names' targets must match. If not, add manually as the examples.
-        Please verify that names are in concordance from both files.
-        Example
-        -------
+        Please verify that names are in concordance from both files or
+        very similar.
+
+        Examples
+        --------
         # Obtain dataframe with the names matched.
         >>> import pydicom
         >>> import os
@@ -536,19 +627,31 @@ class Dicominfo:
                       '4 PTV +1.0 mm',
                       '5 PTV +1.0 mm']
         >>> dicom.info_to_dataframe(targets)
+
         Parameters
         ----------
         targets : list
             List of names' targets. By default target = [].
+
         Returns
         -------
         Dataframe with information from DICOM files.
-        Raises, Warnings
+
+        Raises
         ------
         ValueError
-            Length of target names must be {len(names)}.
-            You must load plan and structure files.
-            Verify the correct names between plan and structures.
+            If plan dicom and struct dicom are not present, raises ValueError.
+            If targets is not a empty list, len(targets) have to be igual a
+            len(names_p), where names_p are the names in the plan. The names
+            in targets have to be igual o muy similar a los names in targets
+
+        Warns
+        -----
+        Warning
+            If target is an empty list, then it will contain the names in
+            the plan. But it is not guaranteed that every element in plan
+            has a corresponding element in struct.
+
         """
         counter = 0
         dictionary_p = {}
@@ -613,66 +716,65 @@ class Dicominfo:
             n_id[
                 (dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
             ] = i
-            names_s.append(dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
-        
+            names_s.append(
+                dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName
+            )
+
         if len(targets) == 0:
             targets = names_p
             warnings.warn(
-                        "It is not guaranteed that for each element in the pydicom structure there is the corresponding element in the pydicom plan"
-                    )
-            
+                "It is not guaranteed that for each element in the \
+                pydicom struct\
+                there is the corresponding element in the pydicom plan"
+            )
+
         elif len(targets) != len(names_p):
             raise ValueError(f"Length of target names must be {len(names_p)}.")
-        else :
+        else:
             for i, target in enumerate(targets):
                 s = names_p[i][:4]
 
-                if target.startswith(s) == False :
-                    raise ValueError(f"{names_p} has not a structure named {target}. Verify the names of the target structures.")    
-        
+                if target.startswith(s) is False:
+                    raise ValueError(
+                        f"{names_p} has not a structure named {target}. \
+                        Verify names of the target structures."
+                    )
+
         targets = list(set(names_s).intersection(targets))
-                
+
         for name in targets:
-            
+
             mean_values1 = []
             for num, _ in enumerate(
-                    dicom_copy.dicom_struct.ROIContourSequence[
-                        n_id[name]
-                    ].ContourSequence
-                ):
+                dicom_copy.dicom_struct.ROIContourSequence[
+                    n_id[name]
+                ].ContourSequence
+            ):
                 counter1 = 0
                 xmean1, ymean1, zmean1 = [], [], []
                 while counter1 < int(
-                        len(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_id[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData
-                        )
-                        / 3
-                    ):
+                    len(
+                        dicom_copy.dicom_struct.ROIContourSequence[n_id[name]]
+                        .ContourSequence[num]
+                        .ContourData
+                    )
+                    / 3
+                ):
                     xmean1.append(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_id[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData[3 * counter1]
-                        )
+                        dicom_copy.dicom_struct.ROIContourSequence[n_id[name]]
+                        .ContourSequence[num]
+                        .ContourData[3 * counter1]
+                    )
                     ymean1.append(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_id[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData[3 * counter1 + 1]
-                        )
+                        dicom_copy.dicom_struct.ROIContourSequence[n_id[name]]
+                        .ContourSequence[num]
+                        .ContourData[3 * counter1 + 1]
+                    )
                     zmean1.append(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_id[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData[3 * counter1 + 2]
-                        )
+                        dicom_copy.dicom_struct.ROIContourSequence[n_id[name]]
+                        .ContourSequence[num]
+                        .ContourData[3 * counter1 + 2]
+                    )
                     counter1 = counter1 + 1
                 xmean1 = np.mean(xmean1)
                 ymean1 = np.mean(ymean1)
@@ -681,57 +783,55 @@ class Dicominfo:
             centermass1 = np.mean(mean_values1, axis=0)
             for num, _ in enumerate(
                 dicom_copy.dicom_struct.ROIContourSequence[
-                        n_id[name]
-                    ].ContourSequence
-                ):
+                    n_id[name]
+                ].ContourSequence
+            ):
                 counter2 = 0
                 while counter2 < int(
-                        len(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_id[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData
-                        )
-                        / 3
-                    ):
+                    len(
+                        dicom_copy.dicom_struct.ROIContourSequence[n_id[name]]
+                        .ContourSequence[num]
+                        .ContourData
+                    )
+                    / 3
+                ):
                     basepoint = np.array(
-                            [
-                                (
-                                    dicom_copy.dicom_struct.ROIContourSequence[
-                                        n_id[name]
-                                    ]
-                                    .ContourSequence[num]
-                                    .ContourData[3 * counter2]
-                                ),
-                                (
-                                    dicom_copy.dicom_struct.ROIContourSequence[
-                                        n_id[name]
-                                    ]
-                                    .ContourSequence[num]
-                                    .ContourData[3 * counter2 + 1]
-                                ),
-                                (
-                                    dicom_copy.dicom_struct.ROIContourSequence[
-                                        n_id[name]
-                                    ]
-                                    .ContourSequence[num]
-                                    .ContourData[3 * counter2 + 2]
-                                ),
-                            ]
-                        )
+                        [
+                            (
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_id[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * counter2]
+                            ),
+                            (
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_id[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * counter2 + 1]
+                            ),
+                            (
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_id[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * counter2 + 2]
+                            ),
+                        ]
+                    )
                     radius_contour.append(
-                            round(
-                                np.linalg.norm(
-                                    np.array((basepoint - centermass1))
-                                ),
-                                2,
-                            )
+                        round(
+                            np.linalg.norm(
+                                np.array((basepoint - centermass1))
+                            ),
+                            2,
                         )
+                    )
                     counter2 = counter2 + 1
             for value, _ in enumerate(centermass1):
                 centermass1[value] = round(centermass1[value], 3)
-        
+
             centermass.append(centermass1)
             radiusmax.append(round(np.max(radius_contour), 2))
             radiusmin.append(round(np.min(radius_contour), 2))
@@ -744,8 +844,6 @@ class Dicominfo:
             )
         dictionary_p["Target"] = names_p
 
-        
-
         dictionary_p["Prescribed dose [Gy]"] = dose
 
         dictionary_p["Reference point dose [Gy]"] = dose_ref
@@ -755,36 +853,31 @@ class Dicominfo:
         dictionary_p["Distance to iso [mm]"] = dist2iso
 
         df_plan = pd.DataFrame(dictionary_p)
-        
+
         for i, target in enumerate(targets):
             for _, name_p in enumerate(names_p):
                 s = name_p[:4]
-                if target.startswith(s) :
+                if target.startswith(s):
                     targets[i] = name_p
-                    
-            
+
         dictionary_s["Target"] = targets
         dictionary_s["Structure coordinates [mm]"] = centermass
-      
+
         dictionary_s["Max radius [mm]"] = radiusmax
-        
+
         dictionary_s["Min radius [mm]"] = radiusmin
-       
+
         dictionary_s["Mean radius [mm]"] = radiusmean
-        
+
         dictionary_s["Distance to iso (from structure) [mm]"] = dist2iso_struct
-        
-        
+
         df_struct = pd.DataFrame(dictionary_s)
-        
-        df_plan_struct = pd.merge(df_plan, df_struct, how='left', on=['Target'])
-        if df_plan_struct.isnull().values.any() == True:
-            warnings.warn(
-                        "The returned dataframe contains NaN values because not all the elements in pydicom plan has the corresponding element in the pydicom structure"
-                    )    
-        print(df_plan_struct)#.iloc[:,5])
+
+        df_plan_struct = pd.merge(
+            df_plan, df_struct, how="left", on=["Target"]
+        )
         return df_plan_struct
-    
+
     def rotate(self, struct, angle, key, *args):
         """Method rotate.
 
