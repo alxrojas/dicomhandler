@@ -1,4 +1,4 @@
-<h1 align="center"> dicom2handle </h1>
+<h1 align="center"> dicomhandler </h1>
 
 Python tool for integrating [DICOM](https://www.dicomstandard.org/) information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new DICOM files with this information, which are compatible with the commercial systems of treatment planning such as [Eclipse](https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse) and [Brainlab Elements](https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/). It is possible to extract the information from the structures in an easy "excelable" form.
 
