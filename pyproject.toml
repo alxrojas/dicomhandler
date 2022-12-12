@@ -24,6 +24,7 @@ dependencies = [
     "xlsxwriter",
     "pydicom",
     "openpyxl",
+    "toml"
 ]
 # copy y warnings están built-in aparentemente (i.e. no hay que importarlas)
 
