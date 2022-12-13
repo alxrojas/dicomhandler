@@ -26,7 +26,15 @@ release = dicomhandler.__version__
 extensions = [
     "sphinx.ext.autodoc",
     "nbsphinx",
+    "sphinxcontrib.bibtex",
 ]
+# =============================================================================
+# BIB TEX
+# =============================================================================
+
+bibtex_default_style = "apa"  # pybtex-apa-style
+
+bibtex_bibfiles = ["refs.bib"]
 
 templates_path = ["_templates"]
 exclude_patterns = []

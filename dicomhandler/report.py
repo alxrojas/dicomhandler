@@ -1,6 +1,6 @@
-"""Method report to extract complementary information.
+"""Report to extract complementary information.
 
-This method allows to compare distances from two structures.
+Allows to compare distances from two structures.
 
 """
 import numpy as np
@@ -11,20 +11,12 @@ import pandas as pd
 def report(dicom1, dicom2, struct):
     """Report metrics from structures.
 
-    Function that report the maximum, minimum, mean, standard deviation.
-    and variance of: radius between each point of a structure and its centre.
-    of mass and the distances between two structures (the same name) in.
-    different positions. It is reported the distance between the centres of.
+    This function reports the maximum, minimum, mean, standard deviation
+    and variance of: radius between each point of a structure and its centre
+    of mass and the distances between two structures (the same name) in
+    different positions. It is reported the distance between the centres of
     mass of the two structures.
     The report is in a dataframe.
-
-    Example
-    -------
-    # import report.
-    >>> import dicomhandler.report as rp
-    # report for the original and displaced lesion.
-    >>> rp(dicom, moved, 'tumor')
-
 
     Parameters
     ----------
@@ -37,13 +29,21 @@ def report(dicom1, dicom2, struct):
 
     Returns
     -------
-    dataframe with statistics.
+    pandas.core.frame.DataFrame
+        dataframe with statistics.
 
     Raises
     ------
     ValueError
-        Wrong name or name must match between two DICOM.
+        If you type a wrong name or if the name does not
+        match between two DICOM files.
 
+    Examples
+    --------
+    # Import report.
+    >>> import dicomhandler.report as rp
+    # Report for the original and displaced lesion.
+    >>> rp(dicom, moved, 'tumor')
     """
     n_id1, n_id2 = {}, {}
     for item, _ in enumerate(dicom1.dicom_struct.StructureSetROISequence):

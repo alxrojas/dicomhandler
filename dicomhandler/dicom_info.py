@@ -1,25 +1,26 @@
-"""Dicomhandler.
+"""Builds and handles DICOM radiotherapy files.
 
-Python tool for integrating.
-`DICOM <https://www.dicomstandard.org/>` information and processing.
-DICOM radiotherapy structures. It allows to modify the structures.
-(expand, contract, rotate, translate) and to obtain statistics.
-from these modifications without the need to use CT or MRI images.
-and to create new DICOM files with this information, which are.
-compatible with the commercial systems of treatment planning such as.
-`Eclipse <https://www.varian.com/>` and.
-`Brainlab Elements <https://www.brainlab.com/>`.
-It is possible to extract the information from the structures.
+Python tool for integrating `DICOM <https://www.dicomstandard.org/>`
+information and processing DICOM radiotherapy structures.
+
+It allows to modify the structures (expand, contract, rotate,
+translate) and to obtain statistics from these modifications without
+the need to use CT or MRI images and to create new DICOM files with
+this information, which are compatible with the commercial systems
+of treatment planning such as `Eclipse <https://www.varian.com/>`
+and `Brainlab Elements <https://www.brainlab.com/>`.
+
+It is possible to extract the information from the structures
 in an easy *excelable* form.
 
 .. moduleauthor:: Alejandro Rojas <alexrojas@ciencias.unam.mx>
 .. moduleauthor:: Jerónimo Fontinós <jerofoti@gmail.com>
 .. moduleauthor:: Nicola Maddalozzo <nicolamaddalozzo95@gmail.com>
-
 """
 import copy
 import warnings
 from collections import defaultdict
+from io import BytesIO
 
 import numpy as np
 
@@ -27,15 +28,14 @@ import pandas as pd
 
 from pydicom.multival import MultiValue
 
-import xlsxwriter
-
 
 class Dicominfo:
-    """Class Dicominfo.
+    """Builds an object containing different DICOM files to handle.
 
-    Allow to integrate the characteristics.
-    and properties of the different DICOM files, which have.
-    complementary information of each patient.
+    Allows to integrate the characteristics and properties of the
+    different DICOM files, which have complementary information of
+    each patient.
+
     The files accepted are:
     - **Structures:** RS.dcm.
     - **Treatment plan:** RP.dcm.
@@ -45,59 +45,67 @@ class Dicominfo:
     different patients. Only one RS, RP and RD is accepted per patient,
     per instantiation.
 
+    Parameters
+    ----------
+    *args : pydicom.dataset.FileDataset
+        DICOM files from a patient.
+
+    Methods
+    -------
+    anonymize(name=True, birth=True, operator=True, creation=True)
+        Allows to overwrite the patient's information.
+    structure_to_excel(name_file, names=[])
+        Creates DICOM contour in *excelable* form.
+    mlc_to_excel(name_file)
+        Creates DICOM plan information in *excelable* form.
+    areas_to_dataframe(self)
+        Determines areas from fields defined by multileaf collimator.
+    info_to_dataframe(self, targets=[])
+        Reports the main information of plan and target structures.
+    rotate(struct, angle, key, *args)
+        Allows to rotate all the points for a single structure.
+    translate(struct, delta, key, *args)
+        Allows to translate all the points for a single structure.
+    add_margin(struct, margin)
+        Allows to expand or subtract margin for a single structure.
+
+    Returns
+    -------
+    pydicom.dataset.FileDataset
+        Dicominfo object with DICOM properties.
+    pandas.core.frame.DataFrame
+        DataFrame reports with specific information and metrics from
+        DICOM files.
     """
 
     def __init__(self, *args):
         """Initialize dicominfo object.
 
-        Initialize Dicominfo objects.
-
-        Example
-        ------
-        >>> import pydicom
-        >>> import os
-        # import the class from the dicomhandler.
-        >>> import dicomhandler.dicom_info as dh
-        # construct the object.
-        >>> file = os.listdir(os.chdir('./path'))
-        >>> struct = pydicom.dcmread(file[0])
-        >>> plan = pydicom.dcmread(file[1])
-        >>> dicom = dh.Dicom_info(struct, plan)
-
+        Initializes dicominfo objects validating that the information
+        belongs to the same patient.
 
         Parameters
         ----------
         *args : pydicom.dataset.FileDataset
-        DICOM files from a patient.
+            DICOM files from a patient.
 
-        Methods
-        -------
-        anonymize(name=True, birth=True, operator=True, creation=True)
-        Allows to overwrite the patient's information.
-        structure_to_excel(name_file, names=[])
-        It creates DICOM contour in *excelable* form.
-        mlc_to_excel(name_file)
-        It creates DICOM plan information in *excelable* form.
-        rotate(struct, angle, key, *args)
-        It allows to rotate all the points for a single structure.
-        translate(struct, delta, key, *args)
-        It allows to translate all the points for a single structure.
-        add_margin(struct, margin)
-        It allows to expand or subtract margin for a single structure.
-
-        Returns
-        -------
-        pydicom.dataset.FileDataset
-        Dicominfo object with DICOM properties.
-
-        Raises, Warnings
-        -------
-        Patients Name do not match.
-        Patients BirthDate do not match.
+        Raises
+        ------
         ValueError
-            Modality not supported.
-            One > dicom of the same modality.
+            If the modality is not supported or if many files has the
+            same modality.
 
+        Examples
+        --------
+        >>> import pydicom
+        >>> import os
+        # Import the class from the dicomhandler.
+        >>> import dicomhandler.dicom_info as dh
+        # Construct the object.
+        >>> file = os.listdir(os.chdir('./path'))
+        >>> struct = pydicom.dcmread(file[0])
+        >>> plan = pydicom.dcmread(file[1])
+        >>> dicom = dh.Dicom_info(struct, plan)
         """
         self.dicom_struct = None
         self.dicom_dose = None
@@ -140,45 +148,40 @@ class Dicominfo:
             self.PatientID = patient.PatientID
 
     def anonymize(self, name=True, birth=True, operator=True, creation=True):
-        """Method anonymize.
+        """Protect the sensitive personal information from files.
 
-        In many cases, it is important to anonymize the patient's information.
-        for research and statistics. `anonymize` method allows to overwrite.
-        the name, birth date of the patient, the operator's name and the.
+        In many cases, it is important to anonymize the patient's information
+        for research and statistics. `anonymize` method allows to overwrite
+        the name, birth date of the patient, the operator's name and the
         creation of the plan.
+
         By default, it modifies a DICOM object with the following values:
-        - Patient Name, 'PatientName',
-        - Patient Birth Date, '19720101',
-        - Operators Name, 'OperatorName',
+        - Patient Name, 'PatientName'
+        - Patient Birth Date, '19720101'
+        - Operators Name, 'OperatorName'
         - Instance Creation Date, '19720101'
-
-        Example
-        -------
-        # anonymize name, birthdate, operator.
-        # no anonymize creation date.
-        >>> dicom = dicom.anonymize(creation=False)
-
 
         Parameters
         ----------
-        name : bool
-            By default True. Anonymize the patient name.
-        birth : bool
-            By default True. Anonymize the patient birth date.
-        operator : bool
-            By default True. Anonymize the operator name.
-        creation : bool
-            By default True. Anonymize the instance creation date.
+        name : bool, default True
+            Anonymize the patient name.
+        birth : bool, default True
+            Anonymize the patient birth date.
+        operator : bool, default True
+            Anonymize the operator name.
+        creation : bool, default True
+            Anonymize the instance creation date.
 
         Returns
         -------
         pydicom.dataset.FileDataset
             Object with DICOM properties of the anonymized files.
 
-        Warnings
-        -------
-        Anonymize should be run after adding data to the object.
-
+        Examples
+        --------
+        # anonymize name, birthdate, operator.
+        # no anonymize creation date.
+        >>> dicom = dicom.anonymize(creation=False)
         """
         dicom_copy = copy.deepcopy(self)
 
@@ -246,43 +249,45 @@ class Dicominfo:
         return dicom_copy
 
     def structure_to_excel(self, name_file, names=[]):
-        """Method structure to excel.
+        """Create an excel file with the information of the structures.
 
-        The information of the cartesian coordinates (relative positions).
-        for all or some structures is extracted in an .xlsx file.
+        The information of the cartesian coordinates (relative positions)
+        for all or some structures is extracted in an .xlsx file
         for posprocessing.
+
         It creates DICOM contour in *excelable* form.
-        The Contour Data for each organ is set on different sheets.
+
+        The ContourData for each organ is set on different sheets.
         The file is created in the same directory with the name name.xlsx.
-
-        Example
-        -------
-        # extract the coordinates of the structures Eye Right and Tumor.
-        >>> dicom.structure_to_excel('outputfile', ['Eye Right', 'Tumor'])
-        # extract the coordinates of the all structures.
-        >>> dicom.structure_to_excel('outputfile', [])
-
 
         Parameters
         ----------
         name_file : str
             Name of the output file.
-        names : list
+        names : list, default=[]
             List of str, with the name of the structures to create the
-            excel file. By default [] which corresponds to all structures.
+            excel file. By default all structures.
             .. note::
             **Important:** For all structures, it could be a slow process
-            to take couple of minutes.
+            to take couple of minutes. The structure BODY or OUTER CONTOUR
+            contains a lot of points.
 
         Returns
         -------
-        Excel file.
+        pandas.io.excel._xlsxwriter.XlsxWriter
+            Excel file with the coordinates of the selected structures.
 
         Raises
         ------
         ValueError
-            Name not founded.
+            If the name of the structures are not in the files.
 
+        Examples
+        --------
+        # Extract the coordinates of the structures 1 GTV and Eye Right.
+        >>> dicom.structure_to_excel('output', ['1 GTV', 'Eye Right'])
+        # Extract the coordinates of the all structures.
+        >>> dicom.structure_to_excel('output', [])
         """
         dicom_copy = copy.deepcopy(self)
         extension = ".xlsx"
@@ -302,64 +307,78 @@ class Dicominfo:
                     n_all[name] = names_aux[name]
                 else:
                     raise ValueError(f"{name} not founded.")
-        file_open = open(name_file, "w")
-        workbook = xlsxwriter.Workbook(name_file)
-        for name in n_all:
-            worksheet = workbook.add_worksheet(name)
-            for num, _ in enumerate(
-                dicom_copy.dicom_struct.ROIContourSequence[
-                    n_all[name]
-                ].ContourSequence
-            ):
-                worksheet.write_row(
-                    0,
-                    3 * num,
-                    [f"x{num} [mm]", f"y{num} [mm]", f"z{num} [mm]"],
-                )
-                count = 0
-                while count < int(
-                    len(
-                        dicom_copy.dicom_struct.ROIContourSequence[n_all[name]]
-                        .ContourSequence[num]
-                        .ContourData
-                    )
-                    / 3
+        with pd.ExcelWriter(name_file) as writer:
+            for name in n_all:
+                array = []
+                for num, _ in enumerate(
+                    dicom_copy.dicom_struct.ROIContourSequence[
+                        n_all[name]
+                    ].ContourSequence
                 ):
-                    x = float(
-                        dicom_copy.dicom_struct.ROIContourSequence[n_all[name]]
-                        .ContourSequence[num]
-                        .ContourData[3 * count]
-                    )
-                    y = float(
-                        dicom_copy.dicom_struct.ROIContourSequence[n_all[name]]
-                        .ContourSequence[num]
-                        .ContourData[3 * count + 1]
-                    )
-                    z = float(
-                        dicom_copy.dicom_struct.ROIContourSequence[n_all[name]]
-                        .ContourSequence[num]
-                        .ContourData[3 * count + 2]
-                    )
-                    worksheet.write_row(1 + count, 3 * num, [x, y, z])
-                    count = count + 1
-        workbook.close()
-        file_open.close()
+                    count = 0
+                    x_values, y_values, z_values = [], [], []
+                    while count < int(
+                        len(
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_all[name]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData
+                        )
+                        / 3
+                    ):
+                        x_values.append(
+                            float(
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_all[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * count]
+                            )
+                        )
+                        y_values.append(
+                            float(
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_all[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * count + 1]
+                            )
+                        )
+                        z_values.append(
+                            float(
+                                dicom_copy.dicom_struct.ROIContourSequence[
+                                    n_all[name]
+                                ]
+                                .ContourSequence[num]
+                                .ContourData[3 * count + 2]
+                            )
+                        )
+                        seriesx = pd.Series(x_values, name=f"x{num} [mm]")
+                        seriesy = pd.Series(y_values, name=f"y{num} [mm]")
+                        seriesz = pd.Series(z_values, name=f"z{num} [mm]")
+                        count = count + 1
+                    array.append(seriesx)
+                    array.append(seriesy)
+                    array.append(seriesz)
+                df = pd.concat(array, axis=1)
+                buffer = BytesIO()
+                df.to_excel(buffer)
+                buffer.getvalue()
+                buffer.seek(0)
+                df.to_excel(writer, sheet_name=name)
+            buffer.close()
 
     def mlc_to_excel(self, name_file):
-        """Method MLC to excel.
+        """Create an excel file with the MLC information.
 
-        The information of the MLC positions, control points.
-        gantry angles, gantry orientation and table angle are.
-        reported in an .xlsx file for posprocessing for numerical.
-        simulations.
-        The date for each beam is set on different sheets.
-        The file is created in the same directory with the name name.xlsx.
-
-        Example
-        -------
-        # extract the MLC relative positions and checkpoints.
-        >>> dicom.mlc_to_excel('outputfile')
-
+        The information of the multilead collimator (MLC) positions,
+        control points, gantry angles, gantry orientation and table
+        angle are reported in an .xlsx file for posprocessing for
+        numerical simulations.
+        The data for each beam is set on different sheets.
+        The file is created at the same directory with the
+        name name_file.xlsx.
 
         Parameters
         ----------
@@ -368,62 +387,68 @@ class Dicominfo:
 
         Returns
         -------
-        Excel file.
+        pandas.io.excel._xlsxwriter.XlsxWriter
+            Excel file.
 
         Raises
         ------
         ValueError
-            Plan not loaded.
+            If the plan file is not loaded.
 
+        References
+        ----------
+            :cite:p:`calvo2022montecarlo`
+
+        Examples
+        --------
+        # Extract the MLC relative positions and checkpoints.
+        >>> dicom.mlc_to_excel('outputfile')
         """
         dicom_copy = copy.deepcopy(self)
         extension = ".xlsx"
         name_file = name_file + extension
         if dicom_copy.dicom_plan is None:
             raise ValueError("Plan not loaded")
-        file_open = open(name_file, "w")
-        workbook = xlsxwriter.Workbook(name_file)
-        for number, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
-            worksheet = workbook.add_worksheet(f"Beam {number}")
-            for controlpoint, _ in enumerate(
-                dicom_copy.dicom_plan.BeamSequence[number].ControlPointSequence
-            ):
-                gantry_angle = (
-                    dicom_copy.dicom_plan.BeamSequence[number]
-                    .ControlPointSequence[controlpoint]
-                    .GantryAngle
-                )
-                gantry_direction = (
-                    dicom_copy.dicom_plan.BeamSequence[number]
-                    .ControlPointSequence[controlpoint]
-                    .GantryRotationDirection
-                )
-                table_direction = (
-                    dicom_copy.dicom_plan.BeamSequence[number]
-                    .ControlPointSequence[0]
-                    .PatientSupportAngle
-                )
-                if controlpoint == 0:
-                    mlc = np.array(
+        with pd.ExcelWriter(name_file) as writer:
+            for number, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
+                array = []
+                for controlpoint, _ in enumerate(
+                    dicom_copy.dicom_plan.BeamSequence[
+                        number
+                    ].ControlPointSequence
+                ):
+                    gantry_angle = (
                         dicom_copy.dicom_plan.BeamSequence[number]
                         .ControlPointSequence[controlpoint]
-                        .BeamLimitingDevicePositionSequence[2]
-                        .LeafJawPositions
+                        .GantryAngle
                     )
-                else:
-                    mlc = list(
-                        np.array(
+                    gantry_direction = (
+                        dicom_copy.dicom_plan.BeamSequence[number]
+                        .ControlPointSequence[controlpoint]
+                        .GantryRotationDirection
+                    )
+                    table_direction = (
+                        dicom_copy.dicom_plan.BeamSequence[number]
+                        .ControlPointSequence[0]
+                        .PatientSupportAngle
+                    )
+                    if controlpoint == 0:
+                        mlc = np.array(
                             dicom_copy.dicom_plan.BeamSequence[number]
                             .ControlPointSequence[controlpoint]
-                            .BeamLimitingDevicePositionSequence[0]
+                            .BeamLimitingDevicePositionSequence[2]
                             .LeafJawPositions
                         )
-                    )
-                worksheet.write_row(
-                    controlpoint,
-                    0,
-                    [
-                        f"ControlPoint{controlpoint}",
+                    else:
+                        mlc = list(
+                            np.array(
+                                dicom_copy.dicom_plan.BeamSequence[number]
+                                .ControlPointSequence[controlpoint]
+                                .BeamLimitingDevicePositionSequence[0]
+                                .LeafJawPositions
+                            )
+                        )
+                    values = [
                         "GantryAngle",
                         gantry_angle,
                         "GantryDirection",
@@ -431,59 +456,65 @@ class Dicominfo:
                         "TableDirection",
                         table_direction,
                         "MLC",
-                    ],
-                )
-                for leaf, _ in enumerate(mlc):
-                    worksheet.write_row(controlpoint, 8 + leaf, [mlc[leaf]])
-        workbook.close()
-        file_open.close()
+                    ]
+                    for leaf in mlc:
+                        values.append(leaf)
+                    series = pd.Series(
+                        values, name=f"ControlPoint{controlpoint}"
+                    )
+                    array.append(series)
+                df = pd.concat(array, axis=1)
+                buffer = BytesIO()
+                df.to_excel(buffer)
+                buffer.getvalue()
+                buffer.seek(0)
+                df.to_excel(writer, sheet_name=f"Beam {number}")
+            buffer.close()
 
     def areas_to_dataframe(self):
-        """Calculates area of gantry.
+        """Calculates areas of multileaf collimator (MLC) modulation.
 
-        The objective of this function is to describe the movements.
-        of the gantry during radiation. The information of every.
-        movement is saved inside the pydicom plan of the patient inside.
+        The objective of this function is to describe the movements
+        of the gantry and MLC during radiation. The information of every
+        movement is saved inside the pydicom plan of the patient inside
         patient.BeamSequence. At every movement corresponds a beam.
-        The output of this funcion is a pandas dataframe with.
-        6 columns. The code of the beam, the code of the checkpoint,
-        the total area that is under radiation, angle of gantry.
+        The output of this funcion is a pandas dataframe with
+        six columns. The code of the beam, the code of the checkpoint,
+        the total area that is under radiation, angle of gantry,
         gantry direction, table (angle of the table).
+
         It is necessary to include at least the plan file.
-        Every beam is made with the same machine for a patient, so.
-        the number of leaves of the machine is the same for every
-        beam.
+        Every beam is made with the same machine for a patient, so
+        the number of leaves of the machine is the same for every beam.
 
-
-        Example
+        Returns
         -------
+        pandas.core.frame.DataFrame
+            Dataframe with information from DICOM plan.
+
+        Raises
+        ------
+        ValueError
+            If the modality is not RTPlan or if the number of
+            leaves varies from each checkpoint.
+        TypeError
+            The direction of gantry is not a string.
+
+        Examples
+        --------
         # Obtain dataframe
         >>> import pydicom
         >>> import os
-        # import the class from the dicomhandler.
+        # Import the class from the dicomhandler.
         >>> import dicomhandler.dicom_info as dh
-        # construct the object.
+        # Construct the object.
         >>> file = os.listdir(os.chdir('./DICOM_PLANfile'))
         >>> plan = pydicom.dcmread(file[0], force = True)
         >>> dicom = dh.Dicom_info(plan)
         # Call method areas_to_dataframe
         >>> dicom.areas_to_dataframe()
-
-
-        Returns
-        -------
-        Dataframe with information from DICOM plan.
-
-        Raises
-        ------
-        ValueError, TypeError
-            Plan not loaded.
-            The number of leaves is different among the beams.
-            gantry_direction must be a string.
-
         """
         dicom_copy = copy.deepcopy(self)
-
         if dicom_copy.dicom_plan is None:
             raise ValueError("Plan not loaded")
         n_laminas = (
@@ -494,13 +525,12 @@ class Dicominfo:
             )
             - 1
         )
-
-        for i, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
+        for sequences, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
 
             if (
                 n_laminas
                 != len(
-                    dicom_copy.dicom_plan.BeamSequence[i]
+                    dicom_copy.dicom_plan.BeamSequence[sequences]
                     .BeamLimitingDeviceSequence[2]
                     .LeafPositionBoundaries
                 )
@@ -509,7 +539,6 @@ class Dicominfo:
                 raise ValueError(
                     "The number of leaves is different among the beams"
                 )
-
         df_cols = [
             "beam",
             "checkpoint",
@@ -524,66 +553,61 @@ class Dicominfo:
             .BeamLimitingDeviceSequence[2]
             .LeafPositionBoundaries
         )
-
-        for i, j in enumerate(leaf_pos[: len(leaf_pos) - 1]):
-            dict_laminas[i + 1].append(abs(j - leaf_pos[i + 1]))
+        for pos1, pos2 in enumerate(leaf_pos[: len(leaf_pos) - 1]):
+            dict_laminas[pos1 + 1].append(abs(pos2 - leaf_pos[pos1 + 1]))
         rows_df = []
-        for i, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
+        for secuencia, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
             table = (
-                dicom_copy.dicom_plan.BeamSequence[i]
+                dicom_copy.dicom_plan.BeamSequence[secuencia]
                 .ControlPointSequence[0]
                 .PatientSupportAngle
             )
-
             gantry_direction = (
-                dicom_copy.dicom_plan.BeamSequence[i]
+                dicom_copy.dicom_plan.BeamSequence[secuencia]
                 .ControlPointSequence[0]
                 .GantryRotationDirection
             )
             if isinstance(gantry_direction, str) is False:
                 raise TypeError("gantry_direction must be a string")
-            for j, _ in enumerate(
-                dicom_copy.dicom_plan.BeamSequence[i].ControlPointSequence
+            for control, _ in enumerate(
+                dicom_copy.dicom_plan.BeamSequence[
+                    secuencia
+                ].ControlPointSequence
             ):
-
                 gantry_angle = (
-                    dicom_copy.dicom_plan.BeamSequence[i]
-                    .ControlPointSequence[j]
+                    dicom_copy.dicom_plan.BeamSequence[secuencia]
+                    .ControlPointSequence[control]
                     .GantryAngle
                 )
-
-                if j == 0:
+                if control == 0:
                     mlc_positions = (
-                        dicom_copy.dicom_plan.BeamSequence[i]
-                        .ControlPointSequence[j]
+                        dicom_copy.dicom_plan.BeamSequence[secuencia]
+                        .ControlPointSequence[control]
                         .BeamLimitingDevicePositionSequence[2]
                         .LeafJawPositions
                     )
                 else:
                     mlc_positions = (
-                        dicom_copy.dicom_plan.BeamSequence[i]
-                        .ControlPointSequence[j]
+                        dicom_copy.dicom_plan.BeamSequence[secuencia]
+                        .ControlPointSequence[control]
                         .BeamLimitingDevicePositionSequence[0]
                         .LeafJawPositions
                     )
-
-                a = np.array(mlc_positions[: len(mlc_positions) // 2])
+                bank_a = np.array(mlc_positions[: len(mlc_positions) // 2])
                 lim1 = len(mlc_positions) // 2
                 lim2 = len(mlc_positions)
-                b = np.array(mlc_positions[lim1:lim2])
-                diff = abs(a - b)
+                bank_b = np.array(mlc_positions[lim1:lim2])
+                diff = abs(bank_a - bank_b)
                 dict_lamina_prov = copy.deepcopy(dict_laminas)
                 for z, elem_diff in enumerate(diff):
                     dict_lamina_prov[z + 1].append(elem_diff)
-
                 area = 0
-
                 for values in dict_lamina_prov.values():
                     area += values[0] * values[1]
                 rows_df.append(
                     [
-                        i + 1,
-                        j + 1,
+                        secuencia + 1,
+                        control + 1,
                         round(area, 4),
                         gantry_angle,
                         gantry_direction,
@@ -594,17 +618,44 @@ class Dicominfo:
         return df
 
     def info_to_dataframe(self, targets=[]):
-        """Method info to dataframe.
+        """Report the main information of the radiotherapy plan.
 
-        The information of the prescribed dose, reference points in targets.
-        dose to references points, maximum, minimun and mean radius and.
-        the center of mass and distance to isocenter for each target.
+        The information of the prescribed dose, reference points in targets,
+        dose to references points, maximum, minimun and mean radius and
+        the center of mass and distance to isocenter for each target
         are summarized in a dataframe.
-        The information is reported for all targets in the dicom plan.
+
+        The information is reported for all targets in the DICOM plan.
         It is necessary to include at least the structure and plan files.
         Names' targets must match. If not, add manually as the examples.
         Please verify that names are in concordance from both files or
         very similar.
+
+        Parameters
+        ----------
+        targets : list, default = []
+            List of names' targets. By default, the empty list includes all
+            the structures.
+
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            Dataframe with information from DICOM files.
+
+        Raises
+        ------
+        ValueError
+            If plan dicom and struct dicom are not present, raises ValueError.
+            If targets is not a empty list, len(targets) have to be igual a
+            len(names_p), where names_p are the names in the plan. The names
+            in targets have to be igual o muy similar a los names in targets
+
+        Warns
+        -----
+        Warning
+            If target is an empty list, then it will contain the names in
+            the plan, but it is not guaranteed that every element in plan
+            has a corresponding element in structures.
 
         Examples
         --------
@@ -627,31 +678,6 @@ class Dicominfo:
                       '4 PTV +1.0 mm',
                       '5 PTV +1.0 mm']
         >>> dicom.info_to_dataframe(targets)
-
-        Parameters
-        ----------
-        targets : list
-            List of names' targets. By default target = [].
-
-        Returns
-        -------
-        Dataframe with information from DICOM files.
-
-        Raises
-        ------
-        ValueError
-            If plan dicom and struct dicom are not present, raises ValueError.
-            If targets is not a empty list, len(targets) have to be igual a
-            len(names_p), where names_p are the names in the plan. The names
-            in targets have to be igual o muy similar a los names in targets
-
-        Warns
-        -----
-        Warning
-            If target is an empty list, then it will contain the names in
-            the plan. But it is not guaranteed that every element in plan
-            has a corresponding element in struct.
-
         """
         counter = 0
         dictionary_p = {}
@@ -712,14 +738,21 @@ class Dicominfo:
                 )
             )
             counter = counter + 1
-        for i, _ in enumerate(dicom_copy.dicom_struct.StructureSetROISequence):
+        for sequence1, _ in enumerate(
+            dicom_copy.dicom_struct.StructureSetROISequence
+        ):
             n_id[
-                (dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
-            ] = i
+                (
+                    dicom_copy.dicom_struct.StructureSetROISequence[
+                        sequence1
+                    ].ROIName
+                )
+            ] = sequence1
             names_s.append(
-                dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName
+                dicom_copy.dicom_struct.StructureSetROISequence[
+                    sequence1
+                ].ROIName
             )
-
         if len(targets) == 0:
             targets = names_p
             warnings.warn(
@@ -727,23 +760,18 @@ class Dicominfo:
                 pydicom struct\
                 there is the corresponding element in the pydicom plan"
             )
-
         elif len(targets) != len(names_p):
             raise ValueError(f"Length of target names must be {len(names_p)}.")
         else:
-            for i, target in enumerate(targets):
-                s = names_p[i][:4]
-
-                if target.startswith(s) is False:
+            for value1, target in enumerate(targets):
+                nombres = names_p[value1][:4]
+                if target.startswith(nombres) is False:
                     raise ValueError(
                         f"{names_p} has not a structure named {target}. \
                         Verify names of the target structures."
                     )
-
         targets = list(set(names_s).intersection(targets))
-
         for name in targets:
-
             mean_values1 = []
             for num, _ in enumerate(
                 dicom_copy.dicom_struct.ROIContourSequence[
@@ -831,7 +859,6 @@ class Dicominfo:
                     counter2 = counter2 + 1
             for value, _ in enumerate(centermass1):
                 centermass1[value] = round(centermass1[value], 3)
-
             centermass.append(centermass1)
             radiusmax.append(round(np.max(radius_contour), 2))
             radiusmin.append(round(np.min(radius_contour), 2))
@@ -843,63 +870,42 @@ class Dicominfo:
                 )
             )
         dictionary_p["Target"] = names_p
-
         dictionary_p["Prescribed dose [Gy]"] = dose
-
         dictionary_p["Reference point dose [Gy]"] = dose_ref
-
         dictionary_p["Reference coordinates [mm]"] = coordinates
-
         dictionary_p["Distance to iso [mm]"] = dist2iso
-
         df_plan = pd.DataFrame(dictionary_p)
-
-        for i, target in enumerate(targets):
+        for value1, target in enumerate(targets):
             for _, name_p in enumerate(names_p):
-                s = name_p[:4]
-                if target.startswith(s):
-                    targets[i] = name_p
-
+                nombres = name_p[:4]
+                if target.startswith(nombres):
+                    targets[value1] = name_p
         dictionary_s["Target"] = targets
         dictionary_s["Structure coordinates [mm]"] = centermass
-
         dictionary_s["Max radius [mm]"] = radiusmax
-
         dictionary_s["Min radius [mm]"] = radiusmin
-
         dictionary_s["Mean radius [mm]"] = radiusmean
-
         dictionary_s["Distance to iso (from structure) [mm]"] = dist2iso_struct
-
         df_struct = pd.DataFrame(dictionary_s)
-
         df_plan_struct = pd.merge(
             df_plan, df_struct, how="left", on=["Target"]
         )
         return df_plan_struct
 
     def rotate(self, struct, angle, key, *args):
-        """Method rotate.
+        """Rotates a structure for a reference point.
 
-        It allows to rotate all the points for a single structure.
+        Allows to rotate all the points for a single structure.
         Rotation transformations are defined at the origin.
-        For that reason it is necessary to bring the coordinates.
-        to the origin before rotating. You can.
-        `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>'.
-        an arbritrary structure (organ at risk, lesion or support.
-        structure) in any of the 3 degrees of freedom roll, pitch or yaw.
-        with the angle (in grades) of your choice.
+        For that reason it is necessary to bring the coordinates
+        to the origin before rotating. You can
+        `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>'
+        an arbritrary structure (organ at risk, lesion or support
+        structure) in any of the 3 degrees of freedom roll, pitch or yaw
+        with the angle (in degrees) of your choice.
         .. note::
             **Additional advantage:** You can accumulate rotations
             and traslations to study any combination.
-
-        Example
-        -------
-        # rotate tumor 1.0º in yaw in isocenter.
-        >>> moved = dicom.rotate('tumor', 1.0, 'yaw')
-        # rotate lesion 1o in roll in [0.0, 0.0, 0.0].
-        >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.rotate('tumor', 1.0, 'yaw', iso)
 
         Parameters
         ----------
@@ -910,7 +916,7 @@ class Dicominfo:
             Maximum angle allowed 360º.
         key : str
             Direction of rotation ('roll', 'pitch' or 'yaw')
-        *args : list
+        *args : list, optional
             Origin in a list of float elements [x, y, z].
             By default, it is considered the isocenter of the
             structure file (last structure in RS DICOM called Coord 1).
@@ -924,14 +930,23 @@ class Dicominfo:
 
         Raises
         ------
-        TypeError, ValueError
-            Angle is a float o int!.
-            Angle is > 360º.
-            Choose a correct key: roll, pitch, yaw.
-            Type an origin [x,y,z] with float elements.
-            One slice did not have all points of 3 elements.
-            Type a correct name.
+        TypeError
+            If the angle is a float, int or if angle >360º.
+        ValueError
+            If you select an incorrect rotation key, incorrect name
+            or if you type an origin point with no float.
 
+        References
+        ----------
+            :cite:p:`venencia2022rot`, :cite:p:`rojas2021rot`
+
+        Examples
+        --------
+        # rotate tumor 1.0º in yaw in isocenter.
+        >>> moved = dicom.rotate('tumor', 1.0, 'yaw')
+        # rotate lesion 1o in roll in [0.0, 0.0, 0.0].
+        >>> iso = [0.0, 0.0, 0.0]
+        >>> dicom.rotate('tumor', 1.0, 'yaw', iso)
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1082,24 +1097,15 @@ class Dicominfo:
         return dicom_copy
 
     def translate(self, struct, delta, key, *args):
-        """Method translate.
+        """Translates a structure for a reference point.
 
-        It allows to translate all the points for a single structure.
-        Rotation transformations are defined at the origin.
-        For that reason it is necessary to bring the coordinates.
+        Allows to translate all the points for a single structure.
+        Translation transformations are defined at the origin.
+        For that reason it is necessary to bring the coordinates
         to the origin before rotating.
         .. note::
             **Additional advantage:** You can accumulate rotations
             and traslations to study any combination.
-
-        Example
-        -------
-        # translate tumor 1.0 mm in x in isocenter.
-        >>> moved = dicom.translate('tumor', 1.0, 'x')
-        # translate lesion 1.0 mm in x in [0.0, 0.0, 0.0].
-        >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.translate('tumor', 1.0, 'x', iso)
-
 
         Parameters
         ----------
@@ -1111,7 +1117,7 @@ class Dicominfo:
             More than 1000 mm has not relevance in patient displacement.
         key : str
             Direction of rotation ('x', 'y' or 'z')
-        *args : list
+        *args : list, optional
             Origin in a list of float elements [x, y, z].
             By default, it is considered the isocenter of the
             structure file (last structure in RS DICOM called Coord 1).
@@ -1125,14 +1131,20 @@ class Dicominfo:
 
         Raises
         ------
-        TypeError, ValueError
-            delta is float or int!.
-            delta is > 1000 mm.
-            Choose a correct key: x, y, z.
-            Type an origin [x,y,z] with float elements.
-            One slice do not have all points of 3 elements.
-            Type a correct name.
+        TypeError
+            If the displacement is not float nor int or if it
+            is > 1000 mm.
+        ValueError
+            If you select an incorrect rotation key, incorrect name
+            or if you type an origin point with no float.
 
+        Examples
+        --------
+        # translate tumor 1.0 mm in x in isocenter.
+        >>> moved = dicom.translate('tumor', 1.0, 'x')
+        # translate lesion 1.0 mm in x in [0.0, 0.0, 0.0].
+        >>> iso = [0.0, 0.0, 0.0]
+        >>> dicom.translate('tumor', 1.0, 'x', iso)
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1282,31 +1294,24 @@ class Dicominfo:
         return dicom_copy
 
     def add_margin(self, struct, margin):
-        """Method add/subtract margin.
+        r"""Expand or contract a structure from a margin.
 
-        It allows to expand or subtract.
-        `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`.
+        Allows to expand or subtract
+        `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
         for a single structure.
-        For each point is considered the distance between the.
-        mean center (xmean, ymean) of each its slice plus (minus) the margin.
-        By solve a quadratic equation between the circunference.
+        For each point is considered the distance between the
+        mean center :math:`(x_{mean}, y_{mean})` of each its slice plus
+        (minus) the margin.
+        By solve a quadratic equation between the circunference
         with centre the point :math:`(x_0, y_0)` and :math:`radius = margin`
-        and the line between :math:`(x_{mean}, y_{mean})` and.
-        :math:`(x_0, y_0)` is calculated the point with the margin.
+        and the line between :math:`(x_{mean}, y_{mean})` and
+        :math:`(x_0, y_0)` is calculated the point with the margin
         :math:`(x, y)`.
         - The quadratic equation is
         ..math::
-        x = x_0 +- sqrt{margin^2 / (1 + m^2},
+            x = x_0 \pm \sqrt{margin^2 / (1 + m^2)}
         where :math:`m` is the slope of the tangent line.
         - The equation of the tangent line is :math:`y = m(x - x_0) + y_0`.
-
-        Example
-        -------
-        # add 0.7 mm to the tumor.
-        >>> dicom.add_margin('tumor', 0.7)
-        # subtract 1.2 mm to the tumor.
-        >>> dicom.add_margin('tumor', -1.2)
-
 
         Parameters
         ----------
@@ -1323,10 +1328,23 @@ class Dicominfo:
 
         Raises
         ------
-        TypeError, ValueError
-            Contour needs at least 1 point.
-            Type a correct name.
+        TypeError
+            If the margin is not float.
+        ValueError
+            If the contour is empty or if its name is
+            not founded.
 
+        References
+        ----------
+            :cite:p:`beltran2012dosimetry`, :cite:p:`zhang2016margin`,
+            :cite:p:`liu2016gating`, :cite:p:`enwiki:1`
+
+        Examples
+        --------
+        # Add 0.7 mm to the tumor.
+        >>> dicom.add_margin('tumor', 0.7)
+        # Subtract 1.2 mm to the tumor.
+        >>> dicom.add_margin('tumor', -1.2)
         """
         dicom_copy = copy.deepcopy(self)
         n_id = {}
