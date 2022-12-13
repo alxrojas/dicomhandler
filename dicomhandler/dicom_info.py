@@ -943,10 +943,10 @@ class Dicominfo:
         Examples
         --------
         # rotate tumor 1.0º in yaw in isocenter.
-        >>> moved = dicom.rotate('tumor', 1.0, 'yaw')
+        >>> moved = dicom.rotate('1 GTV', 1.0, 'yaw')
         # rotate lesion 1o in roll in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.rotate('tumor', 1.0, 'yaw', iso)
+        >>> dicom.rotate('1 GTV', 1.0, 'yaw', iso)
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1141,10 +1141,10 @@ class Dicominfo:
         Examples
         --------
         # translate tumor 1.0 mm in x in isocenter.
-        >>> moved = dicom.translate('tumor', 1.0, 'x')
+        >>> moved = dicom.translate('1 GTV', 1.0, 'x')
         # translate lesion 1.0 mm in x in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.translate('tumor', 1.0, 'x', iso)
+        >>> dicom.translate('1 GTV', 1.0, 'x', iso)
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1342,9 +1342,9 @@ class Dicominfo:
         Examples
         --------
         # Add 0.7 mm to the tumor.
-        >>> dicom.add_margin('tumor', 0.7)
+        >>> dicom.add_margin('1 GTV', 0.7)
         # Subtract 1.2 mm to the tumor.
-        >>> dicom.add_margin('tumor', -1.2)
+        >>> dicom.add_margin('1 GTV', -1.2)
         """
         dicom_copy = copy.deepcopy(self)
         n_id = {}
