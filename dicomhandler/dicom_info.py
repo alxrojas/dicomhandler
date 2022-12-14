@@ -1300,18 +1300,19 @@ class Dicominfo:
         `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
         for a single structure.
         For each point is considered the distance between the
-        mean center :math:`(x_{mean}, y_{mean})` of each its slice plus
-        (minus) the margin.
-        By solve a quadratic equation between the circunference
-        with centre the point :math:`(x_0, y_0)` and :math:`radius = margin`
-        and the line between :math:`(x_{mean}, y_{mean})` and
-        :math:`(x_0, y_0)` is calculated the point with the margin
-        :math:`(x, y)`.
-        - The quadratic equation is
+        mean center :math:`(x_{mean}, y_{mean}, z_{mean})`
+        of each its slice plus (minus) the margin.
+        By solving the parametrize equation for the point
+        :math:`(x, y, z)`
+        along the normal vector to the tangent plane to the surface of the
+        contour at point :math:`(x_0, y_0, z_0)` and considering the
+        :math:`radius = margin`, this parametrize equation is
         ..math::
-            x = x_0 \pm \sqrt{margin^2 / (1 + m^2)}
-        where :math:`m` is the slope of the tangent line.
-        - The equation of the tangent line is :math:`y = m(x - x_0) + y_0`.
+            t = \pm \frac{margin}{2*distance}
+        where :math:`distance` is the Euclidean distance between
+        :math:`(x_0, y_0, z_0)` and :math:`(x_{mean}, y_{mean}, z_{mean})`.
+        Thus, for example, :math:`x = 2*(x_0-x_{mean})*t + x_0` and similar
+        process corresponds to :math:`y` and :math:`z`.
 
         Parameters
         ----------
@@ -1359,6 +1360,49 @@ class Dicominfo:
                 dicom_copy.dicom_struct.StructureSetROISequence[item].ROIName
             ] = item
         if struct in n_id:
+            for num1, _ in enumerate(
+                dicom_copy.dicom_struct.ROIContourSequence[
+                    n_id[struct]
+                ].ContourSequence
+            ):
+                x_mean, y_mean, z_mean = [], [], []
+                longitud = int(
+                    len(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num1]
+                        .ContourData
+                    )
+                    / 3
+                )
+                j = 0
+                while j < longitud:
+                    x_mean.append(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num1]
+                        .ContourData[3 * j]
+                    )
+                    y_mean.append(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num1]
+                        .ContourData[3 * j + 1]
+                    )
+                    z_mean.append(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            n_id[struct]
+                        ]
+                        .ContourSequence[num1]
+                        .ContourData[3 * j + 2]
+                    )
+                    j = j + 1
+            xmean = np.mean(x_mean)
+            ymean = np.mean(y_mean)
+            zmean = np.mean(z_mean)
             for num, _ in enumerate(
                 dicom_copy.dicom_struct.ROIContourSequence[
                     n_id[struct]
@@ -1376,30 +1420,6 @@ class Dicominfo:
                     / 3
                 )
                 if longitude > 1:
-                    xmean = np.mean(
-                        [
-                            (
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * i]
-                            )
-                            for i in range(longitude)
-                        ]
-                    )
-                    ymean = np.mean(
-                        [
-                            (
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * i + 1]
-                            )
-                            for i in range(longitude)
-                        ]
-                    )
                     counter = 0
                     while counter < longitude:
                         x0 = (
@@ -1416,53 +1436,57 @@ class Dicominfo:
                             .ContourSequence[num]
                             .ContourData[3 * counter + 1]
                         )
-                        if x0 != xmean:
-                            m = (ymean - y0) / (xmean - x0)
-                            sol_x1 = x0 + np.sqrt(margin**2 / (1 + m**2))
-                            sol_x2 = x0 - np.sqrt(margin**2 / (1 + m**2))
-                            y1 = m * (sol_x1 - x0) + y0
-                            y2 = m * (sol_x2 - x0) + y0
-                            dist1 = (
-                                (xmean - sol_x1) ** 2 + (ymean - y1) ** 2
-                            ) ** 0.5
-                            dist2 = (
-                                (xmean - sol_x2) ** 2 + (ymean - y2) ** 2
-                            ) ** 0.5
+                        z0 = (
+                            dicom_copy.dicom_struct.ROIContourSequence[
+                                n_id[struct]
+                            ]
+                            .ContourSequence[num]
+                            .ContourData[3 * counter + 2]
+                        )
+                        if (
+                            (xmean - x0) ** 2
+                            + (ymean - y0) ** 2
+                            + (zmean - z0) ** 2
+                        ) != 0.0:
+                            parameter = (
+                                (x0 - xmean) ** 2
+                                + (y0 - ymean) ** 2
+                                + (z0 - zmean) ** 2
+                            )
+                            sol_1 = margin / (2 * np.sqrt(parameter))
+                            sol_2 = -margin / (2 * np.sqrt(parameter))
+                            x_sol1 = round(2 * (xmean - x0) * sol_1 + x0, 2)
+                            y_sol1 = round(2 * (ymean - y0) * sol_1 + y0, 2)
+                            z_sol1 = round(2 * (zmean - z0) * sol_1 + z0, 2)
+                            x_sol2 = round(2 * (xmean - x0) * sol_2 + x0, 2)
+                            y_sol2 = round(2 * (ymean - y0) * sol_2 + y0, 2)
+                            z_sol2 = round(2 * (zmean - z0) * sol_2 + z0, 2)
+                            dist1 = np.sqrt(
+                                (xmean - x_sol1) ** 2
+                                + (ymean - y_sol1) ** 2
+                                + (zmean - z_sol1) ** 2
+                            )
+                            dist2 = np.sqrt(
+                                (xmean - x_sol2) ** 2
+                                + (ymean - y_sol2) ** 2
+                                + (zmean - z_sol2) ** 2
+                            )
                             if margin >= 0 and dist1 >= dist2:
-                                contourmargin.append(sol_x1)
-                                contourmargin.append(y1)
+                                contourmargin.append(x_sol1)
+                                contourmargin.append(y_sol1)
+                                contourmargin.append(z_sol1)
                             elif margin >= 0 and dist1 < dist2:
-                                contourmargin.append(sol_x2)
-                                contourmargin.append(y2)
-                            elif margin < 0 and dist1 <= dist2:
-                                contourmargin.append(sol_x1)
-                                contourmargin.append(y1)
-                            else:
-                                contourmargin.append(sol_x2)
-                                contourmargin.append(y2)
+                                contourmargin.append(x_sol2)
+                                contourmargin.append(y_sol2)
+                                contourmargin.append(z_sol2)
+                            elif margin < 0:
+                                contourmargin.append(x_sol2)
+                                contourmargin.append(y_sol2)
+                                contourmargin.append(z_sol2)
                         else:
                             contourmargin.append(x0)
-                            if margin >= 0 and y0 >= ymean:
-                                y1 = y0 + margin
-                                contourmargin.append(y1)
-                            elif margin >= 0 and y0 < ymean:
-                                y1 = y0 - margin
-                                contourmargin.append(y1)
-                            elif margin < 0 and y0 >= ymean:
-                                y1 = y0 + margin
-                                contourmargin.append(y1)
-                            else:
-                                y1 = y0 - margin
-                                contourmargin.append(y1)
-                        contourmargin.append(
-                            (
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter + 2]
-                            )
-                        )
+                            contourmargin.append(y0)
+                            contourmargin.append(z0)
                         counter = counter + 1
                 elif longitude == 1 and margin > 0:
                     x = (

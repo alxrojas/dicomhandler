@@ -25,23 +25,19 @@ def test_add_margin_cont(dicom_infos, struct, margin, expected):
             "space1",
             1.0,
             0,
-            MultiValue(
-                float, [-0.707107, 1.707107, 0.0, 1.707107, -0.707107, 0.0]
-            ),
+            MultiValue(float, [-0.71, 1.71, 0.0, 1.71, -0.71, 0.0]),
         ),
         (
             "space1",
             -1.0,
             0,
-            MultiValue(
-                float, [0.707107, 0.292893, 0.0, 0.292893, 0.707107, 0.0]
-            ),
+            MultiValue(float, [0.71, 0.29, 0.0, 0.29, 0.71, 0.0]),
         ),
         (
             "space2",
             1.0,
             1,
-            MultiValue(float, [0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 4.0, 0.0, 0.0]),
+            MultiValue(float, [0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0]),
         ),
         (
             "space2",
@@ -54,16 +50,14 @@ def test_add_margin_cont(dicom_infos, struct, margin, expected):
             1.0,
             2,
             MultiValue(
-                float, [0.292893, 1.707107, 0.0, 2.0, -2.0, 0.0, 4.0, 0.0, 0.0]
+                float, [0.29, 1.71, 0.0, 2.0, -2.0, 0.0, 4.0, 0.0, 0.0]
             ),
         ),
         (
             "space3",
             -1.0,
             2,
-            MultiValue(
-                float, [1.707107, 0.292893, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0]
-            ),
+            MultiValue(float, [1.71, 0.29, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0]),
         ),
         (
             "space4",
