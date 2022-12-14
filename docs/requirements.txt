@@ -7,3 +7,5 @@ Sphinx
 sphinx-rtd-theme
 
 nbsphinx
+
+sphinxcontrib-bibtex

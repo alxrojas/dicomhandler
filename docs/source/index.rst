@@ -11,6 +11,7 @@ Welcome to dicomhandler's documentation!
    :caption: Contents:
 
    modules
+   installation.rst
 
 
 
