@@ -1,7 +1,8 @@
-"""Builds and handles DICOM radiotherapy files.
+"""Build and handle DICOM radiotherapy files.
 
-Python tool for integrating `DICOM <https://www.dicomstandard.org/>`
-information and processing DICOM radiotherapy structures.
+Python tool for integrating and processing
+`DICOM <https://www.dicomstandard.org/>`
+information of radiotherapy structures.
 
 It allows to modify the structures (expand, contract, rotate,
 translate) and to obtain statistics from these modifications without
@@ -11,12 +12,14 @@ of treatment planning such as `Eclipse <https://www.varian.com/>`
 and `Brainlab Elements <https://www.brainlab.com/>`.
 
 It is possible to extract the information from the structures
-in an easy *excelable* form.
+in an easy excelable form.
 
 .. moduleauthor:: Alejandro Rojas <alexrojas@ciencias.unam.mx>
 .. moduleauthor:: Jerónimo Fontinós <jerofoti@gmail.com>
 .. moduleauthor:: Nicola Maddalozzo <nicolamaddalozzo95@gmail.com>
+
 """
+
 import copy
 import warnings
 from collections import defaultdict
@@ -30,25 +33,21 @@ from pydicom.multival import MultiValue
 
 
 class Dicominfo:
-    """Builds an object containing different DICOM files to handle.
+    """Build an object containing different DICOM files to handle.
 
     Allows to integrate the characteristics and properties of the
     different DICOM files, which have complementary information of
     each patient.
 
-    The files accepted are:
-    - **Structures:** RS.dcm.
-    - **Treatment plan:** RP.dcm.
-    - **Treatment dose:** RD.dcm.
     .. note::
-    **Important:** Dicominfo not allows to merge information from
-    different patients. Only one RS, RP and RD is accepted per patient,
-    per instantiation.
-
-    Parameters
-    ----------
-    *args : pydicom.dataset.FileDataset
-        DICOM files from a patient.
+        **Important:** `Dicominfo` does not allow to merge information from
+        different patients. Only one RS, RP and RD is accepted per patient,
+        per instantiation.
+    
+    The files accepted are:
+    - Structures: RS.dcm.
+    - Treatment plan: RP.dcm.
+    - Treatment dose: RD.dcm.
 
     Methods
     -------
@@ -62,31 +61,24 @@ class Dicominfo:
         Determines areas from fields defined by multileaf collimator.
     info_to_dataframe(self, targets=[])
         Reports the main information of plan and target structures.
-    rotate(struct, angle, key, *args)
+    rotate(struct, angle, key, args)
         Allows to rotate all the points for a single structure.
-    translate(struct, delta, key, *args)
+    translate(struct, delta, key, args)
         Allows to translate all the points for a single structure.
     add_margin(struct, margin)
         Allows to expand or subtract margin for a single structure.
 
-    Returns
-    -------
-    pydicom.dataset.FileDataset
-        Dicominfo object with DICOM properties.
-    pandas.core.frame.DataFrame
-        DataFrame reports with specific information and metrics from
-        DICOM files.
     """
 
     def __init__(self, *args):
         """Initialize dicominfo object.
 
-        Initializes dicominfo objects validating that the information
+        Initialize ``dicominfo`` objects validating that the information
         belongs to the same patient.
 
         Parameters
         ----------
-        *args : pydicom.dataset.FileDataset
+        args : pydicom.dataset.FileDataset
             DICOM files from a patient.
 
         Raises
@@ -106,6 +98,7 @@ class Dicominfo:
         >>> struct = pydicom.dcmread(file[0])
         >>> plan = pydicom.dcmread(file[1])
         >>> dicom = dh.Dicom_info(struct, plan)
+
         """
         self.dicom_struct = None
         self.dicom_dose = None
@@ -150,7 +143,7 @@ class Dicominfo:
     def anonymize(self, name=True, birth=True, operator=True, creation=True):
         """Protect the sensitive personal information from files.
 
-        In many cases, it is important to anonymize the patient's information
+        In many cases, it is important to anonymize the patient information
         for research and statistics. `anonymize` method allows to overwrite
         the name, birth date of the patient, the operator's name and the
         creation of the plan.
@@ -179,9 +172,10 @@ class Dicominfo:
 
         Examples
         --------
-        # anonymize name, birthdate, operator.
-        # no anonymize creation date.
+        # Anonymize name, birthdate, operator.
+        # No anonymize creation date.
         >>> dicom = dicom.anonymize(creation=False)
+
         """
         dicom_copy = copy.deepcopy(self)
 
@@ -251,14 +245,15 @@ class Dicominfo:
     def structure_to_excel(self, name_file, names=[]):
         """Create an excel file with the information of the structures.
 
-        The information of the cartesian coordinates (relative positions)
+        The information of the Cartesian coordinates (relative positions)
         for all or some structures is extracted in an .xlsx file
         for posprocessing.
 
         It creates DICOM contour in *excelable* form.
 
         The ContourData for each organ is set on different sheets.
-        The file is created in the same directory with the name name.xlsx.
+        The file is created in the same directory with the
+        name name_file.xlsx.
 
         Parameters
         ----------
@@ -288,6 +283,7 @@ class Dicominfo:
         >>> dicom.structure_to_excel('output', ['1 GTV', 'Eye Right'])
         # Extract the coordinates of the all structures.
         >>> dicom.structure_to_excel('output', [])
+
         """
         dicom_copy = copy.deepcopy(self)
         extension = ".xlsx"
@@ -372,9 +368,9 @@ class Dicominfo:
     def mlc_to_excel(self, name_file):
         """Create an excel file with the MLC information.
 
-        The information of the multilead collimator (MLC) positions,
+        The information of the multileaf collimator (MLC) positions,
         control points, gantry angles, gantry orientation and table
-        angle are reported in an .xlsx file for posprocessing for
+        angle are reported in an .xlsx file for pos-processing for
         numerical simulations.
         The data for each beam is set on different sheets.
         The file is created at the same directory with the
@@ -403,6 +399,7 @@ class Dicominfo:
         --------
         # Extract the MLC relative positions and checkpoints.
         >>> dicom.mlc_to_excel('outputfile')
+
         """
         dicom_copy = copy.deepcopy(self)
         extension = ".xlsx"
@@ -472,7 +469,7 @@ class Dicominfo:
             buffer.close()
 
     def areas_to_dataframe(self):
-        """Calculates areas of multileaf collimator (MLC) modulation.
+        """Calculate areas of multileaf collimator (MLC) modulation.
 
         The objective of this function is to describe the movements
         of the gantry and MLC during radiation. The information of every
@@ -513,6 +510,7 @@ class Dicominfo:
         >>> dicom = dh.Dicom_info(plan)
         # Call method areas_to_dataframe
         >>> dicom.areas_to_dataframe()
+
         """
         dicom_copy = copy.deepcopy(self)
         if dicom_copy.dicom_plan is None:
@@ -627,14 +625,14 @@ class Dicominfo:
 
         The information is reported for all targets in the DICOM plan.
         It is necessary to include at least the structure and plan files.
-        Names' targets must match. If not, add manually as the examples.
+        Names targets must match. If not, add manually as the examples.
         Please verify that names are in concordance from both files or
         very similar.
 
         Parameters
         ----------
         targets : list, default = []
-            List of names' targets. By default, the empty list includes all
+            List of names targets. By default, the empty list includes all
             the structures.
 
         Returns
@@ -672,12 +670,9 @@ class Dicominfo:
         # Call method info_to_dataframe
         >>> dicom.info_to_dataframe()
         # Obtain dataframe with the names missmatched.
-        >>> targets = ['1 GTV +2.0 mm',
-                      '2 GTV +2.0 mm',
-                      '3 PTV +1.0 mm',
-                      '4 PTV +1.0 mm',
-                      '5 PTV +1.0 mm']
+        >>> targets = ['1 GTV +2.0 mm','2 GTV +2.0 mm','3 PTV +1.0 mm','4 PTV +1.0 mm','5 PTV +1.0 mm']
         >>> dicom.info_to_dataframe(targets)
+
         """
         counter = 0
         dictionary_p = {}
@@ -893,16 +888,17 @@ class Dicominfo:
         return df_plan_struct
 
     def rotate(self, struct, angle, key, *args):
-        """Rotates a structure for a reference point.
+        """Rotate a structure for a reference point.
 
-        Allows to rotate all the points for a single structure.
+        Allow to rotate all the points for a single structure.
         Rotation transformations are defined at the origin.
         For that reason it is necessary to bring the coordinates
         to the origin before rotating. You can
-        `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>'
+        `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>`
         an arbritrary structure (organ at risk, lesion or support
         structure) in any of the 3 degrees of freedom roll, pitch or yaw
         with the angle (in degrees) of your choice.
+
         .. note::
             **Additional advantage:** You can accumulate rotations
             and traslations to study any combination.
@@ -916,7 +912,7 @@ class Dicominfo:
             Maximum angle allowed 360º.
         key : str
             Direction of rotation ('roll', 'pitch' or 'yaw')
-        *args : list, optional
+        args : list, optional
             Origin in a list of float elements [x, y, z].
             By default, it is considered the isocenter of the
             structure file (last structure in RS DICOM called Coord 1).
@@ -931,22 +927,24 @@ class Dicominfo:
         Raises
         ------
         TypeError
-            If the angle is a float, int or if angle >360º.
+            If the angle is a float, int or if angle > 360 degrees.
         ValueError
             If you select an incorrect rotation key, incorrect name
             or if you type an origin point with no float.
 
         References
         ----------
-            :cite:p:`venencia2022rot`, :cite:p:`rojas2021rot`
+            :cite:p:`rojas2021rot`
+            :cite:p:`venencia2022rot`
 
         Examples
         --------
-        # rotate tumor 1.0º in yaw in isocenter.
+        # rotate tumor 1.0 degree in yaw in isocenter.
         >>> moved = dicom.rotate('1 GTV', 1.0, 'yaw')
-        # rotate lesion 1o in roll in [0.0, 0.0, 0.0].
+        # rotate lesion 1.0 degree in roll in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
         >>> dicom.rotate('1 GTV', 1.0, 'yaw', iso)
+
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1097,12 +1095,13 @@ class Dicominfo:
         return dicom_copy
 
     def translate(self, struct, delta, key, *args):
-        """Translates a structure for a reference point.
+        """Translate a structure for a reference point.
 
-        Allows to translate all the points for a single structure.
+        Allow to translate all the points for a single structure.
         Translation transformations are defined at the origin.
         For that reason it is necessary to bring the coordinates
         to the origin before rotating.
+
         .. note::
             **Additional advantage:** You can accumulate rotations
             and traslations to study any combination.
@@ -1117,7 +1116,7 @@ class Dicominfo:
             More than 1000 mm has not relevance in patient displacement.
         key : str
             Direction of rotation ('x', 'y' or 'z')
-        *args : list, optional
+        args : list, optional
             Origin in a list of float elements [x, y, z].
             By default, it is considered the isocenter of the
             structure file (last structure in RS DICOM called Coord 1).
@@ -1135,7 +1134,7 @@ class Dicominfo:
             If the displacement is not float nor int or if it
             is > 1000 mm.
         ValueError
-            If you select an incorrect rotation key, incorrect name
+            If you select an incorrect translation key, incorrect name
             or if you type an origin point with no float.
 
         Examples
@@ -1145,6 +1144,7 @@ class Dicominfo:
         # translate lesion 1.0 mm in x in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
         >>> dicom.translate('1 GTV', 1.0, 'x', iso)
+
         """
         dicom_copy = copy.deepcopy(self)
         if (
@@ -1296,22 +1296,26 @@ class Dicominfo:
     def add_margin(self, struct, margin):
         r"""Expand or contract a structure from a margin.
 
-        Allows to expand or subtract
+        Allow to expand or subtract
         `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
         for a single structure.
         For each point is considered the distance between the
-        mean center :math:`(x_{mean}, y_{mean})` of each its slice plus
-        (minus) the margin.
-        By solve a quadratic equation between the circunference
-        with centre the point :math:`(x_0, y_0)` and :math:`radius = margin`
-        and the line between :math:`(x_{mean}, y_{mean})` and
-        :math:`(x_0, y_0)` is calculated the point with the margin
-        :math:`(x, y)`.
-        - The quadratic equation is
+        mean center :math:`(x_{mean}, y_{mean}, z_{mean})`
+        of each its slice plus (minus) the margin.
+        By solving the parametrize equation for the point
+        :math:`(x, y, z)`
+        along the normal vector to the tangent plane to the surface of the
+        contour at point :math:`(x_0, y_0, z_0)` and considering the
+        :math:`radius = margin`, this parametrize equation is
+
         ..math::
-            x = x_0 \pm \sqrt{margin^2 / (1 + m^2)}
-        where :math:`m` is the slope of the tangent line.
-        - The equation of the tangent line is :math:`y = m(x - x_0) + y_0`.
+        
+            t = \pm \frac{margin}{2*distance},
+
+        where :math:`distance` is the Euclidean distance between
+        :math:`(x_0, y_0, z_0)` and :math:`(x_{mean}, y_{mean}, z_{mean})`.
+        Thus, for example, :math:`x = 2*(x_0-x_{mean})*t + x_0` and similar
+        process corresponds to :math:`y` and :math:`z`.
 
         Parameters
         ----------
@@ -1336,8 +1340,10 @@ class Dicominfo:
 
         References
         ----------
-            :cite:p:`beltran2012dosimetry`, :cite:p:`zhang2016margin`,
-            :cite:p:`liu2016gating`, :cite:p:`enwiki:1`
+            :cite:p:`enwiki:1`
+            :cite:p:`beltran2012dosimetry`
+            :cite:p:`liu2016gating`
+            :cite:p:`zhang2016margin`
 
         Examples
         --------
@@ -1345,6 +1351,7 @@ class Dicominfo:
         >>> dicom.add_margin('1 GTV', 0.7)
         # Subtract 1.2 mm to the tumor.
         >>> dicom.add_margin('1 GTV', -1.2)
+
         """
         dicom_copy = copy.deepcopy(self)
         n_id = {}
