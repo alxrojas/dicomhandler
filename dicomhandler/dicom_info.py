@@ -43,7 +43,7 @@ class Dicominfo:
         **Important:** `Dicominfo` does not allow to merge information from
         different patients. Only one RS, RP and RD is accepted per patient,
         per instantiation.
-    
+
     The files accepted are:
     - Structures: RS.dcm.
     - Treatment plan: RP.dcm.
@@ -94,7 +94,7 @@ class Dicominfo:
         # Import the class from the dicomhandler.
         >>> import dicomhandler.dicom_info as dh
         # Construct the object.
-        >>> file = os.listdir(os.chdir('./path'))
+        >>> file = os.listdir(os.chdir('path_of_DICOM_files'))
         >>> struct = pydicom.dcmread(file[0])
         >>> plan = pydicom.dcmread(file[1])
         >>> dicom = dh.Dicom_info(struct, plan)
@@ -505,7 +505,7 @@ class Dicominfo:
         # Import the class from the dicomhandler.
         >>> import dicomhandler.dicom_info as dh
         # Construct the object.
-        >>> file = os.listdir(os.chdir('./DICOM_PLANfile'))
+        >>> file = os.listdir(os.chdir(''path_of_DICOM_plan''))
         >>> plan = pydicom.dcmread(file[0], force = True)
         >>> dicom = dh.Dicom_info(plan)
         # Call method areas_to_dataframe
@@ -663,14 +663,18 @@ class Dicominfo:
         # import the class from the dicomhandler.
         >>> import dicomhandler.dicom_info as dh
         # construct the object.
-        >>> file = os.listdir(os.chdir('./DICOMfiles'))
+        >>> file = os.listdir(os.chdir('path_of_DICOM_files'))
         >>> plan = pydicom.dcmread(file[0], force = True)
         >>> struct = pydicom.dcmread(file[1], force = True)
         >>> dicom = dh.Dicom_info(struct, plan)
         # Call method info_to_dataframe
         >>> dicom.info_to_dataframe()
         # Obtain dataframe with the names missmatched.
-        >>> targets = ['1 GTV +2.0 mm','2 GTV +2.0 mm','3 PTV +1.0 mm','4 PTV +1.0 mm','5 PTV +1.0 mm']
+        >>> targets = ['1 GTV +2.0 mm',
+        ...            '2 GTV +2.0 mm',
+        ...            '3 PTV +1.0 mm',
+        ...            '4 PTV +1.0 mm',
+        ...            '5 PTV +1.0 mm']
         >>> dicom.info_to_dataframe(targets)
 
         """
@@ -1309,7 +1313,7 @@ class Dicominfo:
         :math:`radius = margin`, this parametrize equation is
 
         ..math::
-        
+
             t = \pm \frac{margin}{2*distance},
 
         where :math:`distance` is the Euclidean distance between
