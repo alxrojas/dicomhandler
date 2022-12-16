@@ -3,21 +3,12 @@
 Python tool for integrating and processing
 `DICOM <https://www.dicomstandard.org/>`
 information of radiotherapy structures.
-
 It allows to modify the structures (expand, contract, rotate,
 translate) and to obtain statistics from these modifications without
 the need to use CT or MRI images and to create new DICOM files with
 this information, which are compatible with the commercial systems
 of treatment planning such as `Eclipse <https://www.varian.com/>`
 and `Brainlab Elements <https://www.brainlab.com/>`.
-
-It is possible to extract the information from the structures
-in an easy excelable form.
-
-.. moduleauthor:: Alejandro Rojas <alexrojas@ciencias.unam.mx>
-.. moduleauthor:: Jerónimo Fontinós <jerofoti@gmail.com>
-.. moduleauthor:: Nicola Maddalozzo <nicolamaddalozzo95@gmail.com>
-
 """
 
 import copy
@@ -34,16 +25,13 @@ from pydicom.multival import MultiValue
 
 class Dicominfo:
     """Build an object containing different DICOM files to handle.
-
+    
     Allows to integrate the characteristics and properties of the
     different DICOM files, which have complementary information of
     each patient.
-
-    .. note::
-        **Important:** `Dicominfo` does not allow to merge information from
-        different patients. Only one RS, RP and RD is accepted per patient,
-        per instantiation.
-
+    **Important:** `Dicominfo` does not allow to merge information from
+    different patients. Only one RS, RP and RD is accepted per patient,
+    per instantiation.
     The files accepted are:
     - Structures: RS.dcm.
     - Treatment plan: RP.dcm.
@@ -67,7 +55,6 @@ class Dicominfo:
         Allows to translate all the points for a single structure.
     add_margin(struct, margin)
         Allows to expand or subtract margin for a single structure.
-
     """
 
     def __init__(self, *args):
@@ -1298,7 +1285,7 @@ class Dicominfo:
         return dicom_copy
 
     def add_margin(self, struct, margin):
-        r"""Expand or contract a structure from a margin.
+        """Expand or contract a structure a specified margin.
 
         Allow to expand or subtract
         `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
@@ -1355,8 +1342,8 @@ class Dicominfo:
         >>> dicom.add_margin('1 GTV', 0.7)
         # Subtract 1.2 mm to the tumor.
         >>> dicom.add_margin('1 GTV', -1.2)
-
         """
+
         dicom_copy = copy.deepcopy(self)
         n_id = {}
         if isinstance(margin, float):
