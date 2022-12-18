@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# =============================================================================
+# DOCS
+# =============================================================================
+
 """Build and handle DICOM radiotherapy files.
 
 Python tool for integrating and processing
@@ -9,7 +16,13 @@ the need to use CT or MRI images and to create new DICOM files with
 this information, which are compatible with the commercial systems
 of treatment planning such as `Eclipse <https://www.varian.com/>`
 and `Brainlab Elements <https://www.brainlab.com/>`.
+
 """
+
+# =============================================================================
+# IMPORTS
+# =============================================================================
+
 
 import copy
 import warnings
@@ -23,15 +36,20 @@ import pandas as pd
 from pydicom.multival import MultiValue
 
 
+# =============================================================================
+# DICOM INFO
+# =============================================================================
 class Dicominfo:
-    """Build an object containing different DICOM files to handle.
-    
+    """Build an object containing DICOM files.
+
     Allows to integrate the characteristics and properties of the
     different DICOM files, which have complementary information of
     each patient.
+
     **Important:** `Dicominfo` does not allow to merge information from
     different patients. Only one RS, RP and RD is accepted per patient,
     per instantiation.
+
     The files accepted are:
     - Structures: RS.dcm.
     - Treatment plan: RP.dcm.
@@ -55,8 +73,8 @@ class Dicominfo:
         Allows to translate all the points for a single structure.
     add_margin(struct, margin)
         Allows to expand or subtract margin for a single structure.
-    """
 
+    """
     def __init__(self, *args):
         """Initialize dicominfo object.
 
@@ -1285,7 +1303,7 @@ class Dicominfo:
         return dicom_copy
 
     def add_margin(self, struct, margin):
-        """Expand or contract a structure a specified margin.
+        r"""Expand or contract a structure a specified margin.
 
         Allow to expand or subtract
         `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
@@ -1298,11 +1316,7 @@ class Dicominfo:
         along the normal vector to the tangent plane to the surface of the
         contour at point :math:`(x_0, y_0, z_0)` and considering the
         :math:`radius = margin`, this parametrize equation is
-
-        ..math::
-
-            t = \pm \frac{margin}{2*distance},
-
+        :math:`t = \pm \frac{margin}{2*distance}`,
         where :math:`distance` is the Euclidean distance between
         :math:`(x_0, y_0, z_0)` and :math:`(x_{mean}, y_{mean}, z_{mean})`.
         Thus, for example, :math:`x = 2*(x_0-x_{mean})*t + x_0` and similar
@@ -1342,6 +1356,7 @@ class Dicominfo:
         >>> dicom.add_margin('1 GTV', 0.7)
         # Subtract 1.2 mm to the tumor.
         >>> dicom.add_margin('1 GTV', -1.2)
+
         """
 
         dicom_copy = copy.deepcopy(self)
