@@ -1,5 +1,6 @@
 include LICENSE
 include README.md
+include README2.md
 include pyproject.toml
 
 recursive-include dicomhandler *.py
@@ -17,3 +18,5 @@ recursive-exclude dicomhandler.egg-info *
 recursive-exclude .pytest_cache *
 recursive-exclude .ipynb_checkpoints *
 recursive-exclude __pycache__ *
+
+include *.yml

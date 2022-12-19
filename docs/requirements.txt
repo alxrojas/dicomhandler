@@ -7,3 +7,9 @@ Sphinx
 sphinx-rtd-theme
 
 nbsphinx
+
+sphinxcontrib-bibtex
+sphinx-nested-apidoc
+pybtex-apa-style
+
+m2r2

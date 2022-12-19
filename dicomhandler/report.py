@@ -16,6 +16,7 @@ def report(dicom1, dicom2, struct):
     of mass and the distances between two structures (the same name) in
     different positions. It is reported the distance between the centres of
     mass of the two structures.
+
     The report is in a dataframe.
 
     Parameters
@@ -40,9 +41,9 @@ def report(dicom1, dicom2, struct):
 
     Examples
     --------
-    # Import report.
+    >>> # Import report.
     >>> import dicomhandler.report as rp
-    # Report for the original and displaced lesion.
+    >>> # Report for the original and displaced lesion.
     >>> rp(dicom, moved, 'tumor')
     """
     n_id1, n_id2 = {}, {}
