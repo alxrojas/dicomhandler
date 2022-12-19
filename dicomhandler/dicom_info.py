@@ -48,7 +48,7 @@ from pydicom.multival import MultiValue
 # DICOM INFO
 # =============================================================================
 class Dicominfo:
-    """Build an object containing DICOM files.
+    r"""Build an object containing DICOM files.
 
     Allows to integrate the characteristics and properties of the
     different DICOM files, which have complementary information of
@@ -82,7 +82,7 @@ class Dicominfo:
         Creates DICOM contour in *excelable* form.
     translate(struct, delta, key, \*args)
         Allows to translate all the points for a single structure.
-    
+
     Returns
     -------
     pydicom.dataset.FileDataset
@@ -90,8 +90,9 @@ class Dicominfo:
     pandas.core.frame.DataFrame
         DataFrame reports with specific information and metrics from
         DICOM files.
-    
+
     """
+
     def __init__(self, *args):
         """Initialize dicominfo object.
 
@@ -501,7 +502,7 @@ class Dicominfo:
         of the gantry and MLC during irradiation.
 
         The output of this function is a pandas dataframe with
-        six columns: 
+        six columns:
 
             * The code of the beam.
             * The code of the checkpoint.
@@ -681,8 +682,9 @@ class Dicominfo:
         ValueError
             If plan dicom and struct dicom are not present, raises ValueError.
             If targets is not a empty list, `len(targets)` have to be igual a
-            `len(names_p)`, where `names_p` are the names in the plan. The names
-            in targets have to be equal or very similar to the names in targets.
+            `len(names_p)`, where `names_p` are the names in the plan.
+            The names in targets have to be equal or very similar to
+            the names in targets.
 
         Warns
         -----
@@ -928,7 +930,7 @@ class Dicominfo:
         return df_plan_struct
 
     def rotate(self, struct, angle, key, *args):
-        """Rotate a structure for a reference point.
+        r"""Rotate a structure for a reference point.
 
         Allow to rotate all the points for a single structure.
 
@@ -1350,7 +1352,8 @@ class Dicominfo:
         tangent plane to the surface of the contour at point
         :math:`(x_0, y_0, z_0)`.
 
-        This parametrized equation is :math:`t = \pm \frac{margin}{2*distance}`,
+        This parametrized equation is
+        :math:`t = \pm \frac{margin}{2*distance}`,
         where :math:`distance` is the Euclidean distance between
         :math:`(x_0, y_0, z_0)` and :math:`(x_{mean}, y_{mean}, z_{mean})`.
 
@@ -1395,7 +1398,6 @@ class Dicominfo:
         >>> dicom.add_margin('1 GTV', -1.2)
 
         """
-
         dicom_copy = copy.deepcopy(self)
         n_id = {}
         if isinstance(margin, float):

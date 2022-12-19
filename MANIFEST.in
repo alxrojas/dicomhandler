@@ -17,3 +17,5 @@ recursive-exclude dicomhandler.egg-info *
 recursive-exclude .pytest_cache *
 recursive-exclude .ipynb_checkpoints *
 recursive-exclude __pycache__ *
+
+include *.yml
