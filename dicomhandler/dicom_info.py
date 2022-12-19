@@ -1454,9 +1454,6 @@ class Dicominfo:
                         .ContourData[3 * j + 2]
                     )
                     j = j + 1
-            print(x_mean)
-            print(y_mean)
-            print(z_mean)
             xmean = np.mean(x_mean)
             ymean = np.mean(y_mean)
             zmean = np.mean(z_mean)
