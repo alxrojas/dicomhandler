@@ -12,6 +12,7 @@ Welcome to dicomhandler's documentation!
 
    modules
    installation.rst
+   bibliography.rst
 
 
 
