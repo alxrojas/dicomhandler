@@ -5,7 +5,7 @@
 Python tool for integrating [DICOM](https://www.dicomstandard.org/) information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new DICOM files with this information, which are compatible with the commercial systems of treatment planning such as [Eclipse](https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse) and [Brainlab Elements](https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/). It is possible to extract the information from the structures in an easy "excelable" form.
 
 
-## :hammer: Features
+## Features
 
 - `Dicominfo`: The `Dicominfo` class allows to integrate the characteristics and data of the different DICOM files, which have complementary information of each patient. The files accepted are: structures (RS.dcm), treatment plan (RP.dcm) and treatment dose (RD.dcm).
 
@@ -126,16 +126,9 @@ di.info_to_dataframe(targets)
 4	5 PTV +1.0 mm4	21.0	24.46	[18.532, -132.937, -21.835]	33.4	[18.477, -132.879, -22.0]	13.07	2.77	8.12	33.5
 ```
 
-## 📁 Access
-
-Import dicom2handle as
-
-## ⚙️ Open and run the project
-
-Run the project as 
 
 ## 🛠️ 📋 Libraries and pre-requisites
-Things do you need to install the software:
+The dependencies of the package, that will be automatically installed with the software, are the following:
 
 - [numpy](https://numpy.org/): Data analysis and calculation
 - [pandas](https://pandas.pydata.org/): Report statistics
@@ -144,11 +137,13 @@ Things do you need to install the software:
 
 ## ✒ Authors
 
-| [<sub>Alejandro Rojas</sub>](https://github.com/alxrojas)| [<sub>Jerónimo Fotinós</sub>](https://github.com/JeroFotinos) | [<sub>Nicola Maddalozzo</sub>](https://github.com/nicolaMaddalozzo)
-| :---: | :---: | :---: |
+- [Alejandro Rojas](https://github.com/alxrojas)
+- [Jerónimo Fotinós](https://github.com/JeroFotinos)
+- [Nicola Maddalozzo](https://github.com/nicolaMaddalozzo)
+
 
 ## 📄 License
-This project is licensed under (MIT) - Look the file [LICENSE.md](https://github.com/alxrojas/dicom2handle/blob/main/LICENSE) for details.
+This project is licensed under (MIT) - Look the file [LICENSE.md](https://github.com/alxrojas/dicomhandler/blob/main/LICENSE) for details.
 
 ## 🤓 More information for potential applications
 
