@@ -1294,7 +1294,7 @@ class Dicominfo:
         return dicom_copy
 
     def add_margin(self, struct, margin):
-        r"""Expand or contract a structure from a margin.
+        """Expand or contract a structure from a margin.
 
         Allows to expand or subtract
         `margin<www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf>`
@@ -1376,6 +1376,8 @@ class Dicominfo:
                     )
                     / 3
                 )
+                if longitud < 1:
+                    raise ValueError("Contour needs at least 1 point")
                 j = 0
                 while j < longitud:
                     x_mean.append(
@@ -1400,6 +1402,9 @@ class Dicominfo:
                         .ContourData[3 * j + 2]
                     )
                     j = j + 1
+            print(x_mean)
+            print(y_mean)
+            print(z_mean)
             xmean = np.mean(x_mean)
             ymean = np.mean(y_mean)
             zmean = np.mean(z_mean)
@@ -1532,8 +1537,6 @@ class Dicominfo:
                         .ContourSequence[num]
                         .ContourData
                     )
-                else:
-                    raise ValueError("Contour needs at least 1 point")
                 (
                     dicom_copy.dicom_struct.ROIContourSequence[n_id[struct]]
                     .ContourSequence[num]
