@@ -239,7 +239,7 @@ Now, *di* stores the information that were in *patient.dicom_struct* and *patien
 The ``structure_to_excel`` method extracts the information of the cartesian coordinates (relative positions)
 for all or some structures. The output file provides the coordinates of each structure in its own sheet.
 
-For example, we want to extract the information for the third structure. The method return a file in the
+For example, we want to extract the information for the second and third structure. The method return a file in the
 format .xlsx as follows:
 
 .. code-block:: python
@@ -283,7 +283,10 @@ This method searches the information in the RT Structure that correspond to the 
 Plan. Tipically, the names of the structures in RT Plan and RT Structure are different even if they
 refer to the same structure. For example, the structure named "3 GTV" in the RT Structure, could have
 the corresponding information in the RT Plan but in this DICOM file the structure is named "3 GTV + 1 mm".
-
+We could have five structures in the RT Plan named ['1 GTV', '2 GTV', '3 PTV', '4 PTV', '5 PTV']. In the RT 
+Structure, these five could have different names, such as ['1 GTV +2.0 mm', '2 GTV +2.0 mm', 
+'3 PTV +1.0 mm', '4 PTV +1.0 mm', '5 PTV +1.0 mm']. For retrieving the corresponding information in
+the RT Structure, we specify the names (that are in RT Structure) in the targets list.
 This information is represented in a DataFrame as follows:
 
 .. code-block:: python
