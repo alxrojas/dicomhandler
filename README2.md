@@ -24,23 +24,14 @@ Dicomhandler is built on [NumPy](https://numpy.org/). NumPy provides an efficien
 <!-- * [License](#license) -->
 
 ## Features
-Dicomhandler has the following methods:
+The functionalities provided by the package could be divided into three main categories.
 
-- `add_margin`: The dimensions of a structure can be expanded or contracted by an arbitrary amount (in mm) defined by the user. This allows to assign individual margins for each patient.
+- **File transformation:** To modify the files’ information in some
+  meaningful way.
 
-- `anonymize`: It allows to overwrite the name, birthdate of the patient, the operator's name and the creation of the plan.
+- **Format conversion:** DICOM files are neither optimized for data analysis, nor straightforward review by clinical staff, but for hardware. For that reason, the package provides means for both scientific manipulation of data and effortless conversion to clinical-friendly formats.
 
-- `areas_to_dataframe`: It reports the areas for each MLC movement for each control point for a single treatment in a DataFrame.
-
-- `info_to_dataframe`: The complete description of dose, distance to the isocentre, mass centre, maximum, minimum, and mean radius for all targets of the lesions treated are shown in a pandas.DataFrame for pos-processing.
-
-- `mlc_to_excel`: The information of MLC positions, checkpoints, gantry angles, gantry direction and table angle for all beams are extracted in an .xlsx file for pos-processing.
-
-- `report`: It compares the margin assignment of two states (displaced and no-displaced) of the same structure, belonging to different DicomInfo objects. After movements (rotations/translations), the structures are compared to show the main metrics involved in the analyisis, such as maximum, mean and mininum displacements.
-
-- `rotate` and `translate`: A single structure (organ at risk, lesion or support structure) can be displaced with respect to a reference point. By default, rotations and translations are performed for the isocentre.
-
-- `structure_to_excel`: The information of the cartesian coordinates for all or some structures is extracted in an .xlsx file for pos-processing.
+- **Report data:** To summarize different DICOM files, or even about the comparison between files.
 
 ## Examples
 
