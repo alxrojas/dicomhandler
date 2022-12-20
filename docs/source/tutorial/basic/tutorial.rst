@@ -27,15 +27,17 @@ retrieving medical images of a patient. The medical images can have different mo
 .. note::
 
       There are types of DICOM files that are not treated such as computed tomography (CT) and magnetic resonance (MRI)
-      images. A future work is to add methods and funcionalities even for other types. We can see a complete list here_.
+      images. Future releases will aim to give support also with other type of DICOM files. We can see a complete list here_.
 
 .. _here: https://dicom.innolitics.com/ciods/
 
-The core of our package is the class ``Dicominfo``. A *dicominfo* object can be created with one to three of the DICOM
-files described above for their managing, format conversion, and reporting data summaries.
+The core of our package is the class ``Dicominfo``. The class can be instantiated by means of ``pydicom`` objects
+that contain the DICOM files described above. From a practical point of view, a Dicominfo object can be instantiated 
+with zero and up to three ``pydicom`` objects that represents the three DICOM files. The goals of the class are the managing, 
+format converting and the reporting of data summaries about the ``pydicom`` objects contained in the class.
 
-The ``report`` method, that is not contained in the class ``Dicominfo``, is used for storing and comparing information
-about RT Structure files. The *datasets* folder, that contains some DICOM files, is in the directory package
+The ``report`` method, that is not contained in the class ``Dicominfo``, is used for generating a excel file that contains information
+about RT Structure file. The *datasets* folder, that contains some DICOM files, is in the directory package
 *folder -> docs -> source -> tutorial -> datasets*.
 
 ---------------

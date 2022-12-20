@@ -1,84 +1,110 @@
 .. FILE AUTO GENERATED !! 
 
-Python tool for integrating `DICOM <https://www.dicomstandard.org/>`_ information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new DICOM files with this information, which are compatible with the commercial systems of treatment planning such as `Eclipse <https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse>`_ and `Brainlab Elements <https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/>`_. It is possible to extract the information from the structures in an easy "excelable" form.
+Dicomhandler is a Python tool for integrating `DICOM <https://www.dicomstandard.org/>`_ information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new objects with this information, which are compatible with the commercial systems of treatment planning such as `Eclipse <https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse>`_ and `Brainlab Elements <https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/>`_. It is possible to extract the information from the structures in an easy *excelable* form.
+
+Dicomhandler uses DICOM files that belongs to different stages of treatment planning (structures, dose, and plan), by grouping the files of a patient in a single object. DICOM objects have to be created with `Pydicom <https://pydicom.github.io/pydicom/stable/>`_. Also, it allows for the extraction of related information, such as the Cartesian coordinates of structures and multileaf collimator (MLC) positions for each control point in the treatment plan. This is achieved by using the ``Dicominfo`` class. It receives as input the DICOM radiotherapy structures (RS), dose (RD), and plan (RP) files (or a subset of these) and constructs a single object that contains all the information for a patient.
+
+Dicomhandler is built on `NumPy <https://numpy.org/>`_. NumPy provides an efficient implementation of numerical computations in a high-level language like Python but completely compiled in C, resulting in a significant improvement in speed and code that is clear and easy to maintain.
+
+Table of Contents
+-----------------
+
+
+* `Features <#id1>`_
+* `Examples <#id2>`_
+* `Access <#id4>`_
+* `Open and run the project <#id5>`_
+* `Libraries and pre-requisites <#id6>`_
+* `Authors <#id9>`_
+* `License <#id10>`_
+* `Project Status <#id11>`_
+* `Room for Improvement <#id12>`_
+* `Acknowledgements <#id13>`_
+* `More information for potential applications <#id14>`_
+* `Expressions of gratitude <#id15>`_
+
+  .. raw:: html
+
+     <!-- * [License](#license) -->
+
 
 Features
 --------
 
+Dicomhandler has the following methods:
+
 
 * 
-  `Dicominfo`: The `Dicominfo` class allows to integrate the characteristics and data of the different DICOM files, which have complementary information of each patient. The files accepted are: structures (RS.dcm), treatment plan (RP.dcm) and treatment dose (RD.dcm).
+  ``add_margin``\ : The dimensions of a structure can be expanded or contracted by an arbitrary amount (in mm) defined by the user. This allows to assign individual margins for each patient.
 
 * 
-  ``anonymize``\ : In many cases, it is important to anonymize the patient's information for research and statistics. ``anonymize`` method allows to overwrite the name, birthdate of the patient, the operator's name and the creation of the plan.
+  ``anonymize``\ : It allows to overwrite the name, birthdate of the patient, the operator's name and the creation of the plan.
 
 * 
-  ``structure_to_excel``\ : The information of the cartesian coordinates (relative positions) for all or some structures is extracted in an .xlsx file for posprocessing.
+  ``areas_to_dataframe``\ : It reports the areas for each MLC movement for each control point for a single treatment in a DataFrame.
 
 * 
-  ``mlc_to_excel``\ : The information of MLC positions, checkpoints, gantry angles, gantry direction and table angle for all beams are extracted in an .xlsx file for posprocessing.
+  ``info_to_dataframe``\ : The complete description of dose, distance to the isocentre, mass centre, maximum, minimum, and mean radius for all targets of the lesions treated are shown in a pandas.DataFrame for pos-processing.
 
 * 
-  ``info_to_dataframe``\ : The information of plan and structures for targets. The information includes the prescribed dose, the center of mass, the dose received in a reference point, the distance to isocenter, the maximum, minimum and mean radius for each target in a dataframe.
+  ``mlc_to_excel``\ : The information of MLC positions, checkpoints, gantry angles, gantry direction and table angle for all beams are extracted in an .xlsx file for pos-processing.
 
 * 
-  `rotate`: You can rotate an arbritrary structure (organ at risk, lesion or support structure) in any of the 3 degrees of freedom [(roll, pitch or yaw)](https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll) with the angle (in grades) of your choice. **Additional advantage: You can accumulate rotations and traslations to study any combination.**
+  ``report``\ : It compares the margin assignment of two states (displaced and no-displaced) of the same structure, belonging to different DicomInfo objects. After movements (rotations/translations), the structures are compared to show the main metrics involved in the analyisis, such as maximum, mean and mininum displacements.
 
 * 
-  `translate`: You can translate an arbritrary structure (organ at risk, lesion or support structure) in any of the 3 degrees of freedom (x, y, z) with the shift (in milimeters) of your choice. **Additional advantage: You can accumulate rotations and traslations to study any combination.**
+  ``rotate`` and ``translate``\ : A single structure (organ at risk, lesion or support structure) can be displaced with respect to a reference point. By default, rotations and translations are performed for the isocentre.
 
 * 
-  `add_margin`: You can expand or contract an arbritary structure with the [margin](https://www.aapm.org/meetings/2011SS/documents/MackieUncertainty.pdf) of your choice (in milimeters). This allows to asign new personalized margin for each structure for each patient.
+  ``structure_to_excel``\ : The information of the cartesian coordinates for all or some structures is extracted in an .xlsx file for pos-processing.
 
-* 
-  ``report``\ : After movements (rotations/translations), the original and the displaced structure are compared to show the main metrics involved in the analyisis, such as maximum, mean and mininum local and global displacements and the variances associated.
+Examples
+--------
 
-💡Examples
-----------
+Register DICOM files
+^^^^^^^^^^^^^^^^^^^^
 
-Register DICOM file
-~~~~~~~~~~~~~~~~~~~
+It is required to operate on a DICOM object by `Pydicom <https://pydicom.github.io/pydicom/stable/>`_. You can use the DICOM files examples by default in the `repository <https://github.com/alxrojas/dicom2handle/tree/main/Examples>`_\ ).
 
-It is required to operate on a DICOM object (from RS.dcm or RP.dcm), which are called as shown below (you can use the DICOM files by default in the `repository <https://github.com/alxrojas/dicom2handle/tree/main/Examples>`_\ ):
+You can construct an object with different DICOM files from the same patient as:
 
 .. code-block:: python
 
-   import os
-   import pydicom
-   from core import *
-
-   file = os.listdir(os.chdir('./DICOMfiles'))
-   dcm_structure = pydicom.dcmread(file[0], force = True)
-   dcm_plan = pydicom.dcmread(file[1], force = True)
-
-Create the Dicominfo object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Put all dicoms in a single object (containing only the structure's file information as follows:
-
-.. code-block:: python
-
-   di = Dicominfo(dcm_structure)
-
-or containing structure and plan's information as:
-
-.. code-block:: python
-
-   di = Dicominfo(dcm_structure, dcm_plan)
+   di = Dicominfo(dicom_structure, dicom_plan)
 
 Anonymize the information
-~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Anonymize the information. By default this function overwrites all the patient's personal data to generic values. You can choose the information that it has to be anonymized: ``anonymize(name=True, birth=True, operator=True, creation=True)``
+You can choose the information that it has to be anonymized:
 
 .. code-block:: python
 
    di.anonymize(name=True, birth=True, operator=False, creation=False)
 
-Rotate or translate
-~~~~~~~~~~~~~~~~~~~
+Areas to dataframe
+^^^^^^^^^^^^^^^^^^
 
-Input of the functions are: ``rotate('Name of the structure', angle=float, key=str, origin = [x, y, z])`` with key 'roll', 'pitch' or 'yaw'. By default, the point at which you rotate is the isocenter (center of mass of lesions). ``translate('Name of the structure', delta=float, key=str, origin = [x, y, z])`` with key 'x', y' or 'z'. By default, the point at which you rotate/translate is the isocenter (center of mass of lesions). You can change the origin for an arbritary point.
+You can obtain the calculated areas of multileaf collimator (MLC) modulation.
+
+.. code-block:: python
+
+   di.areas_to_dataframe()
+
+Expand or contract margins
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can expand or subtract margins for a single structure. If you want to expand, the input parameter must be positive. Otherwise, negative.
+
+.. code-block:: python
+
+   expanded = add_margin('5 GTV', 1.5)
+   contracted = add_margin('5 GTV', -1.5)
+
+Rotate or translate
+^^^^^^^^^^^^^^^^^^^
+
+You can `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>`_ or `translate <https://en.wikipedia.org/wiki/Transformation_matrix>`_ a structure (organ or lesion) in an specific direction with respect to an arbitary point or to the isocentre. The keys are: roll, pitch, and yaw (for rotations) and x, y, and z (for translations).
+
 For the isocenter:
 
 .. code-block:: python
@@ -86,66 +112,12 @@ For the isocenter:
    di_rotated = di.rotate('5 GTV', 0.5, 'pitch')
    di_translated = di.translate('5 GTV', 1.0, 'x')
 
-or for an arbritary point:
+Or for an arbritary point:
 
 .. code-block:: python
 
    di_rotated = di.rotate('5 GTV', 0.5, 'pitch', [4.0, -50.0, 20.0])
-   di_translated = di.translate('5 GTV', 1.0, 'x', [4.0, -50, 20.0])
-
-Statistics report
-~~~~~~~~~~~~~~~~~
-
-With the report function you can compare the displacements between two states of the same structure:
-
-.. code-block:: python
-
-   report(di, di_rotated, '5 GTV')
-
-       Parameter   Value [mm]
-   0   Max radius  4.229131
-   1   Min radius  1.444514
-   2   Mean radius 3.152265
-   3   STD radius  0.554659
-   4   Variance radius 0.307646
-   5   Max distance    0.170817
-   6   Min distance    0.113221
-   7   Mean distance   0.142280
-   8   STD distance    0.015399
-   9   Variance distance   0.000237
-   10  Distance between center mass    0.141891
-
-Expand or contract margin
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Input of the function is: ``add_margin('Name of the structure', margin=float)`` with the margin in milimeters (positive if expands, negative if contracts).
-
-.. code-block:: python
-
-   add_margin('5 GTV', 1.5)
-
-Excel file
-~~~~~~~~~~
-
-An .xlsx file is generated in the current directory with the information on the coordinates (x, y, z) of all or some structures of a patient. By default the report is generated for all structures.
-
-⚠️ 🐢 For all structures this process takes several minutes (for 40 structures -> 15-20 min) 🐢 ⚠️
-
-.. code-block:: python
-
-   di.structure_to_excel('Name of the file', structures = [])
-
-Or you can select some structures to obtain the excel file:
-
-.. code-block:: python
-
-   di.structure_to_excel('Name of the file', structures = ['Structure1', 'Structure2'])
-
-For the MLC information:
-
-.. code-block:: python
-
-   di.mlc_to_excel('Name of the file')
+   di_translated = di.translate('5 GTV', 1.0, 'x', [4.0, -50.0, 20.0])
 
 Information in dataframe
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -163,57 +135,134 @@ If the names from the plan and structures files missmatch, it is possible to add
    targets = ['1 GTV +2.0 mm','2 GTV +2.0 mm','3 PTV +1.0 mm','4 PTV +1.0 mm','5 PTV +1.0 mm']
    di.info_to_dataframe(targets)
 
-       Target  Prescribed dose [Gy]    Reference point dose [Gy]   Reference coordinates [mm]  Distance to iso [mm]    Structure coordinates [mm]  Max radius [mm] Min radius [mm] Mean radius [mm]    Distance to iso (from structure) [mm]
-   0   1 GTV +2.0 mm   21.0    25.51   [26.758, -150.305, 23.663]  41.0    [26.704, -149.982, 23.5]    12.17   5.76    8.94    41.0
-   1   2 GTV +2.0 mm   21.0    25.78   [-23.007, -145.655, 12.624] 41.3    [-22.738, -145.146, 13.0]   13.07   5.76    9.63    41.5
-   2   3 PTV +1.0 mm4  21.0    25.21   [60.6, -180.097, -31.561]   60.3    [60.485, -180.06, -31.5]    13.07   3.59    8.97    60.2
-   3   4 PTV +1.0 mm4  21.0    25.34   [-47.799, -202.427, -34.313]    72.2    [-47.819, -202.399, -34.5]  13.07   2.77    8.48    72.2
-   4   5 PTV +1.0 mm4  21.0    24.46   [18.532, -132.937, -21.835] 33.4    [18.477, -132.879, -22.0]   13.07   2.77    8.12    33.5
+Excel files
+^^^^^^^^^^^
 
-🛠️ 📋 Libraries and pre-requisites
-----------------------------------
+An .xlsx file is generated in the current directory with some information.
+
+Structures
+~~~~~~~~~~
+
+ The output file provides the information on the coordinates (x, y, z) of all or some structures of a patient. By default the report is generated for all structures.
+
+For all structures this process takes several minutes.
+
+.. code-block:: python
+
+   di.structure_to_excel('Name_of_the_file', structures = [])
+
+Or you can select some structures to obtain the excel file:
+
+.. code-block:: python
+
+   di.structure_to_excel('Name_of_the_file', structures = ['Structure1', 'Structure2'])
+
+MLC
+~~~
+
+ The output file provides the information of gantry angle, gantry direction, table angles, and MLC positions for each checkpoint.
+
+.. code-block:: python
+
+   di.mlc_to_excel('Name_of_the_file')
+
+Access
+------
+
+We encourage the practice of using virtual environments to avoid dependency incompatibilities. The most convenient way to do this, is by using virtualenv, virtualenvwrapper, and pip.
+
+Install with pip
+^^^^^^^^^^^^^^^^
+
+After setting up and activating the virtualenv, run the following command:
+
+.. code-block:: console
+
+   pip install dicomhandler
+
+Install the development version
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In case you’d like to be able to update the package code occasionally with the latest bug fixes and improvements, see the source code, or even make your own changes, you can always clone the code directly from the repository:
+
+.. code-block:: console
+
+   git clone https://github.com/alxrojas/dicomhandler
+   cd dicomhandler
+   pip install -e .
+
+Open and run the project
+------------------------
+
+Run the project as:
+
+.. code-block:: python
+
+   from dicomhandler.dicom_info import Dicominfo
+   from dicomhandler.report import report
+
+Libraries and pre-requisites
+----------------------------
 
 The dependencies of the package, that will be automatically installed with the software, are the following:
 
 
-* `numpy <https://numpy.org/>`_\ : Data analysis and calculation
-* `pandas <https://pandas.pydata.org/>`_\ : Report statistics
-* `pydicom <https://pydicom.github.io/>`_\ : DICOM file reader
-* `xlsxwriter <https://pypi.org/project/XlsxWriter/>`_\ : Write information
+* `numpy <https://numpy.org/>`_\ : Data analysis and calculation.
+* `pandas <https://pandas.pydata.org/>`_\ : Report statistics.
+* `pydicom <https://pydicom.github.io/pydicom/stable/>`_\ : DICOM file reader.
+* `xlsxwriter <https://pypi.org/project/XlsxWriter/>`_\ : Write information.
 
-✒ Authors
----------
+Authors
+-------
 
 
 * `Alejandro Rojas <https://github.com/alxrojas>`_
 * `Jerónimo Fotinós <https://github.com/JeroFotinos>`_
 * `Nicola Maddalozzo <https://github.com/nicolaMaddalozzo>`_
 
-📄 License
-----------
+License
+-------
 
 This project is licensed under (MIT) - Look the file `LICENSE.md <https://github.com/alxrojas/dicomhandler/blob/main/LICENSE>`_ for details.
 
-🤓 More information for potential applications
-----------------------------------------------
+Project Status
+--------------
 
--\ `Beltrán et al. Radiat and Onc (2012) <https://www.sciencedirect.com/science/article/abs/pii/S0167814011003240>`_
+Version 0.0.1a1 is *complete*
 
--\ `Rojas López et al. Phys Med (2021) <https://www.sciencedirect.com/science/article/abs/pii/S1120179721002131>`_
+Room for Improvement
+--------------------
 
--\ `Venencia et al. J Rad in Pract (2022) <https://www.cambridge.org/core/journals/journal-of-radiotherapy-in-practice/article/abs/rotational-effect-and-dosimetric-impact-hdmlc-vs-5mm-mlc-leaf-width-in-single-isocenter-multiple-metastases-radiosurgery-with-brainlab-elements/EFBC35342D49298190BA8381BC729AB1>`_
-
--\ `Zhang et al. SpringerPlus (2016) <https://springerplus.springeropen.com/articles/10.1186/s40064-016-1796-2>`_
-
-🎁 Expressions of gratitude
----------------------------
+For future work and improvement:
 
 
-* Tell others about this project 📢
-* Cite our project in your paper 📄
-* Invite someone from the team a beer 🍺 or a coffee ☕.
-* Give thanks publicly 🤓.
+* A method to provide the assignment of variable margin to a lesion.
+* A method to evaluate the dose-volume histogram for the displaced structures.
+* The possibility to deform structures.
 
-----
+Acknowledgements
+----------------
 
-⌨️ with ❤️ by `AlxRojas <https://github.com/alxrojas>`_ 😊
+Many thanks to
+
+
+* Daniel Venencia, PhD. and Instituto Zunino to provide the resources and the access to data.
+* Juan Cabral, PhD. to evaluate and review this project.
+
+More information for potential applications
+-------------------------------------------
+
+
+* `Beltrán et al. Radiat and Onc (2012) <https://www.sciencedirect.com/science/article/abs/pii/S0167814011003240>`_
+* `Rojas López et al. Phys Med (2021) <https://www.sciencedirect.com/science/article/abs/pii/S1120179721002131>`_
+* `Venencia et al. J Rad in Pract (2022) <https://www.cambridge.org/core/journals/journal-of-radiotherapy-in-practice/article/abs/rotational-effect-and-dosimetric-impact-hdmlc-vs-5mm-mlc-leaf-width-in-single-isocenter-multiple-metastases-radiosurgery-with-brainlab-elements/EFBC35342D49298190BA8381BC729AB1>`_
+* `Zhang et al. SpringerPlus (2016) <https://springerplus.springeropen.com/articles/10.1186/s40064-016-1796-2>`_
+
+Expressions of gratitude
+------------------------
+
+
+* Tell others about this project.
+* Cite our project in your paper.
+* Invite someone from the team a beer or a coffee.
+* Give thanks publicly.
