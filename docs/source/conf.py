@@ -77,7 +77,7 @@ html_theme = "sphinx_rtd_theme"
 import m2r2
 
 DYNAMIC_RST = {
-    "README2.md": "README.rst",
+    "README.md": "README.rst",
 }
 
 for md_name, rst_name in DYNAMIC_RST.items():

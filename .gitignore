@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# rst acutomatically generated
+docs/source/_dynamic
