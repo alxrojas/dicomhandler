@@ -13,13 +13,25 @@ Welcome to dicomhandler's documentation!
 
 Contents
 --------
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
-   modules
-   installation.rst
-   bibliography.rst
+.. toctree::
+    :maxdepth: 1
+    :caption: Tutorials
+
+    installation.rst
+    tutorial/index.rst
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Reference
+
+    modules
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Miscellaneous
+
+    bibliography.rst
 
 
 
