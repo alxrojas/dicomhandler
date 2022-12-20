@@ -1,15 +1,15 @@
-ipykernel
+ipykernel==6.19.2
 
-ipython
+ipython==8.7.0
 
-Sphinx
+Sphinx==5.3.0
 
-sphinx-rtd-theme
+sphinx-rtd-theme==1.1.1
 
-nbsphinx
+nbsphinx==0.8.10
 
-sphinxcontrib-bibtex
-sphinx-nested-apidoc
-pybtex-apa-style
+sphinxcontrib-bibtex==2.5.0
+sphinx-nested-apidoc==1.2.1
+pybtex-apa-style==1.3
 
-m2r2
+m2r2==0.3.2
