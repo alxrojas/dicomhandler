@@ -58,8 +58,8 @@ di.areas_to_dataframe()
 ### Expand or contract margins
 You can expand or subtract margins for a single structure. If you want to expand, the input parameter must be positive. Otherwise, negative.
 ```python
-expanded = add_margin('5 GTV', 1.5)
-contracted = add_margin('5 GTV', -1.5)
+expanded = di.add_margin('5 GTV', 1.5)
+contracted = di.add_margin('5 GTV', -1.5)
 ```
 
 ### Rotate or translate
@@ -143,7 +143,6 @@ The dependencies of the package, that will be automatically installed with the s
 - [Alejandro Rojas](https://github.com/alxrojas)
 - [Jerónimo Fotinós](https://github.com/JeroFotinos)
 - [Nicola Maddalozzo](https://github.com/nicolaMaddalozzo)
-
 
 ## License
 This project is licensed under (MIT) - Look the file [LICENSE.md](https://github.com/alxrojas/dicomhandler/blob/main/LICENSE) for details.
