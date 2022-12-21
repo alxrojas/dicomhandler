@@ -96,4 +96,4 @@ for md_name, rst_name in DYNAMIC_RST.items():
 # INDICATING READ THE DOCS HOW TO FIND index.rst 
 # =============================================================================
 
-master_doc = 'index'
+# master_doc = 'index'
