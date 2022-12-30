@@ -364,30 +364,9 @@ data12 = {
         ("patient_8.gz", "patient_9.gz", "POINT", pytest.raises(ValueError)),
         ("patient_8.gz", "patient_10.gz", "", pytest.raises(ValueError)),
         ("patient_8.gz", "patient_9.gz", "", pytest.raises(ValueError)),
-        ("patient_8.gz", "patient_10.gz", "point", pytest.raises(ValueError)),
-        ("patient_8.gz", "patient_10.gz", "cube", pytest.raises(ValueError)),
     ],
 )
 def test_match_name(dicom_infos, patient1, patient2, name, expected, request):
-    with expected:
-        original = dicom_infos(patient1)
-        rotated = dicom_infos(patient2)
-        report(original, rotated, name)
-
-
-@pytest.mark.parametrize(
-    "patient1,patient2,name,expected",
-    [
-        ("patient_8.gz", "patient_9.gz", "point", does_not_raise()),
-        ("patient_8.gz", "patient_9.gz", "cube", does_not_raise()),
-        ("patient_8.gz", "patient_11.gz", "point", pytest.raises(ValueError)),
-        ("patient_8.gz", "patient_12.gz", "cube", pytest.raises(ValueError)),
-        ("patient_8.gz", "patient_13.gz", "cube", pytest.raises(ValueError)),
-    ],
-)
-def test_length_contours(
-    dicom_infos, patient1, patient2, name, expected, request
-):
     with expected:
         original = dicom_infos(patient1)
         rotated = dicom_infos(patient2)
@@ -438,7 +417,7 @@ def test_translations(
     dicom_infos, patient1, dataframe, name, delta, key, request
 ):
     original = dicom_infos(patient1)
-    translated = original.translate(name, delta, key)
+    translated = original.displace(name, delta, key)
     df1 = report(original, translated, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
@@ -477,7 +456,7 @@ def test_rotations(
     dicom_infos, patient1, dataframe, name, angle, key, request
 ):
     original = dicom_infos(patient1)
-    rotated = original.rotate(name, angle, key)
+    rotated = original.displace(name, angle, key)
     df1 = report(original, rotated, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
@@ -495,8 +474,8 @@ def test_cumulated_rotations(
     dicom_infos, patient1, dataframe, name, angle, key1, key2, request
 ):
     original = dicom_infos(patient1)
-    rotated = original.rotate(name, angle, key1)
-    rotated2 = rotated.rotate(name, angle, key2)
+    rotated = original.displace(name, angle, key1)
+    rotated2 = rotated.displace(name, angle, key2)
     df1 = report(original, rotated2, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
@@ -514,8 +493,8 @@ def test_cumulated_translations(
     dicom_infos, patient1, dataframe, name, delta, key1, key2, request
 ):
     original = dicom_infos(patient1)
-    translated = original.translate(name, delta, key1)
-    translated2 = translated.translate(name, delta, key2)
+    translated = original.displace(name, delta, key1)
+    translated2 = translated.displace(name, delta, key2)
     df1 = report(original, translated2, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
@@ -534,3 +513,21 @@ def test_margins(dicom_infos, patient1, dataframe, name, margin, request):
     df1 = report(original, expanded, name)
     df2 = pd.DataFrame(dataframe)
     assert_frame_equal(df1, df2)
+
+
+@pytest.mark.parametrize(
+    "patient1,patient2,name,expected",
+    [
+        ("patient_8.gz", "patient_9.gz", "point", does_not_raise()),
+        ("patient_8.gz", "patient_9.gz", "cube", does_not_raise()),
+        ("patient_8.gz", "patient_12.gz", "cube", pytest.raises(ValueError)),
+        ("patient_8.gz", "patient_13.gz", "cube", pytest.raises(ValueError)),
+    ],
+)
+def test_length_contours(
+    dicom_infos, patient1, patient2, name, expected, request
+):
+    with expected:
+        original = dicom_infos(patient1)
+        rotated = dicom_infos(patient2)
+        report(original, rotated, name)

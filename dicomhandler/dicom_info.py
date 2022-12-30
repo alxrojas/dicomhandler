@@ -201,6 +201,10 @@ class Dicominfo:
 
         """
         dicom_copy = copy.deepcopy(self)
+        name_dcm = "PatientName"
+        birth_dcm = "19720101"
+        operator_dcm = "OperatorName"
+        creation_dcm = "19720101"
 
         empty_di = all(
             [
@@ -220,63 +224,69 @@ class Dicominfo:
             return dicom_copy
 
         if name:
-            dicom_copy.PatientName = "PatientName"
+            dicom_copy.PatientName = name_dcm
             if dicom_copy.dicom_struct is not None:
-                dicom_copy.dicom_struct.PatientName = "PatientName"
+                dicom_copy.dicom_struct.PatientName = name_dcm
 
             if dicom_copy.dicom_plan is not None:
-                dicom_copy.dicom_plan.PatientName = "PatientName"
+                dicom_copy.dicom_plan.PatientName = name_dcm
 
             if dicom_copy.dicom_dose is not None:
-                dicom_copy.dicom_dose.PatientName = "PatientName"
+                dicom_copy.dicom_dose.PatientName = name_dcm
 
         if birth:
-            dicom_copy.PatientBirthDate = "19720101"
+            dicom_copy.PatientBirthDate = birth_dcm
             if dicom_copy.dicom_struct is not None:
-                (dicom_copy.dicom_struct.PatientBirthDate) = "19720101"
+                (dicom_copy.dicom_struct.PatientBirthDate) = birth_dcm
 
             if dicom_copy.dicom_plan is not None:
-                (dicom_copy.dicom_plan.PatientBirthDate) = "19720101"
+                (dicom_copy.dicom_plan.PatientBirthDate) = birth_dcm
 
             if dicom_copy.dicom_dose is not None:
-                (dicom_copy.dicom_dose.PatientBirthDate) = "19720101"
+                (dicom_copy.dicom_dose.PatientBirthDate) = birth_dcm
 
         if operator:
-            dicom_copy.OperatorsName = "OperatorName"
+            dicom_copy.OperatorsName = operator_dcm
             if dicom_copy.dicom_struct is not None:
-                dicom_copy.dicom_struct.OperatorsName = "OperatorName"
+                dicom_copy.dicom_struct.OperatorsName = operator_dcm
 
             if dicom_copy.dicom_plan is not None:
-                dicom_copy.dicom_plan.OperatorsName = "OperatorName"
+                dicom_copy.dicom_plan.OperatorsName = operator_dcm
 
             if dicom_copy.dicom_dose is not None:
-                dicom_copy.dicom_dose.OperatorsName = "OperatorName"
+                dicom_copy.dicom_dose.OperatorsName = operator_dcm
 
         if creation:
-            dicom_copy.InstanceCreationDate = "19720101"
+            dicom_copy.InstanceCreationDate = creation_dcm
             if dicom_copy.dicom_struct is not None:
-                (dicom_copy.dicom_struct.InstanceCreationDate) = "19720101"
+                (dicom_copy.dicom_struct.InstanceCreationDate) = creation_dcm
 
             if dicom_copy.dicom_plan is not None:
-                (dicom_copy.dicom_plan.InstanceCreationDate) = "19720101"
+                (dicom_copy.dicom_plan.InstanceCreationDate) = creation_dcm
 
             if dicom_copy.dicom_dose is not None:
-                (dicom_copy.dicom_dose.InstanceCreationDate) = "19720101"
+                (dicom_copy.dicom_dose.InstanceCreationDate) = creation_dcm
 
         return dicom_copy
 
-    def structure_to_excel(self, name_file, names=[]):
-        """Create an excel file with the information of the structures.
+    def dicom_to_csv(self, structure=False, mlc=False, names=[]):
+        """Create an csv file with the information of the dicom files.
 
         The information of the Cartesian coordinates (relative positions)
-        for all or some structures is extracted in an .xlsx file
+        for all or some structures is extracted in an .csv file
         for pos-processing.
 
-        It creates DICOM contours in *excelable* form.
-
-        The ContourData for each organ is set on different sheets.
         The file is created in the same directory with the
-        name name_file.xlsx.
+        name output_struct.csv.
+
+        Also, the information of the multileaf collimator (MLC) positions,
+        control points, gantry angles, gantry orientation and table
+        angle are reported in an .csv file for pos-processing for
+        numerical simulations.
+
+        The file is created at the same directory with the
+        name output_mlc.csv. The information contains the principal
+        components necessary for Monte Carlo simulations for radiotherapy.
 
         .. note::
             **Important:** For all structures, it could be a slow process
@@ -285,138 +295,23 @@ class Dicominfo:
 
         Parameters
         ----------
-        name_file : str
-            Name of the output file.
+        structure : bool, default=False
+            True to create structure file.
+        mlc : bool, default=False
+            True to create mlc file.
         names : list, default=[]
             List of str, with the name of the structures to create the
-            excel file. By default all structures.
+            ecsv file. By default all structures.
 
         Returns
         -------
-        pandas.io.excel._xlsxwriter.XlsxWriter
-            Excel file with the coordinates of the selected structures.
+        csv file
+            csv file with the coordinates of the selected structures.
 
         Raises
         ------
         ValueError
             If the name of the structures are not in the files.
-
-        Examples
-        --------
-        >>> # Extract the coordinates of the structures 1 GTV and Eye Right.
-        >>> dicom.structure_to_excel('output', ['1 GTV', 'Eye Right'])
-        >>> # Extract the coordinates of the all structures.
-        >>> dicom.structure_to_excel('output', [])
-
-        """
-        dicom_copy = copy.deepcopy(self)
-        extension = ".xlsx"
-        name_file = name_file + extension
-        names_aux, n_all = {}, {}
-        for item, _ in enumerate(
-            dicom_copy.dicom_struct.StructureSetROISequence
-        ):
-            names_aux[
-                (dicom_copy.dicom_struct.StructureSetROISequence[item].ROIName)
-            ] = item
-        if len(names) == 0:
-            n_all = names_aux
-        else:
-            for name in names:
-                if name in names_aux.keys():
-                    n_all[name] = names_aux[name]
-                else:
-                    raise ValueError(f"{name} not founded.")
-        with pd.ExcelWriter(name_file) as writer:
-            for name in n_all:
-                array = []
-                for num, _ in enumerate(
-                    dicom_copy.dicom_struct.ROIContourSequence[
-                        n_all[name]
-                    ].ContourSequence
-                ):
-                    count = 0
-                    x_values, y_values, z_values = [], [], []
-                    while count < int(
-                        len(
-                            dicom_copy.dicom_struct.ROIContourSequence[
-                                n_all[name]
-                            ]
-                            .ContourSequence[num]
-                            .ContourData
-                        )
-                        / 3
-                    ):
-                        x_values.append(
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_all[name]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * count]
-                            )
-                        )
-                        y_values.append(
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_all[name]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * count + 1]
-                            )
-                        )
-                        z_values.append(
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_all[name]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * count + 2]
-                            )
-                        )
-                        seriesx = pd.Series(x_values, name=f"x{num} [mm]")
-                        seriesy = pd.Series(y_values, name=f"y{num} [mm]")
-                        seriesz = pd.Series(z_values, name=f"z{num} [mm]")
-                        count = count + 1
-                    array.append(seriesx)
-                    array.append(seriesy)
-                    array.append(seriesz)
-                df = pd.concat(array, axis=1)
-                buffer = BytesIO()
-                df.to_excel(buffer)
-                buffer.getvalue()
-                buffer.seek(0)
-                df.to_excel(writer, sheet_name=name)
-            buffer.close()
-
-    def mlc_to_excel(self, name_file):
-        """Create an excel file with the MLC information.
-
-        The information of the multileaf collimator (MLC) positions,
-        control points, gantry angles, gantry orientation and table
-        angle are reported in an .xlsx file for pos-processing for
-        numerical simulations.
-
-        The data for each beam is set on different sheets.
-
-        The file is created at the same directory with the
-        name name_file.xlsx. The information contains the principal
-        components necessary for Monte Carlo simulations for radiotherapy.
-
-        Parameters
-        ----------
-        name_file : str
-            Name of the output file.
-
-        Returns
-        -------
-        pandas.io.excel._xlsxwriter.XlsxWriter
-            Excel file.
-
-        Raises
-        ------
-        ValueError
-            If the plan file is not loaded.
 
         References
         ----------
@@ -424,76 +319,111 @@ class Dicominfo:
 
         Examples
         --------
+        >>> # Extract the coordinates of the structures 1 GTV and Eye Right.
+        >>> dicom.dicom_to_csv(structure = True, ['1 GTV', 'Eye Right'])
+        >>> # Extract the coordinates of the all structures.
+        >>> dicom.dicom_to_csv(structure = True, [])
         >>> # Extract the MLC relative positions and checkpoints.
-        >>> dicom.mlc_to_excel('outputfile')
+        >>> dicom.dicom_to_csv(mlc = True)
 
         """
         dicom_copy = copy.deepcopy(self)
-        extension = ".xlsx"
-        name_file = name_file + extension
-        if dicom_copy.dicom_plan is None:
-            raise ValueError("Plan not loaded")
-        with pd.ExcelWriter(name_file) as writer:
-            for number, _ in enumerate(dicom_copy.dicom_plan.BeamSequence):
-                array = []
-                for controlpoint, _ in enumerate(
-                    dicom_copy.dicom_plan.BeamSequence[
-                        number
-                    ].ControlPointSequence
-                ):
-                    gantry_angle = (
-                        dicom_copy.dicom_plan.BeamSequence[number]
-                        .ControlPointSequence[controlpoint]
-                        .GantryAngle
-                    )
-                    gantry_direction = (
-                        dicom_copy.dicom_plan.BeamSequence[number]
-                        .ControlPointSequence[controlpoint]
-                        .GantryRotationDirection
-                    )
-                    table_direction = (
-                        dicom_copy.dicom_plan.BeamSequence[number]
-                        .ControlPointSequence[0]
-                        .PatientSupportAngle
-                    )
-                    if controlpoint == 0:
-                        mlc = np.array(
-                            dicom_copy.dicom_plan.BeamSequence[number]
-                            .ControlPointSequence[controlpoint]
-                            .BeamLimitingDevicePositionSequence[2]
-                            .LeafJawPositions
-                        )
+        if structure and dicom_copy.dicom_struct:
+            names_aux, names_all = {}, {}
+            for item, value in enumerate(
+                dicom_copy.dicom_struct.StructureSetROISequence
+            ):
+                names_aux[value.ROIName] = item
+            if len(names) != 0:
+                for name in names:
+                    if name in names_aux.keys():
+                        names_all[name] = names_aux[name]
                     else:
-                        mlc = list(
-                            np.array(
-                                dicom_copy.dicom_plan.BeamSequence[number]
-                                .ControlPointSequence[controlpoint]
-                                .BeamLimitingDevicePositionSequence[0]
-                                .LeafJawPositions
+                        raise ValueError(f"{name} not founded.")
+            else:
+                names_all = names_aux
+            with open("output_structure.csv", "wb") as f:
+                for roiname in names_all:
+                    array = []
+                    for num, contour in enumerate(
+                        dicom_copy.dicom_struct.ROIContourSequence[
+                            names_all[roiname]
+                        ].ContourSequence
+                    ):
+                        x, y, z = [], [], []
+                        counter = 0
+                        while counter < int(len(contour.ContourData) / 3):
+                            x.append(float(contour.ContourData[3 * counter]))
+                            y.append(
+                                float(contour.ContourData[3 * counter + 1])
                             )
-                        )
-                    values = [
-                        "GantryAngle",
-                        gantry_angle,
-                        "GantryDirection",
-                        gantry_direction,
-                        "TableDirection",
-                        table_direction,
-                        "MLC",
-                    ]
-                    for leaf in mlc:
-                        values.append(leaf)
-                    series = pd.Series(
-                        values, name=f"ControlPoint{controlpoint}"
-                    )
-                    array.append(series)
-                df = pd.concat(array, axis=1)
-                buffer = BytesIO()
-                df.to_excel(buffer)
-                buffer.getvalue()
-                buffer.seek(0)
-                df.to_excel(writer, sheet_name=f"Beam {number}")
-            buffer.close()
+                            z.append(
+                                float(contour.ContourData[3 * counter + 2])
+                            )
+                            seriesx = pd.Series(x, name=f"x{num} [mm]")
+                            seriesy = pd.Series(y, name=f"y{num} [mm]")
+                            seriesz = pd.Series(z, name=f"z{num} [mm]")
+                            counter = counter + 1
+                        array.append(seriesx)
+                        array.append(seriesy)
+                        array.append(seriesz)
+                    df = pd.concat(array, axis=1)
+                    buff = BytesIO()
+                    df.to_csv(buff, sep="\t", index_label=roiname)
+                    buff.tell()
+                    buff.seek(0)
+                    f.write(buff.getbuffer())
+                    buff.close()
+        if mlc and dicom_copy.dicom_plan:
+            with open("output_mlc.csv", "wb") as f:
+                for number, sequence in enumerate(
+                    dicom_copy.dicom_plan.BeamSequence
+                ):
+                    array = []
+                    for item, point in enumerate(
+                        sequence.ControlPointSequence
+                    ):
+                        gantry_angle = point.GantryAngle
+                        gantry_direction = point.GantryRotationDirection
+                        table_direction = sequence.ControlPointSequence[
+                            0
+                        ].PatientSupportAngle
+                        if item == 0:
+                            mlc = np.array(
+                                point.BeamLimitingDevicePositionSequence[
+                                    2
+                                ].LeafJawPositions
+                            )
+                        else:
+                            mlc = np.array(
+                                point.BeamLimitingDevicePositionSequence[
+                                    0
+                                ].LeafJawPositions
+                            )
+                        values = [
+                            "GantryAngle",
+                            gantry_angle,
+                            "GantryDirection",
+                            gantry_direction,
+                            "TableDirection",
+                            table_direction,
+                            "MLC",
+                        ]
+                        for leaf in mlc:
+                            values.append(leaf)
+                        series = pd.Series(values, name=f"CP{item}")
+                        array.append(series)
+                    df = pd.concat(array, axis=1)
+                    buff = BytesIO()
+                    df.to_csv(buff, sep="\t", index_label=f"Beam {number}")
+                    buff.tell()
+                    buff.seek(0)
+                    f.write(buff.getbuffer())
+                    buff.close()
+        elif structure and not dicom_copy.dicom_struct:
+            raise ValueError("Structure file not loaded.")
+        elif mlc and not dicom_copy.dicom_plan:
+            raise ValueError("Plan file not loaded.")
 
     def areas_to_dataframe(self):
         """Calculate the areas of multileaf collimator (MLC) modulation.
@@ -929,18 +859,20 @@ class Dicominfo:
         )
         return df_plan_struct
 
-    def rotate(self, struct, angle, key, *args):
-        r"""Rotate a structure for a reference point.
+    def displace(self, struct, value, key, *args):
+        r"""Displace a structure for a reference point.
 
-        Allow to rotate all the points for a single structure.
+        Allow to rotate and translate all the points for a single
+        structure.
 
-        Rotation transformations are defined at the origin.
+        The transformations are defined at the origin.
         For that reason it is necessary to bring the coordinates
         to the origin before rotating. You can
         `rotate <https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll>`_
         an arbritrary structure (organ at risk, lesion or support
         structure) in any of the 3 degrees of freedom: roll, pitch, or yaw
-        with the angle (in degrees) of your choice.
+        with the angle (in degrees) or translate (in mm) in x, y or z axis
+        of your choice.
 
         .. note::
             **Additional advantage:** You can accumulate rotations
@@ -950,11 +882,13 @@ class Dicominfo:
         ----------
         struct : str
             Name of the structure to rotate
-        angle : float
-            Angle in degrees (positive or negative).
-            Maximum angle allowed 360º.
+        value : float
+            Value could be positive or negative.
+            For rotation, maximum angle allowed 360º.
+            For translation, maximum shift allowed 1000 mm.
         key : str
-            Direction of rotation ('roll', 'pitch' or 'yaw')
+            Direction of rotation ('roll', 'pitch' or 'yaw').
+            Direction of translation ('x', 'y' or 'z')
         \*args : list, optional
             Origin in a list of float elements [x, y, z].
             By default, it is considered the isocenter of the
@@ -965,12 +899,12 @@ class Dicominfo:
         Returns
         -------
         pydicom.dataset.FileDataset
-            Object with DICOM properties of the rotated structure.
+            Object with DICOM properties of the displaced structure.
 
         Raises
         ------
         TypeError
-            If the angle is a float, int or if angle > 360 degrees.
+            If the angle is not float or int.
         ValueError
             If you select an incorrect rotation key, incorrect name
             or if you type an origin point with no float.
@@ -983,33 +917,36 @@ class Dicominfo:
         Examples
         --------
         >>> # rotate tumor 1.0 degree in yaw in isocenter.
-        >>> moved = dicom.rotate('1 GTV', 1.0, 'yaw')
+        >>> moved = dicom.displace('1 GTV', 1.0, 'yaw')
         >>> # rotate lesion 1.0 degree in roll in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.rotate('1 GTV', 1.0, 'yaw', iso)
+        >>> dicom.displace('1 GTV', 1.0, 'yaw', iso)
+        >>> # translate tumor 1.0 mm in x in isocenter.
+        >>> moved = dicom.displace('1 GTV', 1.0, 'x')
 
         """
         dicom_copy = copy.deepcopy(self)
-        if (
-            isinstance(angle, float) is False
-            and isinstance(angle, int) is False
+        if not dicom_copy.dicom_struct:
+            raise ValueError("Structure file must be loaded")
+        elif (
+            isinstance(value, float) is False
+            and isinstance(value, int) is False
         ):
-            raise TypeError("Angle is a float o int!")
-        elif abs(angle) > 360:
-            raise ValueError("Angle is > 360º")
+            raise TypeError("Displacement must be float or int")
+        elif (key in ["roll", "pitch", "yaw"]) and (abs(value) < 360):
+            delta = np.radians(value)
+        elif (key in ["x", "y", "z"]) and (abs(value) < 1000):
+            delta = value
         else:
-            angle = np.radians(angle)
-        n_id = {}
+            raise ValueError("Choose a correct key or a valid value")
+
+        names_all = {}
         length = len(dicom_copy.dicom_struct.StructureSetROISequence)
-        if key in ["roll", "pitch", "yaw"]:
-            pass
-        else:
-            raise ValueError("Choose a correct key: roll, pitch, yaw")
-        for i, _ in enumerate(dicom_copy.dicom_struct.StructureSetROISequence):
-            n_id[
-                (dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
-            ] = i
-        if struct in n_id:
+        for item, value in enumerate(
+            dicom_copy.dicom_struct.StructureSetROISequence
+        ):
+            names_all[value.ROIName] = item
+        if struct in names_all.keys():
             if not args:
                 origin = (
                     dicom_copy.dicom_struct.ROIContourSequence[length - 1]
@@ -1026,203 +963,27 @@ class Dicominfo:
                 "roll": np.array(
                     [
                         [1, 0, 0, 0],
-                        [0, np.cos(angle), -np.sin(angle), 0],
-                        [0, np.sin(angle), np.cos(angle), 0],
+                        [0, np.cos(delta), -np.sin(delta), 0],
+                        [0, np.sin(delta), np.cos(delta), 0],
                         [0, 0, 0, 1],
                     ]
                 ),
                 "pitch": np.array(
                     [
-                        [np.cos(angle), 0, np.sin(angle), 0],
+                        [np.cos(delta), 0, np.sin(delta), 0],
                         [0, 1, 0, 0],
-                        [-np.sin(angle), 0, np.cos(angle), 0],
+                        [-np.sin(delta), 0, np.cos(delta), 0],
                         [0, 0, 0, 1],
                     ]
                 ),
                 "yaw": np.array(
                     [
-                        [np.cos(angle), -np.sin(angle), 0, 0],
-                        [np.sin(angle), np.cos(angle), 0, 0],
+                        [np.cos(delta), -np.sin(delta), 0, 0],
+                        [np.sin(delta), np.cos(delta), 0, 0],
                         [0, 0, 1, 0],
                         [0, 0, 0, 1],
                     ]
                 ),
-                "point2iso": np.array(
-                    [
-                        [1, 0, 0, -origin[0]],
-                        [0, 1, 0, -origin[1]],
-                        [0, 0, 1, -origin[2]],
-                        [0, 0, 0, 1],
-                    ]
-                ),
-                "iso2point": np.array(
-                    [
-                        [1, 0, 0, origin[0]],
-                        [0, 1, 0, origin[1]],
-                        [0, 0, 1, origin[2]],
-                        [0, 0, 0, 1],
-                    ]
-                ),
-            }
-            for num, _ in enumerate(
-                dicom_copy.dicom_struct.ROIContourSequence[
-                    n_id[struct]
-                ].ContourSequence
-            ):
-                if (
-                    len(
-                        dicom_copy.dicom_struct.ROIContourSequence[
-                            n_id[struct]
-                        ]
-                        .ContourSequence[num]
-                        .ContourData
-                    )
-                    % 3
-                    != 0
-                ):
-                    raise ValueError(
-                        "One slice did not have all points of 3 elements"
-                    )
-                contour_rotated = []
-                counter = 0
-                while counter < int(
-                    len(
-                        dicom_copy.dicom_struct.ROIContourSequence[
-                            n_id[struct]
-                        ]
-                        .ContourSequence[num]
-                        .ContourData
-                    )
-                    / 3
-                ):
-                    rotation = (
-                        m["iso2point"]
-                        @ m[key]
-                        @ m["point2iso"]
-                        @ [
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter]
-                            ),
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter + 1]
-                            ),
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter + 2]
-                            ),
-                            1.0,
-                        ]
-                    )
-                    contour_rotated.append(rotation[0])
-                    contour_rotated.append(rotation[1])
-                    contour_rotated.append(rotation[2])
-                    counter = counter + 1
-                (
-                    dicom_copy.dicom_struct.ROIContourSequence[n_id[struct]]
-                    .ContourSequence[num]
-                    .ContourData
-                ) = MultiValue(float, contour_rotated)
-        else:
-            raise ValueError("Type a correct name")
-        return dicom_copy
-
-    def translate(self, struct, delta, key, *args):
-        """Translate a structure for a reference point.
-
-        Allow to translate all the points for a single structure.
-
-        Translation transformations are defined at the origin.
-        For that reason it is necessary to bring the coordinates
-        to the origin before rotating.
-
-        .. note::
-            **Additional advantage:** You can accumulate rotations
-            and traslations to study any combination.
-
-        Parameters
-        ----------
-        struct : str
-            Name of the structure to translate
-        delta : float
-            Shift in mm (positive or negative).
-            Maximum displacement allowed: 1000 mm (clinical perspective).
-            More than 1000 mm has not relevance in patient displacement.
-        key : str
-            Direction of rotation ('x', 'y' or 'z')
-        args : list, optional
-            Origin in a list of float elements [x, y, z].
-            By default, it is considered the isocenter of the
-            structure file (last structure in RS DICOM called Coord 1).
-            If not is able this structure, you can add an
-            arbritrarly point.
-
-        Returns
-        -------
-        pydicom.dataset.FileDataset
-            Object with DICOM properties of the translated structure.
-
-        Raises
-        ------
-        TypeError
-            If the displacement is not float nor int or if it
-            is > 1000 mm.
-        ValueError
-            If you select an incorrect translation key, incorrect name
-            or if you type an origin point with no float.
-
-        Examples
-        --------
-        >>> # translate tumor 1.0 mm in x in isocenter.
-        >>> moved = dicom.translate('1 GTV', 1.0, 'x')
-        >>> # translate lesion 1.0 mm in x in [0.0, 0.0, 0.0].
-        >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.translate('1 GTV', 1.0, 'x', iso)
-
-        """
-        dicom_copy = copy.deepcopy(self)
-        if (
-            isinstance(delta, float) is False
-            and isinstance(delta, int) is False
-        ):
-            raise TypeError("delta is float or int!")
-        elif abs(delta) > 1000:
-            raise ValueError("delta is > 1000 mm")
-        n_id = {}
-        length = len(dicom_copy.dicom_struct.StructureSetROISequence)
-        if key in ["x", "y", "z"]:
-            pass
-        else:
-            raise ValueError("Choose a correct key: x, y, z")
-        for i, _ in enumerate(dicom_copy.dicom_struct.StructureSetROISequence):
-            n_id[
-                (dicom_copy.dicom_struct.StructureSetROISequence[i].ROIName)
-            ] = i
-        if struct in n_id:
-            if not args:
-                origin = (
-                    dicom_copy.dicom_struct.ROIContourSequence[length - 1]
-                    .ContourSequence[0]
-                    .ContourData
-                )
-            elif len(args[0]) == 3 and all(
-                isinstance(x, float) for x in args[0]
-            ):
-                origin = args[0]
-            else:
-                raise ValueError("Type an origin [x,y,z] with float elements")
-
-            m = {
                 "x": np.array(
                     [
                         [1, 0, 0, delta],
@@ -1264,75 +1025,34 @@ class Dicominfo:
                     ]
                 ),
             }
-            for num, _ in enumerate(
+            for _, contour in enumerate(
                 dicom_copy.dicom_struct.ROIContourSequence[
-                    n_id[struct]
+                    names_all[struct]
                 ].ContourSequence
             ):
-                if (
-                    len(
-                        dicom_copy.dicom_struct.ROIContourSequence[
-                            n_id[struct]
-                        ]
-                        .ContourSequence[num]
-                        .ContourData
-                    )
-                    % 3
-                    != 0
-                ):
+                if len(contour.ContourData) % 3 != 0:
                     raise ValueError(
-                        "One slice do not have all points of 3 elements"
+                        "One slice does not have all points of 3 elements"
                     )
-                contour_translat = []
+                contour_rotated = []
                 counter = 0
-                while counter < int(
-                    len(
-                        dicom_copy.dicom_struct.ROIContourSequence[
-                            n_id[struct]
-                        ]
-                        .ContourSequence[num]
-                        .ContourData
-                    )
-                    / 3
-                ):
-                    translation = (
+                while counter < int(len(contour.ContourData) / 3):
+                    rotation = (
                         m["iso2point"]
                         @ m[key]
                         @ m["point2iso"]
                         @ [
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter]
-                            ),
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter + 1]
-                            ),
-                            float(
-                                dicom_copy.dicom_struct.ROIContourSequence[
-                                    n_id[struct]
-                                ]
-                                .ContourSequence[num]
-                                .ContourData[3 * counter + 2]
-                            ),
+                            float(contour.ContourData[3 * counter]),
+                            float(contour.ContourData[3 * counter + 1]),
+                            float(contour.ContourData[3 * counter + 2]),
                             1.0,
                         ]
                     )
-                    contour_translat.append(translation[0])
-                    contour_translat.append(translation[1])
-                    contour_translat.append(translation[2])
+                    contour_rotated.append(rotation[0])
+                    contour_rotated.append(rotation[1])
+                    contour_rotated.append(rotation[2])
                     counter = counter + 1
-                (
-                    dicom_copy.dicom_struct.ROIContourSequence[n_id[struct]]
-                    .ContourSequence[num]
-                    .ContourData
-                ) = MultiValue(float, contour_translat)
+                contour.ContourData = MultiValue(float, contour_rotated)
         else:
             raise ValueError("Type a correct name")
         return dicom_copy
