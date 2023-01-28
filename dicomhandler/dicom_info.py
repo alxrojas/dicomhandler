@@ -33,6 +33,8 @@ in an easy *excelable* form.
 
 
 import copy
+import os
+import pathlib
 import warnings
 from collections import defaultdict
 from io import BytesIO
@@ -269,7 +271,7 @@ class Dicominfo:
 
         return dicom_copy
 
-    def dicom_to_csv(self, structure=False, mlc=False, names=[]):
+    def to_csv(self, structure=False, mlc=False, names=[], path=None):
         """Create an csv file with the information of the dicom files.
 
         The information of the Cartesian coordinates (relative positions)
@@ -324,21 +326,37 @@ class Dicominfo:
 
         """
         dicom_copy = copy.deepcopy(self)
-        if structure and dicom_copy.dicom_struct:
-            names_aux, names_all = {}, {}
-            for item, value in enumerate(
-                dicom_copy.dicom_struct.StructureSetROISequence
-            ):
-                names_aux[value.ROIName] = item
-            if len(names) != 0:
-                for name in names:
-                    if name in names_aux.keys():
-                        names_all[name] = names_aux[name]
-                    else:
-                        raise ValueError(f"{name} not founded.")
-            else:
-                names_all = names_aux
-            with open("output_structure.csv", "wb") as f:
+        try:
+            buffer = None
+            if structure and dicom_copy.dicom_struct:
+                if isinstance(path, (str, pathlib.Path)):
+                    output = (
+                        f"{dicom_copy.dicom_struct.PatientID}"
+                        f"_{dicom_copy.dicom_struct.SeriesDescription}"
+                        f"_struct.csv"
+                    )
+                    buffer = open(
+                        f"{path}/{output}",
+                        "wb",
+                    )
+                else:
+                    buffer = open(
+                        f"{os.getcwd()}/{output}",
+                        "wb",
+                    )
+                names_aux, names_all = {}, {}
+                for item, value in enumerate(
+                    dicom_copy.dicom_struct.StructureSetROISequence
+                ):
+                    names_aux[value.ROIName] = item
+                if len(names) != 0:
+                    for name in names:
+                        if name in names_aux.keys():
+                            names_all[name] = names_aux[name]
+                        else:
+                            raise ValueError(f"{name} not founded.")
+                else:
+                    names_all = names_aux
                 for roiname in names_all:
                     array = []
                     for num, contour in enumerate(
@@ -365,13 +383,28 @@ class Dicominfo:
                         array.append(seriesz)
                     df = pd.concat(array, axis=1)
                     buff = BytesIO()
-                    df.to_csv(buff, sep="\t", index_label=roiname)
+                    df.to_csv(buff, index_label=roiname)
                     buff.tell()
                     buff.seek(0)
-                    f.write(buff.getbuffer())
-                    buff.close()
-        if mlc and dicom_copy.dicom_plan:
-            with open("output_mlc.csv", "wb") as f:
+                    buffer.write(buff.getvalue())
+            elif structure and not dicom_copy.dicom_struct:
+                raise ValueError("Structure file not loaded.")
+            if mlc and dicom_copy.dicom_plan:
+                output = (
+                    f"{dicom_copy.dicom_plan.PatientID}"
+                    f"_{dicom_copy.dicom_plan.SeriesDescription}"
+                    f"_MLC.csv"
+                )
+                if isinstance(path, (str, pathlib.Path)):
+                    buffer = open(
+                        f"{path}/{output}",
+                        "wb",
+                    )
+                else:
+                    buffer = open(
+                        f"{os.getcwd()}/{output}",
+                        "wb",
+                    )
                 for number, sequence in enumerate(
                     dicom_copy.dicom_plan.BeamSequence
                 ):
@@ -411,17 +444,17 @@ class Dicominfo:
                         array.append(series)
                     df = pd.concat(array, axis=1)
                     buff = BytesIO()
-                    df.to_csv(buff, sep="\t", index_label=f"Beam {number}")
+                    df.to_csv(buff, index_label=f"Beam {number}")
                     buff.tell()
                     buff.seek(0)
-                    f.write(buff.getbuffer())
-                    buff.close()
-        elif structure and not dicom_copy.dicom_struct:
-            raise ValueError("Structure file not loaded.")
-        elif mlc and not dicom_copy.dicom_plan:
-            raise ValueError("Plan file not loaded.")
+                    buffer.write(buff.getvalue())
+            elif mlc and not dicom_copy.dicom_plan:
+                raise ValueError("Plan file not loaded.")
+        finally:
+            if buffer is not None and not buffer.closed:
+                buffer.close()
 
-    def info_to_dataframe(self, area=False):
+    def summarize_to_dataframe(self, area=False):
         """Report the main information of the radiotherapy plan.
 
         The information of the prescribed dose, reference points in targets,
@@ -616,8 +649,8 @@ class Dicominfo:
             df = pd.DataFrame(dict_plan)
         return df
 
-    def displace(self, struct, value, key, *args):
-        r"""Displace a structure for a reference point.
+    def move(self, struct, value, key, *args):
+        r"""Move a structure for a reference point.
 
         Allow to rotate and translate all the points for a single
         structure.
