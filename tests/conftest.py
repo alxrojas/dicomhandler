@@ -8,7 +8,6 @@ import joblib
 
 import pytest
 
-
 PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
 DATA_PATH = PATH / "data"
 

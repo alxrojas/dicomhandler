@@ -67,15 +67,6 @@ You can choose the information that it has to be anonymized:
 
    di.anonymize(name=True, birth=True, operator=False, creation=False)
 
-Areas to dataframe
-^^^^^^^^^^^^^^^^^^
-
-You can obtain the calculated areas of multileaf collimator (MLC) modulation.
-
-.. code-block:: python
-
-   di.areas_to_dataframe()
-
 Expand or contract margins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -83,8 +74,8 @@ You can expand or subtract margins for a single structure. If you want to expand
 
 .. code-block:: python
 
-   expanded = add_margin('5 GTV', 1.5)
-   contracted = add_margin('5 GTV', -1.5)
+   expanded = di.add_margin('5 GTV', 1.5)
+   contracted = di.add_margin('5 GTV', -1.5)
 
 Rotate or translate
 ^^^^^^^^^^^^^^^^^^^
@@ -95,36 +86,37 @@ For the isocenter:
 
 .. code-block:: python
 
-   di_rotated = di.rotate('5 GTV', 0.5, 'pitch')
-   di_translated = di.translate('5 GTV', 1.0, 'x')
+   di_rotated = di.displace('5 GTV', 0.5, 'pitch')
+   di_translated = di.displace('5 GTV', 1.0, 'x')
 
 Or for an arbritary point:
 
 .. code-block:: python
 
-   di_rotated = di.rotate('5 GTV', 0.5, 'pitch', [4.0, -50.0, 20.0])
-   di_translated = di.translate('5 GTV', 1.0, 'x', [4.0, -50.0, 20.0])
+   di_rotated = di.displace('5 GTV', 0.5, 'pitch', [4.0, -50.0, 20.0])
+   di_translated = di.displace('5 GTV', 1.0, 'x', [4.0, -50.0, 20.0])
 
 Information in dataframe
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-A dataframe is generated with the main information of the plan and structures, relevant for clinical statistics. By defaults, the dataframe is created for all targets' name from the plan file.
+A dataframe is generated with the main information of the plan and structures, relevant for clinical statistics. By defaults, the dataframe is created for all targets' name from the plan file. Also, you can obtain the calculated areas of multileaf collimator (MLC) modulation.
+
+To obtain general plan information:
 
 .. code-block:: python
 
-   di.info_to_dataframe()
+   di.info_to_dataframe(area=False)
 
-If the names from the plan and structures files missmatch, it is possible to add manually the list of the target names as follows:
+To obtain the MLC areas:
 
 .. code-block:: python
 
-   targets = ['1 GTV +2.0 mm','2 GTV +2.0 mm','3 PTV +1.0 mm','4 PTV +1.0 mm','5 PTV +1.0 mm']
-   di.info_to_dataframe(targets)
+   di.info_to_dataframe(area=True)
 
-Excel files
-^^^^^^^^^^^
+CSV files
+^^^^^^^^^
 
-An .xlsx file is generated in the current directory with some information.
+A csv file is generated in the current directory with some information.
 
 Structures
 ~~~~~~~~~~
@@ -135,22 +127,19 @@ For all structures this process takes several minutes.
 
 .. code-block:: python
 
-   di.structure_to_excel('Name_of_the_file', structures = [])
+   di.dicom_to_csv(structure=True, mlc=False, structures = [])
 
 Or you can select some structures to obtain the excel file:
 
 .. code-block:: python
 
-   di.structure_to_excel('Name_of_the_file', structures = ['Structure1', 'Structure2'])
+   di.dicom_to_csv(structure=True, mlc=False, structures = ['Structure1', 'Structure2'])
 
-MLC
-~~~
-
- The output file provides the information of gantry angle, gantry direction, table angles, and MLC positions for each checkpoint.
+Also, the output file can provide the information of gantry angle, gantry direction, table angles, and MLC positions for each checkpoint.
 
 .. code-block:: python
 
-   di.mlc_to_excel('Name_of_the_file')
+   di.dicom_to_csv(structure=False, mlc=True)
 
 Access
 ------

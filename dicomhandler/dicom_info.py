@@ -33,6 +33,8 @@ in an easy *excelable* form.
 
 
 import copy
+import os
+import pathlib
 import warnings
 from collections import defaultdict
 from io import BytesIO
@@ -72,7 +74,7 @@ class Dicominfo:
         Allows to overwrite the patient's information.
     areas_to_dataframe(self)
         Determines areas from fields defined by multileaf collimator.
-    info_to_dataframe(self, targets=[])
+    summarize_to_dataframe(self, targets=[])
         Reports the main information of plan and target structures.
     mlc_to_excel(name_file)
         Creates DICOM plan information in *excelable* form.
@@ -269,14 +271,13 @@ class Dicominfo:
 
         return dicom_copy
 
-    def dicom_to_csv(self, structure=False, mlc=False, names=[]):
+    def to_csv(self, structure=False, mlc=False, names=[], path=None):
         """Create an csv file with the information of the dicom files.
 
         The information of the Cartesian coordinates (relative positions)
         for all or some structures is extracted in an .csv file
         for pos-processing. The file is created in the same directory with
         the name output_struct.csv.
-
         Also, the information of the multileaf collimator (MLC) positions,
         control points, gantry angles, gantry orientation and table
         angle are reported in an .csv file for pos-processing for
@@ -321,24 +322,41 @@ class Dicominfo:
         >>> dicom.dicom_to_csv(structure = True, [])
         >>> # Extract the MLC relative positions and checkpoints.
         >>> dicom.dicom_to_csv(mlc = True)
-
         """
         dicom_copy = copy.deepcopy(self)
-        if structure and dicom_copy.dicom_struct:
-            names_aux, names_all = {}, {}
-            for item, value in enumerate(
-                dicom_copy.dicom_struct.StructureSetROISequence
-            ):
-                names_aux[value.ROIName] = item
-            if len(names) != 0:
-                for name in names:
-                    if name in names_aux.keys():
-                        names_all[name] = names_aux[name]
-                    else:
-                        raise ValueError(f"{name} not founded.")
-            else:
-                names_all = names_aux
-            with open("output_structure.csv", "wb") as f:
+        try:
+            buffer = None
+            if structure and dicom_copy.dicom_struct:
+                output = (
+                    f"{dicom_copy.dicom_struct.PatientID}"
+                    f"_{dicom_copy.dicom_struct.SeriesDescription}"
+                    f"_struct.csv"
+                )
+                if isinstance(path, (str, pathlib.Path)):
+
+                    buffer = open(
+                        f"{path}/{output}",
+                        "wb",
+                    )
+                else:
+
+                    buffer = open(
+                        f"{os.getcwd()}/{output}",
+                        "wb",
+                    )
+                names_aux, names_all = {}, {}
+                for item, value in enumerate(
+                    dicom_copy.dicom_struct.StructureSetROISequence
+                ):
+                    names_aux[value.ROIName] = item
+                if len(names) != 0:
+                    for name in names:
+                        if name in names_aux.keys():
+                            names_all[name] = names_aux[name]
+                        else:
+                            raise ValueError(f"{name} not founded.")
+                else:
+                    names_all = names_aux
                 for roiname in names_all:
                     array = []
                     for num, contour in enumerate(
@@ -365,13 +383,28 @@ class Dicominfo:
                         array.append(seriesz)
                     df = pd.concat(array, axis=1)
                     buff = BytesIO()
-                    df.to_csv(buff, sep="\t", index_label=roiname)
+                    df.to_csv(buff, index_label=roiname)
                     buff.tell()
                     buff.seek(0)
-                    f.write(buff.getbuffer())
-                    buff.close()
-        if mlc and dicom_copy.dicom_plan:
-            with open("output_mlc.csv", "wb") as f:
+                    buffer.write(buff.getvalue())
+            elif structure and not dicom_copy.dicom_struct:
+                raise ValueError("Structure file not loaded.")
+            if mlc and dicom_copy.dicom_plan:
+                output = (
+                    f"{dicom_copy.dicom_plan.PatientID}"
+                    f"_{dicom_copy.dicom_plan.SeriesDescription}"
+                    f"_MLC.csv"
+                )
+                if isinstance(path, (str, pathlib.Path)):
+                    buffer = open(
+                        f"{path}/{output}",
+                        "wb",
+                    )
+                else:
+                    buffer = open(
+                        f"{os.getcwd()}/{output}",
+                        "wb",
+                    )
                 for number, sequence in enumerate(
                     dicom_copy.dicom_plan.BeamSequence
                 ):
@@ -411,17 +444,17 @@ class Dicominfo:
                         array.append(series)
                     df = pd.concat(array, axis=1)
                     buff = BytesIO()
-                    df.to_csv(buff, sep="\t", index_label=f"Beam {number}")
+                    df.to_csv(buff, index_label=f"Beam {number}")
                     buff.tell()
                     buff.seek(0)
-                    f.write(buff.getbuffer())
-                    buff.close()
-        elif structure and not dicom_copy.dicom_struct:
-            raise ValueError("Structure file not loaded.")
-        elif mlc and not dicom_copy.dicom_plan:
-            raise ValueError("Plan file not loaded.")
+                    buffer.write(buff.getvalue())
+            elif mlc and not dicom_copy.dicom_plan:
+                raise ValueError("Plan file not loaded.")
+        finally:
+            if buffer is not None and not buffer.closed:
+                buffer.close()
 
-    def info_to_dataframe(self, area=False):
+    def summarize_to_dataframe(self, area=False):
         """Report the main information of the radiotherapy plan.
 
         The information of the prescribed dose, reference points in targets,
@@ -485,15 +518,13 @@ class Dicominfo:
         >>> struct = pydicom.dcmread(file[1], force = True)
         >>> dicom = dh.Dicom_info(struct, plan)
         >>> # Obtain dataframe with general plan information.
-        >>> dicom.info_to_dataframe(area = False)
+        >>> dicom.summarize_to_dataframe(area = False)
         >>> # Or, to obtain dataframe with MLC areas.
-        >>> dicom.info_to_dataframe(area = True)
+        >>> dicom.summarize_to_dataframe(area = True)
 
         """
         dicom_copy = copy.deepcopy(self)
-        if (dicom_copy.dicom_plan is None) or (
-            dicom_copy.dicom_struct is None
-        ):
+        if dicom_copy.dicom_plan is None:
             raise ValueError("You must load plan and structure files.")
         elif area:
             leaf_pos = (
@@ -616,8 +647,8 @@ class Dicominfo:
             df = pd.DataFrame(dict_plan)
         return df
 
-    def displace(self, struct, value, key, *args):
-        r"""Displace a structure for a reference point.
+    def move(self, struct, value, key, *args):
+        r"""Moves a structure for a reference point.
 
         Allow to rotate and translate all the points for a single
         structure.
@@ -656,7 +687,7 @@ class Dicominfo:
         Returns
         -------
         pydicom.dataset.FileDataset
-            Object with DICOM properties of the displaced structure.
+            Object with DICOM properties of the moved structure.
 
         Raises
         ------
@@ -674,12 +705,12 @@ class Dicominfo:
         Examples
         --------
         >>> # rotate tumor 1.0 degree in yaw in isocenter.
-        >>> moved = dicom.displace('1 GTV', 1.0, 'yaw')
+        >>> moved = dicom.move('1 GTV', 1.0, 'yaw')
         >>> # rotate lesion 1.0 degree in roll in [0.0, 0.0, 0.0].
         >>> iso = [0.0, 0.0, 0.0]
-        >>> dicom.displace('1 GTV', 1.0, 'yaw', iso)
+        >>> dicom.move('1 GTV', 1.0, 'yaw', iso)
         >>> # translate tumor 1.0 mm in x in isocenter.
-        >>> moved = dicom.displace('1 GTV', 1.0, 'x')
+        >>> moved = dicom.move('1 GTV', 1.0, 'x')
 
         """
         dicom_copy = copy.deepcopy(self)
@@ -689,7 +720,7 @@ class Dicominfo:
             isinstance(value, float) is False
             and isinstance(value, int) is False
         ):
-            raise TypeError("Displacement must be float or int")
+            raise TypeError("The value of the movement must be float or int")
         elif (key in ["roll", "pitch", "yaw"]) and (abs(value) < 360):
             delta = np.radians(value)
         elif (key in ["x", "y", "z"]) and (abs(value) < 1000):
@@ -942,11 +973,9 @@ class Dicominfo:
                                 distances, solutions = [], []
                                 while counter < 2:
                                     if counter == 0:
-                                        sol = margin / (2 * np.sqrt(parameter))
+                                        sol = margin / (2 * (parameter))
                                     else:
-                                        sol = -margin / (
-                                            2 * np.sqrt(parameter)
-                                        )
+                                        sol = -margin / (2 * (parameter))
                                     solution = []
                                     for value, _ in enumerate(centermass):
                                         solution.append(

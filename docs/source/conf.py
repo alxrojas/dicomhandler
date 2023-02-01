@@ -93,7 +93,7 @@ for md_name, rst_name in DYNAMIC_RST.items():
         print(f"{md_path} -> {rst_path} regenerated!")
 
 # =============================================================================
-# INDICATING READ THE DOCS HOW TO FIND index.rst 
+# INDICATING READ THE DOCS HOW TO FIND index.rst
 # =============================================================================
 
 # master_doc = 'index'
