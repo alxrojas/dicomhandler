@@ -29,7 +29,6 @@ def test_anonymize(
     instance_creation_date,
     request,
 ):
-
     di_original = copy.deepcopy(request.getfixturevalue(di))
 
     di = request.getfixturevalue(di).anonymize(
@@ -50,7 +49,6 @@ def test_anonymize(
         assert di.PatientBirthDate == di_original.PatientBirthDate
 
     if di.dicom_struct is not None:
-
         if patient_name is True:
             assert di.dicom_struct.PatientName == "PatientName"
         else:
@@ -84,7 +82,6 @@ def test_anonymize(
             )
 
     if di.dicom_dose is not None:
-
         if patient_name is True:
             assert di.dicom_dose.PatientName == "PatientName"
         else:
@@ -117,7 +114,6 @@ def test_anonymize(
             )
 
     if di.dicom_plan is not None:
-
         if patient_name is True:
             assert di.dicom_plan.PatientName == "PatientName"
         else:

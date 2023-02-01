@@ -327,7 +327,6 @@ class Dicominfo:
         try:
             buffer = None
             if structure and dicom_copy.dicom_struct:
-
                 output = (
                     f"{dicom_copy.dicom_struct.PatientID}"
                     f"_{dicom_copy.dicom_struct.SeriesDescription}"
@@ -339,7 +338,6 @@ class Dicominfo:
                         "wb",
                     )
                 else:
-
                     buffer = open(
                         f"{os.getcwd()}/{output}",
                         "wb",

@@ -15,7 +15,6 @@ DATA_PATH = PATH / "data"
 @pytest.fixture(scope="session")
 def dicom_infos():
     def make(name):
-
         return Dicominfo(joblib.load(DATA_PATH / name))
 
     return make
@@ -24,7 +23,6 @@ def dicom_infos():
 @pytest.fixture(scope="session")
 def dicom_infos_2():
     def make(name1, name2):
-
         return Dicominfo(
             joblib.load(DATA_PATH / name1), joblib.load(DATA_PATH / name2)
         )
