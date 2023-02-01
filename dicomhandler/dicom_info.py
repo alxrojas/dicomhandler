@@ -327,13 +327,13 @@ class Dicominfo:
         try:
             buffer = None
             if structure and dicom_copy.dicom_struct:
+
                 output = (
                     f"{dicom_copy.dicom_struct.PatientID}"
                     f"_{dicom_copy.dicom_struct.SeriesDescription}"
                     f"_struct.csv"
                 )
                 if isinstance(path, (str, pathlib.Path)):
-
                     buffer = open(
                         f"{path}/{output}",
                         "wb",
