@@ -21,9 +21,7 @@ version = "0.0.1a1"
 dependencies = [
     "numpy",
     "pandas",
-    "xlsxwriter",
     "pydicom",
-    "openpyxl",
     "toml"
 ]
 # copy y warnings están built-in aparentemente (i.e. no hay que importarlas)

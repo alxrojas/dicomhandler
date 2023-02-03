@@ -1,8 +1,8 @@
 .. FILE AUTO GENERATED !! 
 
-Dicomhandler is a Python tool for integrating `DICOM <https://www.dicomstandard.org/>`_ information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new objects with this information, which are compatible with the commercial systems of treatment planning such as `Eclipse <https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse>`_ and `Brainlab Elements <https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/>`_. It is possible to extract the information from the structures in an easy *excelable* form.
+Dicomhandler is a Python tool for integrating `DICOM <https://www.dicomstandard.org/>`_ information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new objects with this information, which are compatible with the commercial systems of treatment planning such as `Eclipse <https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse>`_ and `Brainlab Elements <https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/>`_. It is possible to extract the information from the structures in an easy *csv-able* form.
 
-Dicomhandler uses DICOM files that belongs to different stages of treatment planning (structures, dose, and plan), by grouping the files of a patient in a single object. DICOM objects have to be created with `Pydicom <https://pydicom.github.io/pydicom/stable/>`_. Also, it allows for the extraction of related information, such as the Cartesian coordinates of structures and multileaf collimator (MLC) positions for each control point in the treatment plan. This is achieved by using the ``Dicominfo`` class. It receives as input the DICOM radiotherapy structures (RS), dose (RD), and plan (RP) files (or a subset of these) and constructs a single object that contains all the information for a patient.
+Dicomhandler uses DICOM files that belongs to different stages of treatment planning (structures, dose, and plan), by grouping the files of a patient in a single object. DICOM objects have to be created with `Pydicom <https://pydicom.github.io/pydicom/stable/>`_. Also, it allows for the extraction of related information, such as the Cartesian coordinates of structures and multileaf collimator (MLC) positions for each control point in the treatment plan. This is achieved by using the ``DicomInfo`` class. It receives as input the DICOM radiotherapy structures (RS), dose (RD), and plan (RP) files (or a subset of these) and constructs a single object that contains all the information for a patient.
 
 Dicomhandler is built on `NumPy <https://numpy.org/>`_. NumPy provides an efficient implementation of numerical computations in a high-level language like Python but completely compiled in C, resulting in a significant improvement in speed and code that is clear and easy to maintain.
 
@@ -56,7 +56,7 @@ You can construct an object with different DICOM files from the same patient as:
 
 .. code-block:: python
 
-   di = Dicominfo(dicom_structure, dicom_plan)
+   di = DicomInfo(dicom_structure, dicom_plan)
 
 Anonymize the information
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,37 +86,37 @@ For the isocenter:
 
 .. code-block:: python
 
-   di_rotated = di.displace('5 GTV', 0.5, 'pitch')
-   di_translated = di.displace('5 GTV', 1.0, 'x')
+   di_rotated = di.move('5 GTV', 0.5, 'pitch')
+   di_translated = di.move('5 GTV', 1.0, 'x')
 
 Or for an arbritary point:
 
 .. code-block:: python
 
-   di_rotated = di.displace('5 GTV', 0.5, 'pitch', [4.0, -50.0, 20.0])
-   di_translated = di.displace('5 GTV', 1.0, 'x', [4.0, -50.0, 20.0])
+   di_rotated = di.move('5 GTV', 0.5, 'pitch', [4.0, -50.0, 20.0])
+   di_translated = di.move('5 GTV', 1.0, 'x', [4.0, -50.0, 20.0])
 
-Information in dataframe
-^^^^^^^^^^^^^^^^^^^^^^^^
+Summary in dataframe
+^^^^^^^^^^^^^^^^^^^^
 
-A dataframe is generated with the main information of the plan and structures, relevant for clinical statistics. By defaults, the dataframe is created for all targets' name from the plan file. Also, you can obtain the calculated areas of multileaf collimator (MLC) modulation.
+A dataframe is generated with the main information of the plan, relevant for clinical statistics. Also, you can obtain the calculated areas of multileaf collimator (MLC) modulation.
 
 To obtain general plan information:
 
 .. code-block:: python
 
-   di.info_to_dataframe(area=False)
+   di.summarize_to_dataframe(area=False)
 
 To obtain the MLC areas:
 
 .. code-block:: python
 
-   di.info_to_dataframe(area=True)
+   di.summarize_to_dataframe(area=True)
 
 CSV files
 ^^^^^^^^^
 
-A csv file is generated in the current directory with some information.
+A csv file is generated with some information.
 
 Structures
 ~~~~~~~~~~
@@ -127,19 +127,31 @@ For all structures this process takes several minutes.
 
 .. code-block:: python
 
-   di.dicom_to_csv(structure=True, mlc=False, structures = [])
+   di.struct_to_csv(path_or_buff='output.csv')
 
-Or you can select some structures to obtain the excel file:
+Or you can select some structures to obtain the csv file in a particular path:
 
 .. code-block:: python
 
-   di.dicom_to_csv(structure=True, mlc=False, structures = ['Structure1', 'Structure2'])
+   di.struct_to_csv(path_or_buff='output.csv', names=['Structure1', 'Structure2'])
+
+Or in buffer:
+
+.. code-block:: python
+
+   di.struct_to_csv(path_or_buff=StringIO(), names=['Structure1', 'Structure2'])
 
 Also, the output file can provide the information of gantry angle, gantry direction, table angles, and MLC positions for each checkpoint.
 
 .. code-block:: python
 
-   di.dicom_to_csv(structure=False, mlc=True)
+   di.mlc_to_csv(path_or_buff="output.csv")
+
+Or in buffer:
+
+.. code-block:: python
+
+   di.mlc_to_csv(path_or_buff=StringIO())
 
 Access
 ------
@@ -173,7 +185,7 @@ Run the project as:
 
 .. code-block:: python
 
-   from dicomhandler.dicom_info import Dicominfo
+   from dicomhandler.dicom_info import DicomInfo
    from dicomhandler.report import report
 
 Libraries and pre-requisites
@@ -185,7 +197,6 @@ The dependencies of the package, that will be automatically installed with the s
 * `numpy <https://numpy.org/>`_\ : Data analysis and calculation.
 * `pandas <https://pandas.pydata.org/>`_\ : Report statistics.
 * `pydicom <https://pydicom.github.io/pydicom/stable/>`_\ : DICOM file reader.
-* `xlsxwriter <https://pypi.org/project/XlsxWriter/>`_\ : Write information.
 
 Authors
 -------

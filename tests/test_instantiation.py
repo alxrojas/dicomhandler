@@ -1,6 +1,6 @@
 from contextlib import nullcontext as does_not_raise
 
-from dicomhandler.dicom_info import Dicominfo
+from dicomhandler.dicom_info import DicomInfo
 
 import pytest
 
@@ -15,7 +15,7 @@ import pytest
 )
 def test_repeated_modality(patient_mock1, patient_mock2, expected, request):
     with expected:
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
         )
@@ -31,7 +31,7 @@ def test_repeated_modality(patient_mock1, patient_mock2, expected, request):
 )
 def test_dicominfo_id_match(patient_mock1, patient_mock2, expected, request):
     with expected:
-        assert Dicominfo(
+        assert DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
         )
@@ -48,7 +48,7 @@ def test_dicominfo_id_match(patient_mock1, patient_mock2, expected, request):
 )
 def test_dicominfo_name_match_2in(patient_mock1, patient_mock2, request):
     with pytest.warns(UserWarning):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
         )
@@ -66,7 +66,7 @@ def test_dicominfo_name_match_3in(
     patient_mock1, patient_mock2, patient_mock3, request
 ):
     with pytest.warns(UserWarning):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
             request.getfixturevalue(patient_mock3),
@@ -84,7 +84,7 @@ def test_dicominfo_name_match_3in(
 )
 def test_di_birth_match_2in(patient_mock1, patient_mock2, request):
     with pytest.warns(UserWarning):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
         )
@@ -102,7 +102,7 @@ def test_di_birth_match_3in(
     patient_mock1, patient_mock2, patient_mock3, request
 ):
     with pytest.warns(UserWarning):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
             request.getfixturevalue(patient_mock3),
@@ -120,7 +120,7 @@ def test_di_birth_match_3in(
 )
 def test_dicominfo_modality_supported_1in(patient_mock, expected, request):
     with expected:
-        di = Dicominfo(request.getfixturevalue(patient_mock))
+        di = DicomInfo(request.getfixturevalue(patient_mock))
         assert di is not None
         assert (
             di.PatientName == request.getfixturevalue(patient_mock).PatientName
@@ -147,7 +147,7 @@ def test_dicominfo_modality_supported_2in(
     patient_mock1, patient_mock2, request
 ):
     with pytest.raises(ValueError):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
         )
@@ -180,7 +180,7 @@ def test_dicominfo_modality_supported_3in(
     patient_mock1, patient_mock2, patient_mock3, request
 ):
     with pytest.raises(ValueError):
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock1),
             request.getfixturevalue(patient_mock2),
             request.getfixturevalue(patient_mock3),

@@ -33,11 +33,10 @@ in an easy *excelable* form.
 
 
 import copy
-import os
 import pathlib
+import sys
 import warnings
 from collections import defaultdict
-from io import BytesIO
 
 import numpy as np
 
@@ -49,7 +48,7 @@ from pydicom.multival import MultiValue
 # =============================================================================
 # DICOM INFO
 # =============================================================================
-class Dicominfo:
+class DicomInfo:
     r"""Build an object containing DICOM files.
 
     Allows to integrate the characteristics and properties of the
@@ -57,7 +56,7 @@ class Dicominfo:
     each patient.
 
     .. note::
-        **Important:** ``Dicominfo`` does not allow to merge information from
+        **Important:** ``DicomInfo`` does not allow to merge information from
         different patients. Only one RS, RP and RD is accepted per patient,
         per instantiation.
 
@@ -72,23 +71,19 @@ class Dicominfo:
         Allows to expand or subtract margin for a single structure.
     anonymize(name=True, birth=True, operator=True, creation=True)
         Allows to overwrite the patient's information.
-    areas_to_dataframe(self)
-        Determines areas from fields defined by multileaf collimator.
-    summarize_to_dataframe(self, targets=[])
-        Reports the main information of plan and target structures.
-    mlc_to_excel(name_file)
-        Creates DICOM plan information in *excelable* form.
-    rotate(struct, angle, key, \*args)
-        Allows to rotate all the points for a single structure.
-    structure_to_excel(name_file, names=[])
-        Creates DICOM contour in *excelable* form.
-    translate(struct, delta, key, \*args)
-        Allows to translate all the points for a single structure.
+    mlc_to_csv(path_or_buff)
+        Creates DICOM MLC information in *csv-able* form.
+    move(struct, value, key, \*args)
+        Allows to move all the points for a single structure.
+    struct_to_csv(path_or_buff, names)
+        Creates DICOM structure information in *csv-able* form.
+    summarize_to_dataframe(self, area)
+        Reports the main information of plan and MLC.
 
     Returns
     -------
     pydicom.dataset.FileDataset
-        Dicominfo object with DICOM properties.
+        DicomInfo object with DICOM properties.
     pandas.core.frame.DataFrame
         DataFrame reports with specific information and metrics from
         DICOM files.
@@ -98,7 +93,7 @@ class Dicominfo:
     def __init__(self, *args):
         """Initialize dicominfo object.
 
-        Initialize ``dicominfo`` objects validating that the information
+        Initialize ``DicomInfo`` objects validating that the information
         belongs to the same patient.
 
         Parameters
@@ -122,7 +117,7 @@ class Dicominfo:
         >>> file = os.listdir(os.chdir('path_of_DICOM_files'))
         >>> struct = pydicom.dcmread(file[0])
         >>> plan = pydicom.dcmread(file[1])
-        >>> dicom = dh.Dicom_info(struct, plan)
+        >>> dicom = dh.DicomInfo(struct, plan)
 
         """
         self.dicom_struct = None
@@ -271,19 +266,12 @@ class Dicominfo:
 
         return dicom_copy
 
-    def to_csv(self, structure=False, mlc=False, names=[], path=None):
-        """Create an csv file with the information of the dicom files.
+    def struct_to_csv(self, path_or_buff=None, names=None):
+        """Create an csv file with the information of the structure file.
 
         The information of the Cartesian coordinates (relative positions)
         for all or some structures is extracted in an .csv file
-        for pos-processing. The file is created in the same directory with
-        the name output_struct.csv.
-        Also, the information of the multileaf collimator (MLC) positions,
-        control points, gantry angles, gantry orientation and table
-        angle are reported in an .csv file for pos-processing for
-        numerical simulations. The file is created at the same directory
-        with the name output_mlc.csv. The information contains the principal
-        components necessary for Monte Carlo simulations for radiotherapy.
+        for pos-processing. The file can be created in any path or by buffer.
 
         .. note::
             **Important:** For all structures, it could be a slow process
@@ -292,13 +280,11 @@ class Dicominfo:
 
         Parameters
         ----------
-        structure : bool, default=False
-            True to create structure file.
-        mlc : bool, default=False
-            True to create mlc file.
-        names : list, default=[]
-            List of str, with the name of the structures to create the
-            ecsv file. By default all structures.
+        path_or_buff : str, pathlib.Path or StringIO, default=None
+            Path or buffer to write the information from a dataframe.
+        names : list, default=None
+            List of strings, with the name of the structures to create
+            the csv file. By default all structures.
 
         Returns
         -------
@@ -316,140 +302,151 @@ class Dicominfo:
 
         Examples
         --------
-        >>> # Extract the coordinates of the structures 1 GTV and Eye Right.
-        >>> dicom.dicom_to_csv(structure = True, ['1 GTV', 'Eye Right'])
+        >>> # Extract the coordinates of the structures Eye Right,
+        >>> # using path
+        >>> dicom.struct_to_csv(path_or_buff='output.csv', ['Eye Right'])
+        >>> # using buffer
+        >>> dicom.struct_to_csv(path_or_buff=StringIO(), ['Eye Right'])
         >>> # Extract the coordinates of the all structures.
-        >>> dicom.dicom_to_csv(structure = True, [])
-        >>> # Extract the MLC relative positions and checkpoints.
-        >>> dicom.dicom_to_csv(mlc = True)
+        >>> dicom.struct_to_csv(path_or_buff='output.csv')
         """
         dicom_copy = copy.deepcopy(self)
+        if not dicom_copy.dicom_struct:
+            raise ValueError("Structure file not loaded")
+        names = [] if names is None else names
+        names_aux, names_all = {}, {}
+        df = []
+        for item, value in enumerate(
+            dicom_copy.dicom_struct.StructureSetROISequence
+        ):
+            names_aux[value.ROIName] = item
+        if len(names) != 0:
+            for name in names:
+                if name in names_aux.keys():
+                    names_all[name] = names_aux[name]
+                else:
+                    raise ValueError(f"{name} not founded.")
+        else:
+            names_all = names_aux
+        for roiname in names_all:
+            array = []
+            for num, contour in enumerate(
+                dicom_copy.dicom_struct.ROIContourSequence[
+                    names_all[roiname]
+                ].ContourSequence
+            ):
+                x, y, z = [], [], []
+                counter = 0
+                while counter < int(len(contour.ContourData) / 3):
+                    x.append(float(contour.ContourData[3 * counter]))
+                    y.append(float(contour.ContourData[3 * counter + 1]))
+                    z.append(float(contour.ContourData[3 * counter + 2]))
+                    seriesx = pd.Series(x, name=f"x{num} [mm]")
+                    seriesy = pd.Series(y, name=f"y{num} [mm]")
+                    seriesz = pd.Series(z, name=f"z{num} [mm]")
+                    counter = counter + 1
+                array.append(seriesx)
+                array.append(seriesy)
+                array.append(seriesz)
+            df.append(pd.concat(array, axis=1))
+        df_all = pd.concat(df)
         try:
-            buffer = None
-            if structure and dicom_copy.dicom_struct:
-                output = (
-                    f"{dicom_copy.dicom_struct.PatientID}"
-                    f"_{dicom_copy.dicom_struct.SeriesDescription}"
-                    f"_struct.csv"
-                )
-                if isinstance(path, (str, pathlib.Path)):
-                    buffer = open(
-                        f"{path}/{output}",
-                        "wb",
-                    )
-                else:
-                    buffer = open(
-                        f"{os.getcwd()}/{output}",
-                        "wb",
-                    )
-                names_aux, names_all = {}, {}
-                for item, value in enumerate(
-                    dicom_copy.dicom_struct.StructureSetROISequence
-                ):
-                    names_aux[value.ROIName] = item
-                if len(names) != 0:
-                    for name in names:
-                        if name in names_aux.keys():
-                            names_all[name] = names_aux[name]
-                        else:
-                            raise ValueError(f"{name} not founded.")
-                else:
-                    names_all = names_aux
-                for roiname in names_all:
-                    array = []
-                    for num, contour in enumerate(
-                        dicom_copy.dicom_struct.ROIContourSequence[
-                            names_all[roiname]
-                        ].ContourSequence
-                    ):
-                        x, y, z = [], [], []
-                        counter = 0
-                        while counter < int(len(contour.ContourData) / 3):
-                            x.append(float(contour.ContourData[3 * counter]))
-                            y.append(
-                                float(contour.ContourData[3 * counter + 1])
-                            )
-                            z.append(
-                                float(contour.ContourData[3 * counter + 2])
-                            )
-                            seriesx = pd.Series(x, name=f"x{num} [mm]")
-                            seriesy = pd.Series(y, name=f"y{num} [mm]")
-                            seriesz = pd.Series(z, name=f"z{num} [mm]")
-                            counter = counter + 1
-                        array.append(seriesx)
-                        array.append(seriesy)
-                        array.append(seriesz)
-                    df = pd.concat(array, axis=1)
-                    buff = BytesIO()
-                    df.to_csv(buff, index_label=roiname)
-                    buff.tell()
-                    buff.seek(0)
-                    buffer.write(buff.getvalue())
-            elif structure and not dicom_copy.dicom_struct:
-                raise ValueError("Structure file not loaded.")
-            if mlc and dicom_copy.dicom_plan:
-                output = (
-                    f"{dicom_copy.dicom_plan.PatientID}"
-                    f"_{dicom_copy.dicom_plan.SeriesDescription}"
-                    f"_MLC.csv"
-                )
-                if isinstance(path, (str, pathlib.Path)):
-                    buffer = open(
-                        f"{path}/{output}",
-                        "wb",
-                    )
-                else:
-                    buffer = open(
-                        f"{os.getcwd()}/{output}",
-                        "wb",
-                    )
-                for number, sequence in enumerate(
-                    dicom_copy.dicom_plan.BeamSequence
-                ):
-                    array = []
-                    for item, point in enumerate(
-                        sequence.ControlPointSequence
-                    ):
-                        gantry_angle = point.GantryAngle
-                        gantry_direction = point.GantryRotationDirection
-                        table_direction = sequence.ControlPointSequence[
-                            0
-                        ].PatientSupportAngle
-                        if item == 0:
-                            mlc = np.array(
-                                point.BeamLimitingDevicePositionSequence[
-                                    2
-                                ].LeafJawPositions
-                            )
-                        else:
-                            mlc = np.array(
-                                point.BeamLimitingDevicePositionSequence[
-                                    0
-                                ].LeafJawPositions
-                            )
-                        values = [
-                            "GantryAngle",
-                            gantry_angle,
-                            "GantryDirection",
-                            gantry_direction,
-                            "TableDirection",
-                            table_direction,
-                            "MLC",
-                        ]
-                        for leaf in mlc:
-                            values.append(leaf)
-                        series = pd.Series(values, name=f"CP{item}")
-                        array.append(series)
-                    df = pd.concat(array, axis=1)
-                    buff = BytesIO()
-                    df.to_csv(buff, index_label=f"Beam {number}")
-                    buff.tell()
-                    buff.seek(0)
-                    buffer.write(buff.getvalue())
-            elif mlc and not dicom_copy.dicom_plan:
-                raise ValueError("Plan file not loaded.")
+            if path_or_buff is None:
+                buffer, close = sys.stdout, False
+            elif isinstance(path_or_buff, (str, pathlib.Path)):
+                buffer, close = open(path_or_buff, "w"), True
+            else:
+                buffer, close = path_or_buff, False
+            df_all.to_csv(buffer)
         finally:
-            if buffer is not None and not buffer.closed:
+            if close and not buffer.closed:
+                buffer.close()
+
+    def mlc_to_csv(self, path_or_buff=None):
+        """Create an csv file with the information of the plan file.
+
+        The information of the multileaf collimator (MLC) positions,
+        control points, gantry angles, gantry orientation and table
+        angle are reported in an .csv file for pos-processing for
+        numerical simulations. The file can be created in any path or by
+        buffer. The information contains the principal components
+        necessary for Monte Carlo simulations for radiotherapy.
+
+        Parameters
+        ----------
+        path_or_buff : str, pathlib.Path or StringIO, default=None
+            Path or buffer to write the information from a dataframe.
+
+        Returns
+        -------
+        csv file
+            csv file with MLC description.
+
+        Raises
+        ------
+        ValueError
+            If the plan is not loaded.
+
+        References
+        ----------
+            :cite:p:`calvo2022montecarlo`
+
+        Examples
+        --------
+        >>> # Extract MLC positions and checkpoints from a path.
+        >>> dicom.mlc_to_csv(path_or_buff='output.csv')
+        >>> # Extract MLC positions and checkpoints from a buffer.
+        >>> dicom.struct_to_csv(path_or_buff=StringIO())
+        """
+        dicom_copy = copy.deepcopy(self)
+        if not dicom_copy.dicom_plan:
+            raise ValueError("Plan file not loaded")
+        df = []
+        for number, sequence in enumerate(dicom_copy.dicom_plan.BeamSequence):
+            array = []
+            for item, point in enumerate(sequence.ControlPointSequence):
+                gantry_angle = point.GantryAngle
+                gantry_direction = point.GantryRotationDirection
+                table_direction = sequence.ControlPointSequence[
+                    0
+                ].PatientSupportAngle
+                if item == 0:
+                    mlc = np.array(
+                        point.BeamLimitingDevicePositionSequence[
+                            2
+                        ].LeafJawPositions
+                    )
+                else:
+                    mlc = np.array(
+                        point.BeamLimitingDevicePositionSequence[
+                            0
+                        ].LeafJawPositions
+                    )
+                values = [
+                    "GantryAngle",
+                    gantry_angle,
+                    "GantryDirection",
+                    gantry_direction,
+                    "TableDirection",
+                    table_direction,
+                    "MLC",
+                ]
+                for leaf in mlc:
+                    values.append(leaf)
+                series = pd.Series(values, name=f"CP{item}")
+                array.append(series)
+            df.append(pd.concat(array, axis=1))
+        df_all = pd.concat(df)
+        try:
+            if path_or_buff is None:
+                buffer, close = sys.stdout, False
+            elif isinstance(path_or_buff, (str, pathlib.Path)):
+                buffer, close = open(path_or_buff, "w"), True
+            else:
+                buffer, close = path_or_buff, False
+            df_all.to_csv(buffer)
+        finally:
+            if close and not buffer.closed:
                 buffer.close()
 
     def summarize_to_dataframe(self, area=False):
@@ -514,7 +511,7 @@ class Dicominfo:
         >>> file = os.listdir(os.chdir('path_of_DICOM_files'))
         >>> plan = pydicom.dcmread(file[0], force = True)
         >>> struct = pydicom.dcmread(file[1], force = True)
-        >>> dicom = dh.Dicom_info(struct, plan)
+        >>> dicom = dh.DicomInfo(struct, plan)
         >>> # Obtain dataframe with general plan information.
         >>> dicom.summarize_to_dataframe(area = False)
         >>> # Or, to obtain dataframe with MLC areas.
@@ -668,7 +665,7 @@ class Dicominfo:
         ----------
         struct : str
             Name of the structure to rotate.
-        value : float
+        value : float or int
             Value could be positive or negative.
             For rotation, maximum angle allowed 360º.
             For translation, maximum shift allowed 1000 mm.
@@ -714,10 +711,7 @@ class Dicominfo:
         dicom_copy = copy.deepcopy(self)
         if not dicom_copy.dicom_struct:
             raise ValueError("Structure file must be loaded")
-        elif (
-            isinstance(value, float) is False
-            and isinstance(value, int) is False
-        ):
+        elif not isinstance(value, (int, float)):
             raise TypeError("The value of the movement must be float or int")
         elif (key in ["roll", "pitch", "yaw"]) and (abs(value) < 360):
             delta = np.radians(value)
@@ -871,7 +865,7 @@ class Dicominfo:
 
         Parameters
         ----------
-        name_struct : str
+        struct : str
             Name of the structure to modify the margin.
         margin : float
             The expansion (positive) or substraction

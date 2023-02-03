@@ -1,6 +1,6 @@
 from contextlib import nullcontext as does_not_raise
 
-from dicomhandler.dicom_info import Dicominfo
+from dicomhandler.dicom_info import DicomInfo
 
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -85,6 +85,6 @@ def test_without_areas_dataframes(patient, expected, dicom_infos):
 )
 def test_plan_present(patient_mock, request, expected):
     with expected:
-        Dicominfo(
+        DicomInfo(
             request.getfixturevalue(patient_mock)
         ).summarize_to_dataframe(area=True)

@@ -2,7 +2,7 @@ import os
 import pathlib
 from unittest.mock import Mock
 
-from dicomhandler.dicom_info import Dicominfo
+from dicomhandler.dicom_info import DicomInfo
 
 import joblib
 
@@ -15,7 +15,7 @@ DATA_PATH = PATH / "data"
 @pytest.fixture(scope="session")
 def dicom_infos():
     def make(name):
-        return Dicominfo(joblib.load(DATA_PATH / name))
+        return DicomInfo(joblib.load(DATA_PATH / name))
 
     return make
 
@@ -23,7 +23,7 @@ def dicom_infos():
 @pytest.fixture(scope="session")
 def dicom_infos_2():
     def make(name1, name2):
-        return Dicominfo(
+        return DicomInfo(
             joblib.load(DATA_PATH / name1), joblib.load(DATA_PATH / name2)
         )
 
@@ -40,7 +40,7 @@ def patients():
 
 @pytest.fixture()
 def dicom_info_empty():
-    d1 = Dicominfo()
+    d1 = DicomInfo()
     return d1
 
 
@@ -53,7 +53,7 @@ def dicom_info_2():
     m2.OperatorsName = "Myself"
     m2.InstanceCreationDate = "20220101"
     m2.Modality = "RTPLAN"
-    d2 = Dicominfo(m2)
+    d2 = DicomInfo(m2)
     return d2
 
 
@@ -66,7 +66,7 @@ def dicom_info_3():
     m3.OperatorsName = "Myself"
     m3.InstanceCreationDate = "20220101"
     m3.Modality = "RTDOSE"
-    d3 = Dicominfo(m3)
+    d3 = DicomInfo(m3)
     return d3
 
 
@@ -79,7 +79,7 @@ def dicom_info_4():
     m4.OperatorsName = "Myself"
     m4.InstanceCreationDate = "20220101"
     m4.Modality = "RTSTRUCT"
-    d4 = Dicominfo(m4)
+    d4 = DicomInfo(m4)
     return d4
 
 
@@ -99,7 +99,7 @@ def dicom_info_5():
     m3.OperatorsName = "Myself"
     m3.InstanceCreationDate = "20220101"
     m3.Modality = "RTDOSE"
-    d5 = Dicominfo(m2, m3)
+    d5 = DicomInfo(m2, m3)
     return d5
 
 
@@ -119,7 +119,7 @@ def dicom_info_6():
     m4.OperatorsName = "Myself"
     m4.InstanceCreationDate = "20220101"
     m4.Modality = "RTSTRUCT"
-    d6 = Dicominfo(m3, m4)
+    d6 = DicomInfo(m3, m4)
     return d6
 
 
@@ -139,7 +139,7 @@ def dicom_info_7():
     m4.OperatorsName = "Myself"
     m4.InstanceCreationDate = "20220101"
     m4.Modality = "RTSTRUCT"
-    d7 = Dicominfo(m4, m2)
+    d7 = DicomInfo(m4, m2)
     return d7
 
 
@@ -167,7 +167,7 @@ def dicom_info_8():
     m4.OperatorsName = "Myself"
     m4.InstanceCreationDate = "20220101"
     m4.Modality = "RTSTRUCT"
-    d8 = Dicominfo(m2, m3, m4)
+    d8 = DicomInfo(m2, m3, m4)
     return d8
 
 

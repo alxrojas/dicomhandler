@@ -31,24 +31,24 @@ retrieving medical images of a patient. The medical images can have different mo
 
 .. _here: https://dicom.innolitics.com/ciods/
 
-The core of our package is the class ``Dicominfo``. The class can be instantiated by means of ``pydicom`` objects
+The core of our package is the class ``DicomInfo``. The class can be instantiated by means of ``pydicom`` objects
 that contain the DICOM files described above. From a practical point of view, a Dicominfo object can be instantiated 
 with zero and up to three ``pydicom`` objects that represents the three DICOM files. The goals of the class are the managing, 
 format converting and the reporting of data summaries about the ``pydicom`` objects contained in the class.
 
-The ``report`` method, that is not contained in the class ``Dicominfo``, is used for generating a excel file that contains information
+The ``report`` method, that is not contained in the class ``DicomInfo``, is used for generating a excel file that contains information
 about RT Structure file. The *datasets* folder, that contains some DICOM files, is in the directory package
 *folder -> docs -> source -> tutorial -> datasets*.
 
 ---------------
 Dicominfo class
 ---------------
-Now we describe how this ``Dicominfo`` stores, manages and converts DICOM files.
+Now we describe how this ``DicomInfo`` stores, manages and converts DICOM files.
 
 Storing DICOM
 -------------
 
-We read the DICOM file before storing it in a instance of ``Dicominfo`` class. The first thing to do, before
+We read the DICOM file before storing it in a instance of ``DicomInfo`` class. The first thing to do, before
 storing a DICOM file, is reading it. In order to read it, we import ``os`` package (used for retrieving 
 the path in which are the DICOM files) and ``pydicom`` package_ (used for reading a DICOM file). The extension
 of a DICOM file is .dcm. In the following example, the variable *patient.dicom_struct* contains a RT Structure. 
@@ -67,16 +67,16 @@ The type of this variable is pydicom.dataset.FileDataset.
       >>> patient_dicom_struct = pydicom.dcmread(dicom_structure_path)
       ...
 
-Now, we can create a instance of ``Dicominfo``. The name of this instance is *di*. For creating a instance of the
+Now, we can create a instance of ``DicomInfo``. The name of this instance is *di*. For creating a instance of the
 class, we need at least one of the three DICOM files described at the beginning of the section. We import
-``Dicominfo`` as follows:
+``DicomInfo`` as follows:
 
 .. code-block:: python
 
-      >>> from dicomhandler.dicom_info import Dicominfo
+      >>> from dicomhandler.dicom_info import DicomInfo
 
 
-      >>> di = Dicominfo(patient_dicom_struct)
+      >>> di = DicomInfo(patient_dicom_struct)
       ...
 
 At this point, *di* stores the RT Structure. For example, we can retrieve the name of the patient:
@@ -96,7 +96,7 @@ and the name of the second structure (organ or lesion) of this patient:
       ...
 
 We can start to see the methods that handling and converting the DICOM files. The methods that
-manage this type of DICOM file are ``anonymize``, ``rotate``, ``translate`` and ``add_margin``.
+manage this type of DICOM file are ``anonymize``, ``move`` and ``add_margin``.
 All these methods can modify the information of the patient's structures.
 
 The object *di.dicom_struct.StructureSetROISequence* contains all the names of the structures.
@@ -147,7 +147,7 @@ birthday before and after the anonymization:
       # This date corresponds to the creation date of the CT device.
       ...
 
-The method ``rotate`` is used to perform a rotation_ in pitch, yaw or roll directions of a structure.
+The method ``move`` could perform a rotation_ in pitch, yaw or roll directions of a structure.
 
 .. _rotation: https://en.wikipedia.org/wiki/Aircraft_principal_axes
 
@@ -162,17 +162,17 @@ by the user. For example, we want to perform a roll rotation of the second struc
       
       >>> struct_name = di.dicom_struct.StructureSetROISequence[1].ROIName
       >>> # Roll rotation of 20.0º in the isocentre
-      >>> di_rotate = di.rotate(struct_name, 20.0, 'roll')
+      >>> di_rotate = di.move(struct_name, 20.0, 'roll')
       >>> di_rotate.dicom_struct.ROIContourSequence[1].ContourSequence[1].ContourData
 
       >>> # For a rotation in an arbritary point
       >>> point = [4.0, -1.2, 100.8]
-      >>> di_rotate = di.rotate(struct_name, 20.0, 'roll', point)
+      >>> di_rotate = di.move(struct_name, 20.0, 'roll', point)
       >>> di_rotate.dicom_struct.ROIContourSequence[1].ContourSequence[1].ContourData
       ...
 
 
-The ``translate`` method is used for displacing a structure along the axes x, y or z. By default, translations
+The ``move`` method is used for displacing a structure along the axes x, y or z. By default, translations
 are performed for the isocentre (that is the last structure of the sequence *di.dicom_struct.ROIContourSequence*)
 or an arbitrary point defined by the user.
 
@@ -182,7 +182,7 @@ For example, we want to make a translation by 2.0 mm of the second structure alo
 
       >>> # x translation of 2.0 mm in the isocentre
       >>> struct_name = di.dicom_struct.StructureSetROISequence[1].ROIName    
-      >>> di_translate = di.translate(struct_name, 2.0, 'x')
+      >>> di_translate = di.move(struct_name, 2.0, 'x')
       ...
 
 With the ``add_margin`` method, we can increase/decrease the margin of a specific structure. The
@@ -201,7 +201,7 @@ For example, we can increase the second structure by a margin of 2 mm:
       >>> di_decreased = di.add_margin(struct_name, -2.0)
       ...
 
-As we have seen, the extraction of the contour data from ``Dicominfo`` object is a bit trivial. The ``Dicominfo``
+As we have seen, the extraction of the contour data from ``DicomInfo`` object is a bit trivial. The ``DicomInfo``
 instance *di* is created using a RT Structure *patient.dicom_struct*. All the information of the RT Structure
 are inside the di:
 
@@ -219,9 +219,9 @@ Format conversion
 -----------------
 
 For simplifying the extraction of information from RT Structure and RT Plan, we use the methods
-``structure_to_excel``, ``mlc_to_excel``, and ``info_to_dataframe`` of ``Dicominfo``. With these methods, we
+``struct_to_csv``, ``mlc_to_csv``, and ``summarize_to_dataframe`` of ``DicomInfo``. With these methods, we
 want to give the user a way to better structure the information contained in RT Structure and RT Plan.
-Now, we want to instance a ``Dicominfo`` object which also contains RT Plan. The RT Structure and RT Plan must
+Now, we want to instance a ``DicomInfo`` object which also contains RT Plan. The RT Structure and RT Plan must
 refer to the same patient. The ``pydicom`` object *patient.dicom_plan* contains the information of RT Plan.
 
 .. code-block:: python
@@ -238,18 +238,18 @@ refer to the same patient. The ``pydicom`` object *patient.dicom_plan* contains 
 
 Now, *di* stores the information that were in *patient.dicom_struct* and *patient.dicom_plan*.
 
-The ``structure_to_excel`` method extracts the information of the cartesian coordinates (relative positions)
+The ``struct_to_csv`` method extracts the information of the cartesian coordinates (relative positions)
 for all or some structures. The output file provides the coordinates of each structure in its own sheet.
 
-For example, we want to extract the information for the second and third structure. The method return a file in the
-format .xlsx as follows:
+For example, we want to extract the information for the second and third structure. The method return a file
+as follows:
 
 .. code-block:: python
 
       >>> struct_name_1 = di.dicom_struct.StructureSetROISequence[1].ROIName
       >>> struct_name_2 = di.dicom_struct.StructureSetROISequence[2].ROIName
       >>> # The output file has the name: name_file.xlsx
-      >>> di.structure_to_excel('name_file', names = [struct_name_1, struct_name_2])
+      >>> di.struct_to_csv('name_file', names = [struct_name_1, struct_name_2])
       ...
 
 The RT Plan contains information about multileaf collimator (MLC) positions, control points, gantry angles,
@@ -268,37 +268,33 @@ stored in the RT Plan. During a treatment, we have a lot of differents movements
 MLC, and table. For each movement, we have some control points in which we save the information about the
 MLC leaves positions, gantry angles, gantry orientation and table angle.
 
-The ``mlc_to_excel`` method extracts these information. It returns a file with extension .xlsx as follows:
+The ``mlc_to_csv`` method extracts these information. It returns a file as follows:
 
 .. code-block:: python
       
       >>> # The output file has the name: name_file.xlsx
-      >>> di.mlc_to_excel('name_file')
+      >>> di.mlc_to_csv('name_file')
       ...
 
-The ``info_to_dataframe`` method extracts information about the RT Plan and RT Structure of a patient.
+The ``summarize_to_dataframe`` method extracts information about the RT Plan of a patient.
 It returns all the information about the lesions/organs structures that are contained in the RT Plan.
 This information is prescribed dose, reference points, dose to references points, maximum, minimun, and
 mean radius, the mass centre and distance to isocentre.
 
 This method searches the information in the RT Structure that correspond to the structures in the RT
-Plan. Tipically, the names of the structures in RT Plan and RT Structure are different even if they
-refer to the same structure. For example, the structure named "3 GTV" in the RT Structure, could have
-the corresponding information in the RT Plan but in this DICOM file the structure is named "3 GTV + 1 mm".
-We could have five structures in the RT Plan named ['1 GTV', '2 GTV', '3 PTV', '4 PTV', '5 PTV']. In the RT 
-Structure, these five could have different names, such as ['1 GTV +2.0 mm', '2 GTV +2.0 mm', 
-'3 PTV +1.0 mm', '4 PTV +1.0 mm', '5 PTV +1.0 mm']. For retrieving the corresponding information in
-the RT Structure, we specify the names (that are in RT Structure) in the targets list.
-This information is represented in a DataFrame as follows:
+Plan. This information is represented in a DataFrame as follows:
 
 .. code-block:: python
       
-      >>> targets = ['1 GTV +2.0 mm',
-      ...            '2 GTV +2.0 mm',
-      ...            '3 PTV +1.0 mm',
-      ...            '4 PTV +1.0 mm',
-      ...            '5 PTV +1.0 mm']
-      >>> df = di.info_to_dataframe(targets)
+      >>> df = di.summarize_to_dataframe(area=False)
+      ...
+
+Also, the ``summarize_to_dataframe`` method extracts the areas of the irregular forms created by the MLC leaves
+during a treatment for each control control for each beam. It returns a pandas DataFrame.
+
+.. code-block:: python
+
+      >>> df_areas = di.summarize_to_dataframe(area=True)
       ...
 
 Reporting data
@@ -314,7 +310,7 @@ For example, if we consider the third structure and we rotate it 5.0º in yaw di
 
       >>> import pydicom
 
-      >>> from dicomhandler.dicom_info import Dicominfo
+      >>> from dicomhandler.dicom_info import DicomInfo
       >>> from dicomhandler.report import report
       
 
@@ -323,7 +319,7 @@ For example, if we consider the third structure and we rotate it 5.0º in yaw di
       >>> patient_struct = pydicom.dcmread(dicom_structure_path)
       >>> di = Dicominfo(patient_struct)
       >>> struct_name = di.dicom_struct.StructureSetROISequence[2].ROIName
-      >>> di_rotated = di.rotate(struct_name, 5.0, 'yaw')
+      >>> di_rotated = di.move(struct_name, 5.0, 'yaw')
       >>> report(di_1, di_rotated, struct_name)
       Parameter	Value [mm]
       0	Max radius	21.828
@@ -337,12 +333,4 @@ For example, if we consider the third structure and we rotate it 5.0º in yaw di
       8	STD distance	0.800
       9	Variance distance	0.640
       10    Distance between center mass	4.119
-      ...
-
-The ``areas_to_dataframe`` method extracts the areas of the irregular forms created by the MLC leaves
-during a treatment for each control control for each beam. It returns a pandas DataFrame.
-
-.. code-block:: python
-
-      >>> df_areas = di.areas_to_dataframe()
       ...
