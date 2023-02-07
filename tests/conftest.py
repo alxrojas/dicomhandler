@@ -11,39 +11,34 @@ import pytest
 PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
 DATA_PATH = PATH / "data"
 
+# This fixture returns a DicomInfo object, initialized with one DICOM file.
+
 
 @pytest.fixture(scope="session")
-def dicom_infos():
-    def make(name):
-        return DicomInfo(joblib.load(DATA_PATH / name))
+def di_1p_fixt():
+    def make(name, path):
+        return DicomInfo(joblib.load(DATA_PATH / path / name))
 
     return make
 
 
-@pytest.fixture(scope="session")
-def dicom_infos_2():
-    def make(name1, name2):
-        return DicomInfo(
-            joblib.load(DATA_PATH / name1), joblib.load(DATA_PATH / name2)
-        )
-
-    return make
-
-
+# This fixture returns a DICOM file (structure or plan).
 @pytest.fixture(scope="session")
 def patients():
-    def make(name):
-        return joblib.load(DATA_PATH / name)
+    def make(name, path):
+        return joblib.load(DATA_PATH / path / name)
 
     return make
 
 
+# This fixture returns an empty DicomInfo object.
 @pytest.fixture()
 def dicom_info_empty():
     d1 = DicomInfo()
     return d1
 
 
+# This fixture returns a DicomInfo object, initialized with a Mock DICOM file
 @pytest.fixture()
 def dicom_info_2():
     m2 = Mock()
@@ -57,6 +52,7 @@ def dicom_info_2():
     return d2
 
 
+# This fixture returns a DicomInfo object, initialized with a Mock DICOM file
 @pytest.fixture()
 def dicom_info_3():
     m3 = Mock()
@@ -70,6 +66,7 @@ def dicom_info_3():
     return d3
 
 
+# This fixture returns a DicomInfo object, initialized with a Mock DICOM file
 @pytest.fixture()
 def dicom_info_4():
     m4 = Mock()
@@ -83,6 +80,7 @@ def dicom_info_4():
     return d4
 
 
+# This fixture returns a DicomInfo object, initialized with 2 Mock DICOM files
 @pytest.fixture()
 def dicom_info_5():
     m2 = Mock()
@@ -103,6 +101,7 @@ def dicom_info_5():
     return d5
 
 
+# This fixture returns a DicomInfo object, initialized with 2 Mock DICOM files
 @pytest.fixture()
 def dicom_info_6():
     m3 = Mock()
@@ -123,6 +122,7 @@ def dicom_info_6():
     return d6
 
 
+# This fixture returns a DicomInfo object, initialized with 2 Mock DICOM files
 @pytest.fixture()
 def dicom_info_7():
     m2 = Mock()
@@ -143,6 +143,7 @@ def dicom_info_7():
     return d7
 
 
+# This fixture returns a DicomInfo object, initialized with 3 Mock DICOM files
 @pytest.fixture()
 def dicom_info_8():
     m2 = Mock()
@@ -171,6 +172,7 @@ def dicom_info_8():
     return d8
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_1():
     m1 = Mock()
@@ -183,6 +185,7 @@ def patient_mock_1():
     return m1
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_2():
     m2 = Mock()
@@ -195,6 +198,7 @@ def patient_mock_2():
     return m2
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_3():
     m3 = Mock()
@@ -207,6 +211,7 @@ def patient_mock_3():
     return m3
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_4():
     m4 = Mock()
@@ -219,6 +224,7 @@ def patient_mock_4():
     return m4
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_5():
     m5 = Mock()
@@ -231,6 +237,7 @@ def patient_mock_5():
     return m5
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_6():
     m6 = Mock()
@@ -243,6 +250,7 @@ def patient_mock_6():
     return m6
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_7():
     m7 = Mock()
@@ -255,6 +263,7 @@ def patient_mock_7():
     return m7
 
 
+# This fixture returns a Mock DICOM file
 @pytest.fixture()
 def patient_mock_8():
     m8 = Mock()
@@ -265,3 +274,12 @@ def patient_mock_8():
     m8.InstanceCreationDate = "20220101"
     m8.Modality = "RTDOSE"
     return m8
+
+
+# This fixture returns a generic file
+@pytest.fixture(scope="session")
+def load_file():
+    def make(path):
+        return joblib.load(DATA_PATH / path)
+
+    return make

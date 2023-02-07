@@ -12,9 +12,11 @@ import pytest
         ("space1", 1, pytest.raises(TypeError)),
     ],
 )
-def test_add_margin_cont(dicom_infos, struct, margin, expected):
+# These tests verify if the method raises/doesn't raise errors
+# in the correct way.
+def test_raises(di_1p_fixt, struct, margin, expected):
     with expected:
-        dicom_info1 = dicom_infos("patient_2.gz")
+        dicom_info1 = di_1p_fixt("patient_2_s.gz", "test_add_margin")
         dicom_info1.add_margin(struct, margin)
 
 
@@ -82,14 +84,15 @@ def test_add_margin_cont(dicom_infos, struct, margin, expected):
         ),
     ],
 )
-def test_add_margin(dicom_infos, struct, margin, index, expected):
-    dicom_info1 = dicom_infos("patient_2.gz")
+# These tests compare the structure with itself with
+# increased/reduced margin.
+def test_add_margin(di_1p_fixt, struct, margin, index, expected):
+    dicom_info1 = di_1p_fixt("patient_2_s.gz", "test_add_margin")
     x = (
         dicom_info1.add_margin(struct, margin)
         .dicom_struct.ROIContourSequence[index]
         .ContourSequence[0]
         .ContourData
     )
-    y = expected
-    assert len(x) == len(y)
-    assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
+    assert len(x) == len(expected)
+    assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, expected)])

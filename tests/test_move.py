@@ -6,30 +6,33 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "struct, angle, key, expected",
+    "patient, struct, angle, key, expected",
     [
-        ("cuadrad", 359.999, "yaw", pytest.raises(ValueError)),
-        (2, 200.0, "yaw", pytest.raises(ValueError)),
-        ("punto", 200.0, "yaw", does_not_raise()),
-        ("punto", 361.1, "yaw", pytest.raises(ValueError)),
-        ("cubo", "1", "yaw", pytest.raises(TypeError)),
-        ("cubo", 200.1, "yy", pytest.raises(ValueError)),
-        ("error", 200, "yaw", pytest.raises(ValueError)),
-        ("cubo", 200.1, "yaw", does_not_raise()),
-        ("cuadrad", 0, "x", pytest.raises(ValueError)),
-        (2, 20.0, "x", pytest.raises(ValueError)),
-        ("punto", 20.0, "x", does_not_raise()),
-        ("punto", 1001, "x", pytest.raises(ValueError)),
-        ("cubo", "1", "x", pytest.raises(TypeError)),
-        ("cubo", 200.0, "xx", pytest.raises(ValueError)),
-        ("error", 200, "x", pytest.raises(ValueError)),
-        ("cubo", 200.1, "x", does_not_raise()),
+        ("patient_1_s.gz", "cuadr", 359.999, "yaw", pytest.raises(ValueError)),
+        ("patient_1_s.gz", 2, 200.0, "yaw", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "punto", 200.0, "yaw", does_not_raise()),
+        ("patient_1_s.gz", "punto", 361.1, "yaw", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "cubo", "1", "yaw", pytest.raises(TypeError)),
+        ("patient_1_s.gz", "cubo", 200.1, "yy", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "error", 200, "yaw", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "cubo", 200.1, "yaw", does_not_raise()),
+        ("patient_1_s.gz", "cuadrad", 0, "x", pytest.raises(ValueError)),
+        ("patient_1_s.gz", 2, 20.0, "x", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "punto", 20.0, "x", does_not_raise()),
+        ("patient_1_s.gz", "punto", 1001, "x", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "cubo", "1", "x", pytest.raises(TypeError)),
+        ("patient_1_s.gz", "cubo", 200.0, "xx", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "error", 200, "x", pytest.raises(ValueError)),
+        ("patient_1_s.gz", "cubo", 200.1, "x", does_not_raise()),
+        ("patient_0_p.gz", "cubo", 200.1, "x", pytest.raises(ValueError)),
     ],
 )
-def test_inputs(dicom_infos, struct, angle, key, expected):
+# These tests verify if the method raises/doesn't raise errors
+# in the correct way.
+def test_raises(di_1p_fixt, patient, struct, angle, key, expected):
     with expected:
-        dicom_info1 = dicom_infos("patient_1_s.gz")
-        dicom_info1.move(struct, angle, key)
+        dicom_info = di_1p_fixt(patient, "test_move")
+        dicom_info.move(struct, angle, key)
 
 
 @pytest.mark.parametrize(
@@ -43,9 +46,11 @@ def test_inputs(dicom_infos, struct, angle, key, expected):
         ("cubo", 200.0, "x", [0.0, 0.0], pytest.raises(ValueError)),
     ],
 )
-def test_move_isocenter(dicom_infos, struct, angle, key, args, expected):
+# These tests verify if the method raises/doesn't raise errors
+# in the correct way, when we use correct/not correct isocenter.
+def test_raises_move_isocenter(di_1p_fixt, struct, angle, key, args, expected):
     with expected:
-        dicom_info1 = dicom_infos("patient_1_s.gz")
+        dicom_info1 = di_1p_fixt("patient_1_s.gz", "test_move")
         dicom_info1.move(struct, angle, key, args)
 
 
@@ -63,16 +68,18 @@ def test_move_isocenter(dicom_infos, struct, angle, key, args, expected):
         ("punto", 0.0, "z"),
     ],
 )
-def test_move_punto_equal(dicom_infos, patients, struct, angle, key, *args):
-    dicom_info1 = dicom_infos("patient_1_s.gz")
+# These tests compare the punto structure with itself rotated with
+# 0 degrees or 359.999.
+def test_move_punto_equal(di_1p_fixt, patients, struct, angle, key, *args):
+    dicom_info = di_1p_fixt("patient_1_s.gz", "test_move")
     x = (
-        dicom_info1.move(struct, angle, key)
+        dicom_info.move(struct, angle, key)
         .dicom_struct.ROIContourSequence[1]
         .ContourSequence[0]
         .ContourData
     )
     y = (
-        patients("patient_1_s.gz")
+        patients("patient_1_s.gz", "test_move")
         .ROIContourSequence[1]
         .ContourSequence[0]
         .ContourData
@@ -95,8 +102,10 @@ def test_move_punto_equal(dicom_infos, patients, struct, angle, key, *args):
         ("cubo", 0.0, "z"),
     ],
 )
-def test_move_cubo_equal(dicom_infos, patients, struct, angle, key, *args):
-    dicom_info = dicom_infos("patient_1_s.gz")
+# These tests compare the cubo structure with itself rotated with
+# 0 degrees and 359.999.
+def test_move_cubo_equal(di_1p_fixt, patients, struct, angle, key, *args):
+    dicom_info = di_1p_fixt("patient_1_s.gz", "test_move")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
             dicom_info.move(struct, angle, key)
@@ -105,7 +114,7 @@ def test_move_cubo_equal(dicom_infos, patients, struct, angle, key, *args):
             .ContourData
         )
         y = (
-            patients("patient_1_s.gz")
+            patients("patient_1_s.gz", "test_move")
             .ROIContourSequence[0]
             .ContourSequence[i]
             .ContourData
@@ -131,10 +140,12 @@ def test_move_cubo_equal(dicom_infos, patients, struct, angle, key, *args):
         ("space", 200, 0, -200, "roll"),
     ],
 )
+# These tests compare the space structure with itself rotated more
+# times. The ultimate rotation return the structure to its original location.
 def test_multi_move_space_equal(
-    dicom_infos, patients, struct, delta1, delta2, delta3, key, *args
+    di_1p_fixt, patients, struct, delta1, delta2, delta3, key, *args
 ):
-    dicom_info = dicom_infos("patient_1_s.gz")
+    dicom_info = di_1p_fixt("patient_1_s.gz", "test_move")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[0])):
         x = (
             dicom_info.move(struct, delta1, key)
@@ -145,7 +156,7 @@ def test_multi_move_space_equal(
             .ContourData
         )
         y = (
-            patients("patient_1_s.gz")
+            patients("patient_1_s.gz", "test_move")
             .ROIContourSequence[1]
             .ContourSequence[i]
             .ContourData
@@ -180,8 +191,10 @@ def test_multi_move_space_equal(
         ("punto", 1, "z", MultiValue(float, [1.0, 1.0, 2.0])),
     ],
 )
-def test_move_punto(dicom_infos, struct, angle, key, expected):
-    dicom_info = dicom_infos("patient_1_s.gz")
+# These tests compare the punto structure with itself rotated one
+# time with 90 degrees.
+def test_move_punto(di_1p_fixt, struct, angle, key, expected):
+    dicom_info = di_1p_fixt("patient_1_s.gz", "test_move")
     for i in range(len(dicom_info.dicom_struct.ROIContourSequence[2])):
         x = (
             dicom_info.move(struct, angle, key)
@@ -189,6 +202,5 @@ def test_move_punto(dicom_infos, struct, angle, key, expected):
             .ContourSequence[i]
             .ContourData
         )
-        y = expected
-        assert len(x) == len(y)
-        assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, y)])
+        assert len(x) == len(expected)
+        assert all([abs(xi - yi) <= 0.00001 for xi, yi in zip(x, expected)])

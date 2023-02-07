@@ -248,7 +248,7 @@ as follows:
 
       >>> struct_name_1 = di.dicom_struct.StructureSetROISequence[1].ROIName
       >>> struct_name_2 = di.dicom_struct.StructureSetROISequence[2].ROIName
-      >>> # The output file has the name: name_file.xlsx
+      >>> # The output file has the name: name_file.csv
       >>> di.struct_to_csv('name_file', names = [struct_name_1, struct_name_2])
       ...
 
@@ -272,7 +272,7 @@ The ``mlc_to_csv`` method extracts these information. It returns a file as follo
 
 .. code-block:: python
       
-      >>> # The output file has the name: name_file.xlsx
+      >>> # The output file has the name: name_file.csv
       >>> di.mlc_to_csv('name_file')
       ...
 

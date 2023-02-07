@@ -33,6 +33,7 @@ in an easy *excelable* form.
 
 
 import copy
+import os
 import pathlib
 import sys
 import warnings
@@ -295,6 +296,8 @@ class DicomInfo:
         ------
         ValueError
             If the name of the structures are not in the files.
+            If the file has not a name.
+            If the file has not a .csv o .txt extension.
 
         References
         ----------
@@ -313,6 +316,28 @@ class DicomInfo:
         dicom_copy = copy.deepcopy(self)
         if not dicom_copy.dicom_struct:
             raise ValueError("Structure file not loaded")
+        elif isinstance(path_or_buff, str):
+            name_file = path_or_buff.split("/")[-1].split(".")[0]
+            exten = path_or_buff.split("/")[-1].split(".")[1]
+            if name_file == "":
+                raise ValueError("Enter the file name")
+            elif exten not in ["csv", "txt"]:
+                raise ValueError(
+                    f"The file must have a .csv or .txt extension, \
+                     not .{exten}"
+                )
+        elif isinstance(path_or_buff, pathlib.Path):
+            name_file = (
+                os.path.splitext(path_or_buff)[0].split("/")[-1].split(".")[0]
+            )
+            exten = os.path.splitext(path_or_buff)[-1]
+            if name_file == "":
+                raise ValueError("Enter the file name")
+            elif exten not in [".csv", ".txt"]:
+                raise ValueError(
+                    f"The file must have a .csv or .txt \
+                extension, not {exten}"
+                )
         names = [] if names is None else names
         names_aux, names_all = {}, {}
         df = []
@@ -386,6 +411,9 @@ class DicomInfo:
         ------
         ValueError
             If the plan is not loaded.
+            If the file has not a name.
+            If the file has not a .csv o .txt extension.
+
 
         References
         ----------
@@ -401,6 +429,27 @@ class DicomInfo:
         dicom_copy = copy.deepcopy(self)
         if not dicom_copy.dicom_plan:
             raise ValueError("Plan file not loaded")
+        elif isinstance(path_or_buff, str):
+            name_file = path_or_buff.split("/")[-1].split(".")[0]
+            exten = path_or_buff.split("/")[-1].split(".")[1]
+            if name_file == "":
+                raise ValueError("Enter the file name")
+            elif exten not in ["csv", "txt"]:
+                raise ValueError(
+                    f"The file must have a .csv or .txt extension, \
+                     not .{exten}"
+                )
+        elif isinstance(path_or_buff, pathlib.Path):
+            name_file = (
+                os.path.splitext(path_or_buff)[0].split("/")[-1].split(".")[0]
+            )
+            exten = os.path.splitext(path_or_buff)[-1]
+            if name_file == "":
+                raise ValueError("Enter the file name")
+            elif exten not in [".csv", ".txt"]:
+                raise ValueError(
+                    f"The file must have a .csv or .txt extension, not {exten}"
+                )
         df = []
         for number, sequence in enumerate(dicom_copy.dicom_plan.BeamSequence):
             array = []
