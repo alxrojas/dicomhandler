@@ -1,0 +1,12 @@
+Parameter,Value [mm]
+Max radius,1.225
+Min radius,0.707
+Mean radius,1.052
+STD radius,0.244
+Variance radius,0.06
+Max distance,3.162
+Min distance,0.0
+Mean distance,1.803
+STD distance,1.04
+Variance distance,1.082
+Distance between center mass,1.581

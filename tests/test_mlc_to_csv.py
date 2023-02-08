@@ -18,14 +18,14 @@ import pytest
 # This test verifies if the method writes in the correct way
 # the buffer. In order to do it, two dataframes from a
 # expected buffer and output buffer are compared.
-def test_equality_buffers(di_1p_fixt, patient_p, name_buff, load_file):
+def test_equality_buffers(di_1p_fixt, patient_p, name_buff, load_buff):
     di = di_1p_fixt(patient_p, "test_mlc_to_csv")
     buff_out = StringIO()
     di.mlc_to_csv(path_or_buff=buff_out)
     buff_out.seek(0)
     result = pd.read_csv(buff_out)
     path = Path(os.getcwd() + "/tests/data/test_mlc_to_csv/" + name_buff)
-    buff_exp = load_file(path)
+    buff_exp = load_buff(path)
     buff_exp.seek(0)
     expected = pd.read_csv(buff_exp)
     assert_frame_equal(result, expected)
@@ -41,9 +41,7 @@ def test_equality_buffers(di_1p_fixt, patient_p, name_buff, load_file):
 # These tests verify if the method writes in the correct way
 # the csv file, when in input there is a path. In order to do it,
 # two dataframes from a expected csv and output csv are compared.
-def test_equality_csv_files(
-    di_1p_fixt, patient_p, name_csv, exp_csv, load_file
-):
+def test_equality_csv_files(di_1p_fixt, patient_p, name_csv, exp_csv):
     di = di_1p_fixt(patient_p, "test_mlc_to_csv")
     path_file_out = Path(
         os.getcwd() + "/tests/data/test_mlc_to_csv/" + name_csv

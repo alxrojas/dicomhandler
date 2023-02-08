@@ -1,7 +1,10 @@
+import json
+import os
 from contextlib import nullcontext as does_not_raise
 
 from dicomhandler.dicom_info import DicomInfo
 
+import pandas as pd
 from pandas.testing import assert_frame_equal
 
 import pytest
@@ -31,9 +34,11 @@ def test_raises_df_areas(patient, expected, di_1p_fixt):
 )
 # This test verifies if the method generates in the correct way
 # the areas dataframe.
-def test_equality_df_areas(patient, di_1p_fixt, load_file):
+def test_equality_df_areas(patient, di_1p_fixt):
     dicom_info1 = di_1p_fixt(patient, "test_summarize_to_dataframe")
-    df_exp = load_file("test_summarize_to_dataframe/exp_df_area.gz")
+    df_exp = pd.read_csv(
+        os.getcwd() + "/tests/data/test_summarize_to_dataframe/exp_df_area.csv"
+    )
     df_res = dicom_info1.summarize_to_dataframe(area=True)
     assert_frame_equal(df_res, df_exp)
 
@@ -44,10 +49,15 @@ def test_equality_df_areas(patient, di_1p_fixt, load_file):
 )
 # This test verifies if the method generates in the correct way
 # the plan dataframe.
-def test_equality_df_plan(patient, di_1p_fixt, load_file):
+def test_equality_df_plan(patient, di_1p_fixt):
     dicom_info = di_1p_fixt(patient, "test_summarize_to_dataframe")
-    df_exp = load_file("test_summarize_to_dataframe/exp_df_plan.gz")
+    df_exp = pd.read_csv(
+        os.getcwd() + "/tests/data/test_summarize_to_dataframe/exp_df_plan.csv"
+    )
     df_res = dicom_info.summarize_to_dataframe(area=False)
+    df_exp["Reference coordinates [mm]"] = df_exp[
+        "Reference coordinates [mm]"
+    ].apply(lambda x: json.loads(x))
     assert_frame_equal(df_res, df_exp)
 
 

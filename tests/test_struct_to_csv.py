@@ -21,7 +21,7 @@ import pytest
 # the buffer. In order to do it, two dataframes from a
 # expected buffer and output buffer are compared.
 def test_equality_buffers(
-    di_1p_fixt, patient_s, list_struct, name_buff, load_file
+    di_1p_fixt, patient_s, list_struct, name_buff, load_buff
 ):
     di = di_1p_fixt(patient_s, "test_struct_to_csv")
     buff_res = StringIO()
@@ -29,7 +29,7 @@ def test_equality_buffers(
     buff_res.seek(0)
     result = pd.read_csv(buff_res)
     path = Path(os.getcwd() + "/tests/data/test_struct_to_csv/" + name_buff)
-    buff_exp = load_file(path)
+    buff_exp = load_buff(path)
     buff_exp.seek(0)
     expected = pd.read_csv(buff_exp)
     assert_frame_equal(result, expected)
@@ -70,7 +70,7 @@ def test_equality_buffers(
 # the csv file, when in input there is a path. In order to do it,
 # two dataframes from a expected csv and output csv are compared.
 def test_equality_csv_files(
-    di_1p_fixt, patient_s, list_struct, name_csv, exp_csv, load_file
+    di_1p_fixt, patient_s, list_struct, name_csv, exp_csv
 ):
     di = di_1p_fixt(patient_s, "test_struct_to_csv")
     path_file_res = Path(

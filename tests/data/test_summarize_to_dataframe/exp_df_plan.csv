@@ -1,0 +1,6 @@
+Target,Prescribed dose [Gy],Reference point dose [Gy],Reference coordinates [mm],Distance to iso [mm]
+Met1,21.0,21.81,"[0.0, 0.0, 0.0]",0.0
+Met2,21.0,22.21,"[1.0, 0.0, 0.0]",1.0
+Met3,21.0,23.21,"[0.0, 1.0, 0.0]",1.0
+Met4,21.0,24.11,"[0.0, 0.0, 1.0]",1.0
+Met5,21.0,22.21,"[1.0, 1.0, 1.0]",1.7

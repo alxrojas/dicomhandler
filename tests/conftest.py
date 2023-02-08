@@ -278,7 +278,7 @@ def patient_mock_8():
 
 # This fixture returns a generic file
 @pytest.fixture(scope="session")
-def load_file():
+def load_buff():
     def make(path):
         return joblib.load(DATA_PATH / path)
 

@@ -1,0 +1,5 @@
+beam,checkpoint,area,gantry_angle,gantry_direction,table
+1,1,60.0,0.0,CW,0.0
+1,2,0.0,10.0,CW,0.0
+2,1,30.0,0.0,CC,5.0
+2,2,30.0,10.0,CC,5.0
