@@ -148,7 +148,7 @@ class DicomInfo:
                     )
                 if temp_modality == files.Modality:
                     raise ValueError("One > dicom of the same modality")
-            for files in args[:]:
+            for files in args:
                 if files.Modality == "RTSTRUCT":
                     self.dicom_struct = files
                 elif files.Modality == "RTDOSE":

@@ -9,7 +9,7 @@ from pydicom.multival import MultiValue
 PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
 DATA_PATH = PATH / "data"
 
-filename = os.path.join(DATA_PATH, "patient_22_s.gz")
+filename = os.path.join(DATA_PATH, "patient_s.gz")
 
 
 def create_patient_pydicom():
