@@ -271,8 +271,8 @@ class DicomInfo:
         """Create an csv file with the information of the structure file.
 
         The information of the Cartesian coordinates (relative positions)
-        for all or some structures is extracted in a comma-separated 
-        values (csv) file or in a text file (txt) for pos-processing. 
+        for all or some structures is extracted in a comma-separated
+        values (csv) file or in a text file (txt) for pos-processing.
         The file can be created in any path or by buffer.
 
         .. note::
@@ -393,10 +393,10 @@ class DicomInfo:
 
         The information of the multileaf collimator (MLC) positions,
         control points, gantry angles, gantry orientation and table
-        angle are reported in a comma-separated values (csv) file or 
-        in a text file (txt) for numerical simulations. The file can 
-        be created in any path or by buffer. The information contains 
-        the principal components necessary for Monte Carlo simulations 
+        angle are reported in a comma-separated values (csv) file or
+        in a text file (txt) for numerical simulations. The file can
+        be created in any path or by buffer. The information contains
+        the principal components necessary for Monte Carlo simulations
         for radiotherapy.
 
         Parameters
