@@ -17,7 +17,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dicomhandler"
-version = "0.0.1a1"
+version = "0.0.1a"
 dependencies = [
     "numpy",
     "pandas",
