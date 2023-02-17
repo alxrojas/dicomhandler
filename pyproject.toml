@@ -16,7 +16,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dicomhandler1"
+name = "dicomhandler"
 version = "0.0.1"
 dependencies = [
     "numpy",
