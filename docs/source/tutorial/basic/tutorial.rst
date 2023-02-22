@@ -233,7 +233,7 @@ refer to the same patient. The ``pydicom`` object *patient.dicom_plan* contains 
       >>> dicom_plan_path = str(path) + '/datasets/plan/RP_0.dcm'
       >>> # RT plan
       >>> patient_dicom_plan = pydicom.dcmread(dicom_plan_path)
-      >>> di = Dicominfo(patient_dicom_struct, patient_dicom_plan)
+      >>> di = DicomInfo(patient_dicom_struct, patient_dicom_plan)
       ...
 
 Now, *di* stores the information that were in *patient.dicom_struct* and *patient.dicom_plan*.
@@ -249,7 +249,7 @@ as follows:
       >>> struct_name_1 = di.dicom_struct.StructureSetROISequence[1].ROIName
       >>> struct_name_2 = di.dicom_struct.StructureSetROISequence[2].ROIName
       >>> # The output file has the name: name_file.csv
-      >>> di.struct_to_csv('name_file', names = [struct_name_1, struct_name_2])
+      >>> di.struct_to_csv('name_file.csv', names = [struct_name_1, struct_name_2])
       ...
 
 The RT Plan contains information about multileaf collimator (MLC) positions, control points, gantry angles,
@@ -273,7 +273,7 @@ The ``mlc_to_csv`` method extracts these information. It returns a file as follo
 .. code-block:: python
       
       >>> # The output file has the name: name_file.csv
-      >>> di.mlc_to_csv('name_file')
+      >>> di.mlc_to_csv('name_file.csv')
       ...
 
 The ``summarize_to_dataframe`` method extracts information about the RT Plan of a patient.
@@ -317,10 +317,10 @@ For example, if we consider the third structure and we rotate it 5.0º in yaw di
       >>> path = os.getcwd()
       >>> dicom_structure_path = str(path) + '/datasets/structure/RS_0.dcm'
       >>> patient_struct = pydicom.dcmread(dicom_structure_path)
-      >>> di = Dicominfo(patient_struct)
+      >>> di = DicomInfo(patient_struct)
       >>> struct_name = di.dicom_struct.StructureSetROISequence[2].ROIName
       >>> di_rotated = di.move(struct_name, 5.0, 'yaw')
-      >>> report(di_1, di_rotated, struct_name)
+      >>> report(di, di_rotated, struct_name)
       Parameter	Value [mm]
       0	Max radius	21.828
       1	Min radius	0.704
