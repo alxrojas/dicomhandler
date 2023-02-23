@@ -1,6 +1,15 @@
 # dicomhandler
 
 <!-- BODY -->
+[![Documentation Status](https://readthedocs.org/projects/dicomhandler/badge/?version=latest)](https://dicomhandler.readthedocs.io/en/latest/?badge=latest)
+[![Contributors](https://img.shields.io/badge/Contributors-3-green)](https://github.com/alxrojas/dicomhandler/graphs/contributors)
+[![PyPI](https://img.shields.io/badge/PyPI-v0.0.1-orange)](https://pypi.org/project/dicomhandler/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/alxrojas/dicomhandler/blob/main/LICENSE)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://pypi.org/project/dicomhandler/)
+[![Coverage](https://img.shields.io/badge/Coverage-100%25-yellowgreen)](https://github.com/alxrojas/dicomhandler/tree/main/tests)
+[![Applications](https://img.shields.io/badge/dicomhandler-Applications-blue)](https://pubmed.ncbi.nlm.nih.gov/34062337/)
+[![CodeOcean](https://img.shields.io/badge/CodeOcean-publication-lightgrey)](https://codeocean.com/capsule/3291396/tree/v1)
+[![Contact](https://img.shields.io/badge/Contact-mail-lightgrey)](https://github.com/alxrojas)
 
 Dicomhandler is a Python tool for integrating [DICOM](https://www.dicomstandard.org/) information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new objects with this information, which are compatible with the commercial systems of treatment planning such as [Eclipse](https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse) and [Brainlab Elements](https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/). It is possible to extract the information from the structures in an easy *csv-able* form.
 
