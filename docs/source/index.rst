@@ -10,8 +10,7 @@ Welcome to dicomhandler's documentation!
    :scale: 100 %
    :alt: Logo
    :align: center
-   :width: 2502px
-   :height: 814px
+   :width: 100%
 
 |
 
