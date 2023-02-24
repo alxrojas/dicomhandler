@@ -7,7 +7,7 @@ Welcome to dicomhandler's documentation!
 ========================================
 
 .. image:: _static/logo_transparent.png
-   :scale: 35
+   :scale: 100 %
 
 |
 
