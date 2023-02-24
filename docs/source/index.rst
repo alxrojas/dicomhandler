@@ -7,10 +7,9 @@ Welcome to dicomhandler's documentation!
 ========================================
 
 .. image:: _static/logo_transparent.png
-   :scale: 100 %
+   :scale: 50 %
    :alt: Logo
    :align: center
-   :width: 100%
 
 |
 
