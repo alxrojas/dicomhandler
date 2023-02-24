@@ -8,6 +8,10 @@ Welcome to dicomhandler's documentation!
 
 .. image:: _static/logo_transparent.png
    :scale: 100 %
+   :alt: Logo
+   :align: center
+   :width: 2502px
+   :height: 814px
 
 |
 
