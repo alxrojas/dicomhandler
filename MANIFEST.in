@@ -5,6 +5,7 @@ include pyproject.toml
 
 recursive-include dicomhandler *.py
 recursive-include Examples *
+recursive-include images *
 recursive-include .github *
 
 exclude requirements_dev.txt

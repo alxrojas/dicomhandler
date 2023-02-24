@@ -1,5 +1,51 @@
 .. FILE AUTO GENERATED !! 
 
+
+.. image:: https://readthedocs.org/projects/dicomhandler/badge/?version=latest
+   :target: https://dicomhandler.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+
+.. image:: https://img.shields.io/badge/Contributors-3-green
+   :target: https://github.com/alxrojas/dicomhandler/graphs/contributors
+   :alt: Contributors
+
+
+.. image:: https://img.shields.io/badge/PyPI-v0.0.1-orange
+   :target: https://pypi.org/project/dicomhandler/
+   :alt: PyPI
+
+
+.. image:: https://img.shields.io/badge/license-MIT-blue
+   :target: https://github.com/alxrojas/dicomhandler/blob/main/LICENSE
+   :alt: License
+
+
+.. image:: https://img.shields.io/badge/python-3.7+-blue.svg
+   :target: https://pypi.org/project/dicomhandler/
+   :alt: Python 3.7+
+
+
+.. image:: https://img.shields.io/badge/Coverage-100%25-yellowgreen
+   :target: https://github.com/alxrojas/dicomhandler/tree/main/tests
+   :alt: Coverage
+
+
+.. image:: https://img.shields.io/badge/dicomhandler-Applications-blue
+   :target: https://pubmed.ncbi.nlm.nih.gov/34062337/
+   :alt: Applications
+
+
+.. image:: https://img.shields.io/badge/CodeOcean-publication-lightgrey
+   :target: https://codeocean.com/capsule/3291396/tree/v1
+   :alt: CodeOcean
+
+
+.. image:: https://img.shields.io/badge/Contact-mail-lightgrey
+   :target: https://github.com/alxrojas
+   :alt: Contact
+
+
 Dicomhandler is a Python tool for integrating `DICOM <https://www.dicomstandard.org/>`_ information and processing DICOM radiotherapy structures. It allows to modify the structures (expand, contract, rotate, translate) and to obtain statistics from these modifications without the need to use CT or MRI images and to create new objects with this information, which are compatible with the commercial systems of treatment planning such as `Eclipse <https://www.varian.com/es/products/radiotherapy/treatment-planning/eclipse>`_ and `Brainlab Elements <https://www.brainlab.com/es/productos-de-cirugia/relacion-de-productos-de-neurocirugia/brainlab-elements/>`_. It is possible to extract the information from the structures in an easy *csv-able* form.
 
 Dicomhandler uses DICOM files that belongs to different stages of treatment planning (structures, dose, and plan), by grouping the files of a patient in a single object. DICOM objects have to be created with `Pydicom <https://pydicom.github.io/pydicom/stable/>`_. Also, it allows for the extraction of related information, such as the Cartesian coordinates of structures and multileaf collimator (MLC) positions for each control point in the treatment plan. This is achieved by using the ``DicomInfo`` class. It receives as input the DICOM radiotherapy structures (RS), dose (RD), and plan (RP) files (or a subset of these) and constructs a single object that contains all the information for a patient.

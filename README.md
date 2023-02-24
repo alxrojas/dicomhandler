@@ -1,5 +1,7 @@
 # dicomhandler
 
+![image](https://github.com/alxrojas/dicomhandler/tree/v0.0.1/images/logo.jpg)
+
 <!-- BODY -->
 [![Documentation Status](https://readthedocs.org/projects/dicomhandler/badge/?version=latest)](https://dicomhandler.readthedocs.io/en/latest/?badge=latest)
 [![Contributors](https://img.shields.io/badge/Contributors-3-green)](https://github.com/alxrojas/dicomhandler/graphs/contributors)
